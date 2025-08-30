@@ -129,7 +129,7 @@ class InvestmentRegistration extends Component
             'attendance_days',
         ]);
 
-        $this->provinces = collect(); 
+        $this->provinces = collect();
     }
 
     public function render()

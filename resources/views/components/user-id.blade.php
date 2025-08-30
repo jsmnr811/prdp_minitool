@@ -1,17 +1,94 @@
 <style>
-    html, body { margin:0; padding:0; background:#fff; }
-    .id-container { display:flex; justify-content:center; align-items:center; }
-    .id-card { width:350px; height:566px; border:1px solid #ccc; border-radius:8px; padding:20px; text-align:center; font-family:Arial, sans-serif; position:relative; }
-    .header-logos { display:flex; justify-content:center; gap:10px; margin-bottom:8px; }
-    .header-logos img { height:40px; }
-    .event-title { font-size:14px; font-weight:bold; margin-bottom:12px; }
-    .profile-pic { width:150px; height:180px; object-fit:cover; border:1px solid #ccc; margin:0 auto 8px auto; }
-    .user-info .name { font-size:16px; font-weight:bold; }
-    .user-info .role { font-size:13px; font-weight:bold; margin-top:2px; }
-    .user-info .department { font-size:12px; margin-top:1px; }
-    .footer { margin-top:18px; display:flex; justify-content:space-between; font-size:12px; }
-    .qr-code { margin:6px auto 0; width:80px; height:80px; border:3px solid #000; display:flex; justify-content:center; align-items:center; }
-    .powered { position:absolute; bottom:6px; left:0; right:0; font-size:10px; color:#555; }
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        background: #fff;
+    }
+
+    .id-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .id-card {
+        width: 350px;
+        height: 566px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        font-family: Arial, sans-serif;
+        position: relative;
+    }
+
+    .header-logos {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .header-logos img {
+        height: 40px;
+    }
+
+    .event-title {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 12px;
+    }
+
+    .profile-pic {
+        width: 150px;
+        height: 180px;
+        object-fit: cover;
+        border: 1px solid #ccc;
+        margin: 0 auto 8px auto;
+    }
+
+    .user-info .name {
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .user-info .role {
+        font-size: 13px;
+        font-weight: bold;
+        margin-top: 2px;
+    }
+
+    .user-info .department {
+        font-size: 12px;
+        margin-top: 1px;
+    }
+
+    .footer {
+        margin-top: 18px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+    }
+
+    .qr-code {
+        margin: 6px auto 0;
+        width: 80px;
+        height: 80px;
+        border: 3px solid #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .powered {
+        position: absolute;
+        bottom: 6px;
+        left: 0;
+        right: 0;
+        font-size: 10px;
+        color: #555;
+    }
 </style>
 
 <div class="id-container">
@@ -22,8 +99,7 @@
 
         <div class="event-title">National Agri-Fishery Investment Forum</div>
 
-        {{-- <img class="profile-pic" src="{{ public_path($user->image) }}" alt="Profile Picture"> --}}
-        <img src="{{ url('media/Scale-Up.png') }}" alt="Logo1">
+        <img class="profile-pic" src="{{ Storage::disk('public')->path(str_replace('storage/', '', $user->image)) }}" alt="Profile Picture">
 
 
         <div class="user-info">

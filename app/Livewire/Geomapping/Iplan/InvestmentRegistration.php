@@ -11,6 +11,7 @@ use App\Models\GeomappingUser;
 use Livewire\Attributes\Layout;
 use PHPMailer\PHPMailer\PHPMailer;
 use Illuminate\Support\Facades\Log;
+use App\Notifications\UserRegistered;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
 #[Layout('components.layouts.investmentForum2025.app')]
@@ -78,6 +79,15 @@ class InvestmentRegistration extends Component
 
     public function register()
     {
+                $geomappingUser = GeomappingUser::find(5);
+        $geomappingUser->notify(new UserRegistered($geomappingUser));
+       LivewireAlert::title('Success!')
+            ->text('You have been successfully registered.')
+            ->success()
+            ->toast()
+            ->position('top-end')
+            ->show();
+        return;
         $this->validate();
 
         // If institution is "Provincial Local Government Unit", check uniqueness of office+province
@@ -98,7 +108,7 @@ class InvestmentRegistration extends Component
         $imagePath = 'storage/investmentforum2025/' . $filename;
 
         $loginCode = strtoupper(Str::random(8));
-        
+
         GeomappingUser::create([
             'image'            => $imagePath,
             'name' => implode(' ', array_filter([$this->firstname, $this->lastname, $this->ext_name])),
