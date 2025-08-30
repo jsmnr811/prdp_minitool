@@ -131,7 +131,8 @@
     <div class="id-card">
         <!-- Logos -->
         <div class="header-logos">
-            <img src="{{ asset('media/Scale-Up.png') }}" alt="Logo1">
+            <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('media/Scale-Up.png'))) }}"
+                alt="Logo1">
         </div>
 
         <!-- Event title -->
@@ -140,7 +141,10 @@
         </div>
 
         <!-- Profile Picture -->
-        <img class="profile-pic" src="{{ asset($user->image) }}" alt="Profile Picture">
+        {{-- <img class="profile-pic" src="{{ asset($user->image) }}" alt="Profile Picture"> --}}
+        <img class="profile-pic"
+            src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path($user->image))) }}"
+            alt="Profile Picture">
 
         <!-- User Information -->
         <div class="user-info">
