@@ -48,6 +48,7 @@ class UserRegistered extends Notification implements ShouldQueue
         Browsershot::html($html)
             ->windowSize(350, 566)
             ->waitUntilNetworkIdle() // ensure all images load
+            ->timeout(60) // increase timeout
             ->save($storagePath);
 
         return (new MailMessage)
