@@ -17,6 +17,7 @@
         "phpmailer/phpmailer": "^6.10",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/browsershot": "^5.0",
+        "spatie/image": "^3.8",
         "spatie/laravel-permission": "^6.17",
         "yajra/laravel-datatables": "^12.0"
     },
