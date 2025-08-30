@@ -25,7 +25,7 @@ new class extends Component {
 
         $user = GeomappingUser::where('login_code', $this->accessCode)->first();
 
-        if ($user->is_blocked === 1) {
+        if ($user && $user->is_blocked === 1) {
             $this->addError('accessCode', 'User is blocked.Please contact system admin.');
             return;
         }

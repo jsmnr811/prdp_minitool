@@ -169,6 +169,7 @@
                 });
 
                 Livewire.on('provinceGeoUpdated', newGeo => {
+                    console.log('Province geo updated event received:', newGeo);
                     this.provinceGeo = newGeo.flat ? newGeo.flat() : newGeo;
                     this.addMarkers(this.provinceGeo, false);
                 });

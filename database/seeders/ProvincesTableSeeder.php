@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class ProvincesTableSeeder extends Seeder
 {
@@ -15,9 +16,9 @@ class ProvincesTableSeeder extends Seeder
     public function run()
     {
 
-        \DB::table('provinces')->delete();
+        DB::table('provinces')->delete();
 
-        \DB::table('provinces')->insert(array (
+        DB::table('provinces')->insert(array (
             0 =>
             array (
                 'id' => 1,

@@ -2,16 +2,17 @@
 
 namespace App\Livewire\Geomapping\Iplan;
 
-use App\Services\LeafletJSServices;
 use Livewire\Component;
 use App\Models\Commodity;
 use Livewire\Attributes\On;
 use App\Models\GeoCommodity;
+use App\Models\Intervention;
 use App\Models\CommodityGroup;
 
-use App\Models\Intervention;
-use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use App\Services\LeafletJSServices;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
 
 class MainMap extends Component
@@ -38,9 +39,13 @@ class MainMap extends Component
         $this->userRole = $user->role ?? null;
         $this->userGroup = $user->group_number ?? null;
 
-        $this->interventions = Intervention::orderBy('name', 'asc')->get();
+        $this->interventions = Cache::rememberForever('interventions_all', function () {
+            return Intervention::orderBy('name', 'asc')->get();
+        });
         if (intval($this->userRole) === 1) {
-            $this->commodities = Commodity::orderBy('name', 'asc')->get();
+            $this->commodities = Cache::rememberForever('commodities_all', function () {
+                return Commodity::orderBy('name', 'asc')->get();
+            });
             $this->provinceGeo = GeoCommodity::where('province_id', 1)->with('commodity', 'geoInterventions.intervention')->get()->toArray();
         } else {
             $groupCommodityIds = CommodityGroup::where('group_number', $user->group_number)
@@ -81,19 +86,21 @@ class MainMap extends Component
 
     public function updatedSelectedFilterCommoditites()
     {
-        $this->provinceGeo = array_values(
+        $loadedProvinceGeo = $this->provinceGeo;
+        $loadedTemporaryGeo = $this->temporaryGeo;
+
+        $loadedProvinceGeo = array_values(
             array_filter($this->provinceGeo, function ($item) {
                 return in_array($item['commodity_id'], $this->selectedFilterCommoditites);
             }),
         );
-        $this->temporaryGeo = array_values(
+        $loadedTemporaryGeo = array_values(
             array_filter($this->temporaryGeo, function ($item) {
                 return in_array($item['commodity_id'], $this->selectedFilterCommoditites);
             }),
         );
-
-        $this->dispatch('temporaryGeoUpdated', $this->temporaryGeo);
-        $this->dispatch('provinceGeoUpdated', $this->provinceGeo);
+        $this->dispatch('provinceGeoUpdated', $loadedProvinceGeo);
+        $this->dispatch('temporaryGeoUpdated', $loadedTemporaryGeo);
     }
 
     #[On('deleteTempCommodity')]

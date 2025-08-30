@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 
 class SidlanAPIServices
 {
@@ -23,15 +24,19 @@ class SidlanAPIServices
 
         $finalParams = array_merge($defaultParams, $params);
 
-        $response = Http::timeout(300)->get($this->apiUrl, $finalParams);
+        $cacheKey = 'sidlan_api_' . md5(serialize($finalParams));
 
-        if ($response->successful()) {
-            return $response->json();
-        }
+        return Cache::remember($cacheKey, 300, function () use ($finalParams) {
+            $response = Http::timeout(300)->get($this->apiUrl, $finalParams);
 
-        return [
-            'error' => 'Failed to fetch data from iReap API.',
-            'status' => $response->status()
-        ];
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return [
+                'error' => 'Failed to fetch data from iReap API.',
+                'status' => $response->status()
+            ];
+        });
     }
 }

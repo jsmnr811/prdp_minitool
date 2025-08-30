@@ -2,7 +2,7 @@
 
 use Illuminate\View\View;
 use Livewire\Volt\Component;
-use App\Services\SidlanAPIServices;
+use App\Services\SidlanLocalAPIServices;
 
 new class extends Component {
     public $chartData = [];
@@ -12,7 +12,7 @@ new class extends Component {
 
     public function mount($irZeroOneData = []): void
     {
-        $apiService = new SidlanAPIServices();
+        $apiService = new SidlanLocalAPIServices();
         $irZeroTwoData = $apiService->executeRequest(['dataset_id' => 'ir-01-002']);
 
         $totals = $this->computePipelineAndApproved($irZeroOneData, $irZeroTwoData);

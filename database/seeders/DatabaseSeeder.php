@@ -19,5 +19,6 @@ class DatabaseSeeder extends Seeder
         ]);
         $this->call(RegionsTableSeeder::class);
         $this->call(ProvincesTableSeeder::class);
+        $this->call(InterventionsTableSeeder::class);
     }
 }

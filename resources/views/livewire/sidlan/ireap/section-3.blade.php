@@ -4,7 +4,7 @@ use Carbon\Carbon;
 use Illuminate\View\View;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
-use App\Services\SidlanAPIServices;
+use App\Services\SidlanLocalAPIServices;
 
 new class extends Component {
     public $chartData = [];
@@ -73,7 +73,7 @@ new class extends Component {
 
     private function underBusinessPlanPreparation(): array
     {
-        $apiService = new SidlanAPIServices();
+        $apiService = new SidlanLocalAPIServices();
         $irZeroTwoData = $apiService->executeRequest(['dataset_id' => 'ir-01-002']);
         $zeroTwo = collect($irZeroTwoData);
 
@@ -161,7 +161,7 @@ new class extends Component {
 
     private function forRPABApproval(): array
     {
-        $apiService = new SidlanAPIServices();
+        $apiService = new SidlanLocalAPIServices();
         $irZeroTwoData = $apiService->executeRequest(['dataset_id' => 'ir-01-002']);
         $zeroTwo = collect($irZeroTwoData);
 
@@ -295,7 +295,7 @@ new class extends Component {
 
     private function RPABApproved(): array
     {
-        $apiService = new SidlanAPIServices();
+        $apiService = new SidlanLocalAPIServices();
         $irZeroTwoData = $apiService->executeRequest(['dataset_id' => 'ir-01-002']);
         $zeroTwo = collect($irZeroTwoData);
 
@@ -605,7 +605,7 @@ new class extends Component {
     window.ChartOne = function(chartData) {
         const canvas = document.getElementById('subproject-chart-days-in-the-current-status');
 
-        if (!canvas) return; 
+        if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
 
