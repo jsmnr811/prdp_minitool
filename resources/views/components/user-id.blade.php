@@ -94,20 +94,11 @@
 <div class="id-container">
     <div class="id-card">
         <div class="header-logos">
-            <img src="{{ public_path('media/Scale-Up.png') }}" alt="Logo1">
+            <img src="{{ $logoSrc }}" alt="Logo1">
         </div>
 
         <div class="event-title">National Agri-Fishery Investment Forum</div>
-
-        @php
-            $imagePath =
-                $user->image && Storage::disk('public')->exists($user->image)
-                    ? asset('storage/' . $user->image)
-                    : asset('storage/investmentforum2025/default.png');
-        @endphp
-
-        <img class="profile-pic" src="{{ $imagePath }}" alt="Profile Picture">
-
+        <img class="profile-pic" src="{{ $userImageSrc }}" alt="Profile Picture">
 
         <div class="user-info">
             <div class="name">{{ $user->name }}</div>

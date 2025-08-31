@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use App\DataTables\GeomappingUsersDataTable;
 
 class GeomappingUsersTableController extends Controller
@@ -28,6 +29,18 @@ class GeomappingUsersTableController extends Controller
     public function verifyUser($id)
     {
         $user = \App\Models\GeomappingUser::findOrFail($id);
-        return view('geomapping.iplan.user-verification', compact('user'));
+         // Load logo image and convert to base64
+        $logoPath = public_path('media/Scale-Up.png');
+        $logoData = base64_encode(file_get_contents($logoPath));
+        $logoSrc = 'data:image/png;base64,' . $logoData;
+
+        // Load user image and convert to base64 (check if exists, otherwise use default)
+        $userImagePath = $user->image && Storage::disk('public')->exists(str_replace('storage/', '', $user->image)) && file_exists(public_path($user->image))
+            ? public_path($user->image)
+            : storage_path('app/public/investmentforum2025/default.png');
+
+        $userImageData = base64_encode(file_get_contents($userImagePath));
+        $userImageSrc = 'data:image/png;base64,' . $userImageData;
+        return view('geomapping.iplan.user-verification', compact('user', 'logoSrc', 'userImageSrc'));
     }
 }
