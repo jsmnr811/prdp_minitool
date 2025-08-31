@@ -79,17 +79,6 @@ class InvestmentRegistration extends Component
 
     public function register()
     {
-                $geomappingUser = GeomappingUser::find(5);
-        $geomappingUser->notify(new UserRegistered($geomappingUser));
-       LivewireAlert::title('Success!')
-            ->text('You have been successfully registered.')
-            ->success()
-            ->toast()
-            ->position('top-end')
-            ->show();
-        return;
-        $this->validate();
-
         // If institution is "Provincial Local Government Unit", check uniqueness of office+province
         if ($this->institution === 'Provincial Local Government Unit') {
             $exists = GeomappingUser::where('institution', $this->institution)
