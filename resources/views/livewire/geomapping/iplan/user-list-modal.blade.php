@@ -251,7 +251,7 @@ new class extends Component {
         @else
             {{-- ✅ Fallback to default-image.png --}}
             <div style="position: relative">
-                <img src="{{ asset('storage/investmentforum2025/default-image.png') }}" class="rounded-lg border" width="200" height="200">
+                <img src="{{ asset('storage/investmentforum2025/default.png') }}" class="rounded-lg border" width="200" height="200">
                 <div class="absolute top-0 right-0 bg-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer"
                      onclick="document.getElementById('profile_image').click()">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"

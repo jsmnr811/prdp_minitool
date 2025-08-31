@@ -23,7 +23,7 @@
                     >
                         <img
                             src="{{ asset('icons/' . $commodity->icon) }}"
-                            onerror="this.onerror=null;this.src='{{ asset('icons/commmodities/default.png') }}';"
+                            onerror="this.onerror=null;this.src='{{ asset('icons/commodities/default.png') }}';"
                             alt="{{ $commodity->name }}"
                             width="24" height="24"
                             class="me-2"
