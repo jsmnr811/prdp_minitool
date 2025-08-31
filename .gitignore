@@ -21,3 +21,5 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+/storage/app/public/investmentforum2025/*
+!/storage/app/public/investmentforum2025/default-image.png

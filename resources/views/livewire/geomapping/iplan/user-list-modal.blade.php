@@ -225,43 +225,57 @@ new class extends Component {
                             </ul>
                         </div>
                         @endif
-                        {{-- ✅ Profile Image --}}
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Profile Image</label>
-                            <div class="flex items-center gap-3 mt-2">
-                                @if ($image)
-                                <img src="{{ $image->temporaryUrl() }}" class="rounded-lg border" width="80"
-                                    height="80">
-                                @elseif ($existing_image)
-                                <div style="position: relative">
-                                    <img src="{{ asset($existing_image) }}" class="rounded-lg border"
-                                        width="200px" height="200px">
-                                    <div class="absolute top-0 right-0 bg-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer"
-                                        onclick="document.getElementById('profile_image').click()">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                            viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                            class="w-4 h-4">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M16.862 4.487l1.687 1.687a1.875 1.875 0 010 2.652l-8.955 8.955a4.5 4.5 0 01-1.897 1.13l-3.615.965a.75.75 0 01-.927-.928l.965-3.615a4.5 4.5 0 011.13-1.897l8.955-8.955a1.875 1.875 0 012.652 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M19.5 7.125L16.875 4.5" />
-                                        </svg>
+{{-- ✅ Profile Image --}}
+<div>
+    <label class="block text-sm font-medium text-gray-700">Profile Image</label>
+    <div class="flex items-center gap-3 mt-2">
+        @if ($image)
+            {{-- New upload preview --}}
+            <img src="{{ $image->temporaryUrl() }}" class="rounded-lg border" width="80" height="80">
+        @elseif ($existing_image && Storage::disk('public')->exists($existing_image))
+            {{-- Existing stored image (only if file actually exists) --}}
+            <div style="position: relative">
+                <img src="{{ asset('storage/' . $existing_image) }}" class="rounded-lg border" width="200" height="200">
+                <div class="absolute top-0 right-0 bg-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer"
+                     onclick="document.getElementById('profile_image').click()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                         class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M16.862 4.487l1.687 1.687a1.875 1.875 0 010 2.652l-8.955 8.955a4.5 4.5 0 01-1.897 1.13l-3.615.965a.75.75 0 01-.927-.928l.965-3.615a4.5 4.5 0 011.13-1.897l8.955-8.955a1.875 1.875 0 012.652 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M19.5 7.125L16.875 4.5" />
+                    </svg>
+                </div>
+            </div>
+        @else
+            {{-- ✅ Fallback to default-image.png --}}
+            <div style="position: relative">
+                <img src="{{ asset('storage/investmentforum2025/default-image.png') }}" class="rounded-lg border" width="200" height="200">
+                <div class="absolute top-0 right-0 bg-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer"
+                     onclick="document.getElementById('profile_image').click()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                         class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M16.862 4.487l1.687 1.687a1.875 1.875 0 010 2.652l-8.955 8.955a4.5 4.5 0 01-1.897 1.13l-3.615.965a.75.75 0 01-.927-.928l.965-3.615a4.5 4.5 0 011.13-1.897l8.955-8.955a1.875 1.875 0 012.652 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M19.5 7.125L16.875 4.5" />
+                    </svg>
+                </div>
+            </div>
+        @endif
 
-                                    </div>
-                                </div>
-                                @else
-                                <div
-                                    class="border rounded-lg flex items-center justify-center text-gray-400 w-20 h-20">
-                                    No Image
-                                </div>
-                                @endif
-                                <input type="file" wire:model="image" accept=".jpg,.jpeg,.png"
-                                    style="display: none" id="profile_image" wire:model="image" class="text-sm">
-                            </div>
-                            @error('image')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
+        {{-- Hidden file input --}}
+        <input type="file" wire:model="image" accept=".jpg,.jpeg,.png"
+               style="display: none" id="profile_image" class="text-sm">
+    </div>
+
+    @error('image')
+        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+    @enderror
+</div>
+
 
 
                         {{-- 🆔 Primary Info --}}

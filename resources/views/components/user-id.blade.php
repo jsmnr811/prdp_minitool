@@ -99,7 +99,14 @@
 
         <div class="event-title">National Agri-Fishery Investment Forum</div>
 
-        <img class="profile-pic" src="{{ Storage::disk('public')->path(str_replace('storage/', '', $user->image)) }}" alt="Profile Picture">
+        @php
+            $imagePath =
+                $user->image && Storage::disk('public')->exists($user->image)
+                    ? asset('storage/' . $user->image)
+                    : asset('storage/investmentforum2025/default.png');
+        @endphp
+
+        <img class="profile-pic" src="{{ $imagePath }}" alt="Profile Picture">
 
 
         <div class="user-info">
