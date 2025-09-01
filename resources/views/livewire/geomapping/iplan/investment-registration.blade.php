@@ -108,9 +108,9 @@
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5
            dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             <option value="">Select Institution</option>
-                            <option value="Provincial Local Government Unit">Provincial Local Government Unit</option>
-                            <option value="Department of Agriculture">Department of Agriculture</option>
-                            <option value="Other Institutions">Other Institutions</option>
+                            @foreach ($institutions as $inst)
+                                <option value="{{ $inst }}">{{ $inst }}</option>
+                            @endforeach
                         </select>
                         @error('institution')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -122,22 +122,17 @@
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                             Office <span class="text-red-600">*</span>
                         </label>
-
-                        @if ($showOfficeField)
-                            {{-- Show dropdown --}}
+                        @if (!empty($availableOffices))
                             <select wire:model="office"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
-                                <option value="">Select an office</option>
-                                <option value="Office of the Governor">Office of the Governor</option>
-                                <option value="Sangguniang Panlalawigan Committee on Agriculture">Sangguniang
-                                    Panlalawigan Committee on Agriculture</option>
-                                <option value="Provincial Planning and Development Office">Provincial Planning and
-                                    Development Office</option>
-                                <option value="Provincial Agriculture Office">Provincial Agriculture Office</option>
-                                <option value="Provincial Veterinary Office">Provincial Veterinary Office</option>
+                                class="mt-3 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5
+                   dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="">Select Office</option>
+                                @foreach ($availableOffices as $off)
+                                    <option value="{{ $off }}">{{ $off }}</option>
+                                @endforeach
                             </select>
                         @else
-                            {{-- Show input text --}}
+                            {{-- Fallback text input --}}
                             <input type="text" wire:model="office"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
                                 placeholder="Enter your office">
@@ -147,6 +142,7 @@
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
+
 
 
 

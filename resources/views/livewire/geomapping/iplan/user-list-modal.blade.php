@@ -2,6 +2,7 @@
 
 use App\Models\Region;
 use App\Models\Province;
+use App\Models\GeoOffice;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
@@ -16,10 +17,14 @@ new class extends Component {
 
     public $image, $existing_image;
     public $firstname, $middlename, $lastname, $ext_name, $sex;
-    public $institution, $office, $designation, $region_id, $province_id;
+    public $designation, $region_id, $province_id;
     public $email, $contact_number;
     public $food_restriction;
     public $group_number, $table_number;
+    public $institution = '';
+    public $office = '';
+    public $institutions = [];
+    public $offices = [];
     public $regions = [];
     public $provinces = [];
     public $showOfficeField = false;
@@ -34,6 +39,7 @@ new class extends Component {
     {
         $this->regions = Region::orderBy('name')->get();
         $this->provinces = collect();
+        $this->institutions = GeoOffice::distinct('institution')->pluck('institution')->toArray();
     }
 
     #[On('editGeomappingUser')]
@@ -104,7 +110,7 @@ new class extends Component {
             'office' => 'required|string|max:255',
             'designation' => 'required|string|max:255',
 
-            'attendance_days'  => 'required|array|min:1',
+            'attendance_days' => 'required|array|min:1',
         ]);
 
         if (!$this->existing_image && !$this->image) {
@@ -120,7 +126,6 @@ new class extends Component {
 
         LivewireAlert::title('Are you sure?')->question()->timer(0)->withConfirmButton('Update')->withCancelButton('Cancel')->onConfirm('updateUser')->show();
     }
-
 
     public function confirmUpdateAssignment()
     {
@@ -159,7 +164,8 @@ new class extends Component {
 
     public function updatedInstitution($value)
     {
-        $this->showOfficeField = $value === 'Provincial Local Government Unit';
+        $this->availableOffices = GeoOffice::where('institution', $value)->orderBy('office')->pluck('office')->toArray();
+
         $this->office = '';
     }
     #[On('confirmUpdateBlockStatus')]
@@ -199,383 +205,377 @@ new class extends Component {
 ?>
 <div>
     @if ($editModal)
-    <!-- Bootstrap Modal (container only) -->
-    <div class="modal fade show d-block" id="editUserModal" tabindex="-1" role="dialog"
-        aria-labelledby="editUserModalLabel" aria-modal="true">
-        <div class="modal-dialog modal-xl" role="document">
-            <div class="modal-content rounded-2xl shadow-lg">
+        <!-- Bootstrap Modal (container only) -->
+        <div class="modal fade show d-block" id="editUserModal" tabindex="-1" role="dialog"
+            aria-labelledby="editUserModalLabel" aria-modal="true">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content rounded-2xl shadow-lg">
 
-                <!-- Modal Header -->
-                <div class="modal-header border-b d-flex justify-content-between align-items-center">
-                    <h5 class="modal-title font-semibold text-lg" id="editUserModalLabel">Edit Information</h5>
-                    <span aria-hidden="true">&times;</span>
-                    <button type="button" class="btn-close" wire:click='$set("editModal", false)' aria-label="Close"></button>
-                </div>
-
-
-                <!-- Modal Body -->
-                <form wire:submit.prevent="confirmUpdate">
-                    <div class="modal-body space-y-6">
-                        @if ($errors->any())
-                        <div class="alert alert-danger">
-                            <ul>
-                                @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                        @endif
-{{-- ✅ Profile Image --}}
-<div>
-    <label class="block text-sm font-medium text-gray-700">Profile Image</label>
-    <div class="flex items-center gap-3 mt-2">
-        @if ($image)
-            {{-- New upload preview --}}
-            <img src="{{ $image->temporaryUrl() }}" class="rounded-lg border" width="80" height="80">
-        @elseif ($existing_image && Storage::disk('public')->exists($existing_image))
-            {{-- Existing stored image (only if file actually exists) --}}
-            <div style="position: relative">
-                <img src="{{ asset('storage/' . $existing_image) }}" class="rounded-lg border" width="200" height="200">
-                <div class="absolute top-0 right-0 bg-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer"
-                     onclick="document.getElementById('profile_image').click()">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                         class="w-4 h-4">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M16.862 4.487l1.687 1.687a1.875 1.875 0 010 2.652l-8.955 8.955a4.5 4.5 0 01-1.897 1.13l-3.615.965a.75.75 0 01-.927-.928l.965-3.615a4.5 4.5 0 011.13-1.897l8.955-8.955a1.875 1.875 0 012.652 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M19.5 7.125L16.875 4.5" />
-                    </svg>
-                </div>
-            </div>
-        @else
-            {{-- ✅ Fallback to default-image.png --}}
-            <div style="position: relative">
-                <img src="{{ asset('storage/investmentforum2025/default.png') }}" class="rounded-lg border" width="200" height="200">
-                <div class="absolute top-0 right-0 bg-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer"
-                     onclick="document.getElementById('profile_image').click()">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                         class="w-4 h-4">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M16.862 4.487l1.687 1.687a1.875 1.875 0 010 2.652l-8.955 8.955a4.5 4.5 0 01-1.897 1.13l-3.615.965a.75.75 0 01-.927-.928l.965-3.615a4.5 4.5 0 011.13-1.897l8.955-8.955a1.875 1.875 0 012.652 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M19.5 7.125L16.875 4.5" />
-                    </svg>
-                </div>
-            </div>
-        @endif
-
-        {{-- Hidden file input --}}
-        <input type="file" wire:model="image" accept=".jpg,.jpeg,.png"
-               style="display: none" id="profile_image" class="text-sm">
-    </div>
-
-    @error('image')
-        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-    @enderror
-</div>
+                    <!-- Modal Header -->
+                    <div class="modal-header border-b d-flex justify-content-between align-items-center">
+                        <h5 class="modal-title font-semibold text-lg" id="editUserModalLabel">Edit Information</h5>
+                        <span aria-hidden="true">&times;</span>
+                        <button type="button" class="btn-close" wire:click='$set("editModal", false)'
+                            aria-label="Close"></button>
+                    </div>
 
 
-
-                        {{-- 🆔 Primary Info --}}
-                        <div>
-                            <h6 class="text-gray-700 font-semibold mb-2">Primary Info</h6>
-                            <div class="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label class="text-sm font-medium">First Name <span
-                                            class="text-red-500">*</span></label>
-                                    <input type="text" wire:model="firstname" placeholder="First Name"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                    @error('firstname')
-                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                    @enderror
+                    <!-- Modal Body -->
+                    <form wire:submit.prevent="confirmUpdate">
+                        <div class="modal-body space-y-6">
+                            @if ($errors->any())
+                                <div class="alert alert-danger">
+                                    <ul>
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
                                 </div>
-                                <div>
-                                    <label class="text-sm font-medium">Middle Name <small
-                                            class="text-gray-400">(optional)</small></label>
-                                    <input type="text" wire:model="middlename" placeholder="Middle Name"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                </div>
-                                <div>
-                                    <label class="text-sm font-medium">Last Name <span
-                                            class="text-red-500">*</span></label>
-                                    <input type="text" wire:model="lastname" placeholder="Last Name"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                </div>
-                                <div>
-                                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name
-                                        Extension<span class="text-gray-400"> (optional)</span></label>
-                                    <input type="text" wire:model="ext_name" placeholder="e.g. Jr., Sr."
-                                        class="form-control w-full rounded border border-gray-300 p-2">
-                                    @error('ext_name')
-                                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-
-                                <div>
-                                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Sex
-                                        <span class="text-red-600">*</span></label>
-                                    <select wire:model="sex"
-                                        class="form-control w-full rounded border border-gray-300 p-2">
-                                        <option value="">Select Sex</option>
-                                        <option {{ $sex == 'Male' ? 'selected' : '' }} value="Male">Male</option>
-                                        <option {{ $sex == 'Female' ? 'selected' : '' }} value="Female">Female
-                                        </option>
-                                    </select>
-                                    @error('sex')
-                                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Organizational Info --}}
-                        <div>
-                            <h6 class="text-gray-700 font-semibold mb-4">Organizational Info</h6>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                                {{-- Institution --}}
-                                <div>
-                                    <label for="institution" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                                        Institution <span class="text-red-600">*</span>
-                                    </label>
-                                    <select
-                                        id="institution"
-                                        wire:model.live="institution"
-                                        class="form-control w-full rounded border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                        <option value="">Select Institution</option>
-                                        <option value="Provincial Local Government Unit">Provincial Local Government Unit</option>
-                                        <option value="Department of Agriculture">Department of Agriculture</option>
-                                        <option value="Other Institutions">Other Institutions</option>
-                                    </select>
-                                    @error('institution')
-                                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-
-                                {{-- Office --}}
-                                <div>
-                                    <label for="office" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                                        Office <span class="text-red-600">*</span>
-                                    </label>
-                                    @if ($showOfficeField)
-                                    <select
-                                        id="office"
-                                        wire:model="office"
-                                        class="form-control w-full rounded border border-gray-300 p-2">
-                                        <option value="">Select an office</option>
-                                        <option value="Office of the Governor">Office of the Governor</option>
-                                        <option value="Sangguniang Panlalawigan Committee on Agriculture">Sangguniang Panlalawigan Committee on Agriculture</option>
-                                        <option value="Provincial Planning and Development Office">Provincial Planning and Development Office</option>
-                                        <option value="Provincial Agriculture Office">Provincial Agriculture Office</option>
-                                        <option value="Provincial Veterinary Office">Provincial Veterinary Office</option>
-                                    </select>
+                            @endif
+                            {{-- ✅ Profile Image --}}
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Profile Image</label>
+                                <div class="flex items-center gap-3 mt-2">
+                                    @if ($image)
+                                        {{-- New upload preview --}}
+                                        <img src="{{ $image->temporaryUrl() }}" class="rounded-lg border" width="80"
+                                            height="80">
+                                    @elseif ($existing_image && Storage::disk('public')->exists($existing_image))
+                                        {{-- Existing stored image (only if file actually exists) --}}
+                                        <div style="position: relative">
+                                            <img src="{{ asset('storage/' . $existing_image) }}"
+                                                class="rounded-lg border" width="200" height="200">
+                                            <div class="absolute top-0 right-0 bg-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer"
+                                                onclick="document.getElementById('profile_image').click()">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                    class="w-4 h-4">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M16.862 4.487l1.687 1.687a1.875 1.875 0 010 2.652l-8.955 8.955a4.5 4.5 0 01-1.897 1.13l-3.615.965a.75.75 0 01-.927-.928l.965-3.615a4.5 4.5 0 011.13-1.897l8.955-8.955a1.875 1.875 0 012.652 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M19.5 7.125L16.875 4.5" />
+                                                </svg>
+                                            </div>
+                                        </div>
                                     @else
-                                    <input
-                                        type="text"
-                                        id="office"
-                                        wire:model="office"
-                                        placeholder="Enter your office"
-                                        class="form-control w-full rounded border border-gray-300 p-2" />
+                                        {{-- ✅ Fallback to default-image.png --}}
+                                        <div style="position: relative">
+                                            <img src="{{ asset('storage/investmentforum2025/default.png') }}"
+                                                class="rounded-lg border" width="200" height="200">
+                                            <div class="absolute top-0 right-0 bg-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer"
+                                                onclick="document.getElementById('profile_image').click()">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                    class="w-4 h-4">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M16.862 4.487l1.687 1.687a1.875 1.875 0 010 2.652l-8.955 8.955a4.5 4.5 0 01-1.897 1.13l-3.615.965a.75.75 0 01-.927-.928l.965-3.615a4.5 4.5 0 011.13-1.897l8.955-8.955a1.875 1.875 0 012.652 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M19.5 7.125L16.875 4.5" />
+                                                </svg>
+                                            </div>
+                                        </div>
                                     @endif
-                                    @error('office')
-                                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
+
+                                    {{-- Hidden file input --}}
+                                    <input type="file" wire:model="image" accept=".jpg,.jpeg,.png"
+                                        style="display: none" id="profile_image" class="text-sm">
                                 </div>
 
-                                {{-- Designation --}}
-                                <div>
-                                    <label for="designation" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                                        Designation <span class="text-red-600">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="designation"
-                                        wire:model="designation"
-                                        placeholder="Designation"
-                                        class="form-control w-full rounded border border-gray-300 p-2" />
-                                    @error('designation')
-                                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            {{-- Region & Province (with ids) --}}
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-                                <div>
-                                    <label for="region_id" class="text-sm font-medium">
-                                        Region <span class="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        id="region_id"
-                                        wire:model.debounce.500ms="region_id"
-                                        class="form-control w-full rounded border border-gray-300 p-2">
-                                        <option value="">Select Region</option>
-                                        @foreach ($regions as $reg)
-                                        <option value="{{ $reg->code }}" {{ $reg->code == $region_id ? 'selected' : '' }}>{{ $reg->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('region_id')
+                                @error('image')
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                    @enderror
-                                </div>
+                                @enderror
+                            </div>
 
-                                <div>
-                                    <label for="province_id" class="text-sm font-medium">
-                                        Province <span class="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        id="province_id"
-                                        wire:model="province_id"
-                                        class="form-control w-full rounded border border-gray-300 p-2">
-                                        <option value="">Select Province</option>
-                                        @foreach ($provinces as $prov)
-                                        <option value="{{ $prov->id }}" {{ $prov->id == $province_id ? 'selected' : '' }}>{{ $prov->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('province_id')
-                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                    @enderror
+
+
+                            {{-- 🆔 Primary Info --}}
+                            <div>
+                                <h6 class="text-gray-700 font-semibold mb-2">Primary Info</h6>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="text-sm font-medium">First Name <span
+                                                class="text-red-500">*</span></label>
+                                        <input type="text" wire:model="firstname" placeholder="First Name"
+                                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                        @error('firstname')
+                                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-medium">Middle Name <small
+                                                class="text-gray-400">(optional)</small></label>
+                                        <input type="text" wire:model="middlename" placeholder="Middle Name"
+                                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-medium">Last Name <span
+                                                class="text-red-500">*</span></label>
+                                        <input type="text" wire:model="lastname" placeholder="Last Name"
+                                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name
+                                            Extension<span class="text-gray-400"> (optional)</span></label>
+                                        <input type="text" wire:model="ext_name" placeholder="e.g. Jr., Sr."
+                                            class="form-control w-full rounded border border-gray-300 p-2">
+                                        @error('ext_name')
+                                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Sex
+                                            <span class="text-red-600">*</span></label>
+                                        <select wire:model="sex"
+                                            class="form-control w-full rounded border border-gray-300 p-2">
+                                            <option value="">Select Sex</option>
+                                            <option {{ $sex == 'Male' ? 'selected' : '' }} value="Male">Male</option>
+                                            <option {{ $sex == 'Female' ? 'selected' : '' }} value="Female">Female
+                                            </option>
+                                        </select>
+                                        @error('sex')
+                                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
+                            {{-- Organizational Info --}}
+                            <div>
+                                <h6 class="text-gray-700 font-semibold mb-4">Organizational Info</h6>
 
-                        {{-- 📞 Contact Info --}}
-                        <div>
-                            <h6 class="text-gray-700 font-semibold mb-2">Contact Information</h6>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-sm font-medium">Email <span
-                                            class="text-red-500">*</span></label>
-                                    <input type="email" wire:model="email" placeholder="you@example.com"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                                    {{-- Institution --}}
+                                    <div>
+                                        <label for="institution"
+                                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                            Institution <span class="text-red-600">*</span>
+                                        </label>
+                                        <select id="institution" wire:model="institution"
+                                            class="form-control w-full rounded border border-gray-300 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                            <option value="">Select Institution</option>
+                                            @foreach ($institutions as $inst)
+                                                <option value="{{ $inst }}">{{ $inst }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('institution')
+                                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    {{-- Office --}}
+                                    <div>
+                                        <label for="office"
+                                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                            Office <span class="text-red-600">*</span>
+                                        </label>
+                                        @if (!empty($availableOffices))
+                                            <select id="office" wire:model="office"
+                                                class="form-control w-full rounded border border-gray-300 p-2">
+                                                <option value="">Select an office</option>
+                                                @foreach ($availableOffices as $off)
+                                                    <option value="{{ $off }}">{{ $off }}</option>
+                                                @endforeach
+                                            </select>
+                                        @else
+                                            <input type="text" id="office" wire:model="office"
+                                                placeholder="Enter your office"
+                                                class="form-control w-full rounded border border-gray-300 p-2" />
+                                        @endif
+                                        @error('office')
+                                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    {{-- Designation --}}
+                                    <div>
+                                        <label for="designation"
+                                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                            Designation <span class="text-red-600">*</span>
+                                        </label>
+                                        <input type="text" id="designation" wire:model="designation"
+                                            placeholder="Designation"
+                                            class="form-control w-full rounded border border-gray-300 p-2" />
+                                        @error('designation')
+                                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="text-sm font-medium">Contact Number <span
-                                            class="text-red-500">*</span></label>
-                                    <input type="text" wire:model="contact_number" minlength="11"
-                                        maxlength="11" placeholder="09123456789"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+
+                                {{-- Region & Province (with ids) --}}
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                                    <div>
+                                        <label for="region_id" class="text-sm font-medium">
+                                            Region <span class="text-red-500">*</span>
+                                        </label>
+                                        <select id="region_id" wire:model.debounce.500ms="region_id"
+                                            class="form-control w-full rounded border border-gray-300 p-2">
+                                            <option value="">Select Region</option>
+                                            @foreach ($regions as $reg)
+                                                <option value="{{ $reg->code }}"
+                                                    {{ $reg->code == $region_id ? 'selected' : '' }}>
+                                                    {{ $reg->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('region_id')
+                                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div>
+                                        <label for="province_id" class="text-sm font-medium">
+                                            Province <span class="text-red-500">*</span>
+                                        </label>
+                                        <select id="province_id" wire:model="province_id"
+                                            class="form-control w-full rounded border border-gray-300 p-2">
+                                            <option value="">Select Province</option>
+                                            @foreach ($provinces as $prov)
+                                                <option value="{{ $prov->id }}"
+                                                    {{ $prov->id == $province_id ? 'selected' : '' }}>
+                                                    {{ $prov->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('province_id')
+                                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
 
-                        <!-- Food Restriction -->
-                        <div>
-                            <label class="text-sm font-medium">Food Restriction <span
-                                    class="text-red-500">*</span>
-                                <small class="text-gray-400">(Put N/A if not applicable)</small>
-                            </label>
-                            <textarea wire:model="food_restriction" rows="3" placeholder="Specify any food restriction..."
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
-                            @error('food_restriction')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
+                            {{-- 📞 Contact Info --}}
+                            <div>
+                                <h6 class="text-gray-700 font-semibold mb-2">Contact Information</h6>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-sm font-medium">Email <span
+                                                class="text-red-500">*</span></label>
+                                        <input type="email" wire:model="email" placeholder="you@example.com"
+                                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-medium">Contact Number <span
+                                                class="text-red-500">*</span></label>
+                                        <input type="text" wire:model="contact_number" minlength="11"
+                                            maxlength="11" placeholder="09123456789"
+                                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                </div>
+                            </div>
 
-                        <div class="mt-4">
-                            <label class="block mb-2 font-semibold text-gray-900 dark:text-white">
-                                Select days you will attend <span class="text-red-600">*</span>
-                            </label>
 
-                            <div class="flex flex-wrap gap-4">
-                                @foreach(['Day 1', 'Day 2', 'Day 3'] as $day)
-                                <label class="inline-flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        wire:model="attendance_days"
-                                        value="{{ $day }}"
-                                        class="form-checkbox h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500">
-                                    <span class="ml-2 text-gray-700 dark:text-gray-300">{{ $day }}</span>
+                            <!-- Food Restriction -->
+                            <div>
+                                <label class="text-sm font-medium">Food Restriction <span
+                                        class="text-red-500">*</span>
+                                    <small class="text-gray-400">(Put N/A if not applicable)</small>
                                 </label>
-                                @endforeach
+                                <textarea wire:model="food_restriction" rows="3" placeholder="Specify any food restriction..."
+                                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                @error('food_restriction')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
-                            @error('attendance_days')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                            <div class="mt-4">
+                                <label class="block mb-2 font-semibold text-gray-900 dark:text-white">
+                                    Select days you will attend <span class="text-red-600">*</span>
+                                </label>
+
+                                <div class="flex flex-wrap gap-4">
+                                    @foreach (['Day 1', 'Day 2', 'Day 3'] as $day)
+                                        <label class="inline-flex items-center">
+                                            <input type="checkbox" wire:model="attendance_days"
+                                                value="{{ $day }}"
+                                                class="form-checkbox h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500">
+                                            <span
+                                                class="ml-2 text-gray-700 dark:text-gray-300">{{ $day }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+
+                                @error('attendance_days')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
-                    </div>
-                    <div class="modal-footer border-t mt-6">
-                        <button type="button" class="btn btn-secondary"
-                            wire:click='$set("editModal", false)'>Close</button>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
-                    </div>
-                </form>
+                        <div class="modal-footer border-t mt-6">
+                            <button type="button" class="btn btn-secondary"
+                                wire:click='$set("editModal", false)'>Close</button>
+                            <button type="submit" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Backdrop -->
-    <div class="modal-backdrop fade show"></div>
+        <!-- Backdrop -->
+        <div class="modal-backdrop fade show"></div>
     @endif
 
     @if ($assignModal)
-    <!-- Bootstrap Modal (container only) -->
-    <div class="modal fade show d-block" id="assignUser" tabindex="-1" role="dialog"
-        aria-labelledby="assignUserLabel" aria-modal="true">
-        <div class="modal-dialog modal-xl" role="document">
-            <div class="modal-content rounded-2xl shadow-lg">
+        <!-- Bootstrap Modal (container only) -->
+        <div class="modal fade show d-block" id="assignUser" tabindex="-1" role="dialog"
+            aria-labelledby="assignUserLabel" aria-modal="true">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content rounded-2xl shadow-lg">
 
-                <!-- Modal Header -->
-                <div class="modal-header border-b">
-                    <h5 class="modal-title font-semibold text-lg" id="assignUserLabel">Assign Group and Table</h5>
-                    <button type="button" class="close" wire:click='$set("assignModal", false)'
-                        aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
+                    <!-- Modal Header -->
+                    <div class="modal-header border-b">
+                        <h5 class="modal-title font-semibold text-lg" id="assignUserLabel">Assign Group and Table</h5>
+                        <button type="button" class="close" wire:click='$set("assignModal", false)'
+                            aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
 
-                <!-- Modal Body -->
-                <form wire:submit.prevent="confirmUpdateAssignment">
-                    <div class="modal-body space-y-6">
+                    <!-- Modal Body -->
+                    <form wire:submit.prevent="confirmUpdateAssignment">
+                        <div class="modal-body space-y-6">
 
-                        <div>
-                            <!-- Group & Table -->
-                            <div class="grid grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label class="text-sm font-medium">Group Number <span
-                                            class="text-red-500">*</span></label>
-                                    <input type="text" wire:model="group_number"
-                                        placeholder="Enter group number" minlength="1" maxlength="2"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                    @error('group_number')
-                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                    @enderror
+                            <div>
+                                <!-- Group & Table -->
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label class="text-sm font-medium">Group Number <span
+                                                class="text-red-500">*</span></label>
+                                        <input type="text" wire:model="group_number"
+                                            placeholder="Enter group number" minlength="1" maxlength="2"
+                                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                        @error('group_number')
+                                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-medium">Table Number <span
+                                                class="text-red-500">*</span></label>
+                                        <input type="text" wire:model="table_number"
+                                            placeholder="Enter table number" minlength="1" maxlength="1"
+                                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                        @error('table_number')
+                                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="text-sm font-medium">Table Number <span
-                                            class="text-red-500">*</span></label>
-                                    <input type="text" wire:model="table_number"
-                                        placeholder="Enter table number" minlength="1" maxlength="1"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                    @error('table_number')
-                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                    @enderror
-                                </div>
+
+
                             </div>
-
 
                         </div>
 
-                    </div>
-
-                    <!-- Modal Footer -->
-                    <div class="modal-footer border-t mt-6">
-                        <button type="button" class="btn btn-secondary"
-                            wire:click='$set("assignModal", false)'>Close</button>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
-                    </div>
-                </form>
+                        <!-- Modal Footer -->
+                        <div class="modal-footer border-t mt-6">
+                            <button type="button" class="btn btn-secondary"
+                                wire:click='$set("assignModal", false)'>Close</button>
+                            <button type="submit" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Backdrop -->
-    <div class="modal-backdrop fade show"></div>
+        <!-- Backdrop -->
+        <div class="modal-backdrop fade show"></div>
     @endif
 </div>

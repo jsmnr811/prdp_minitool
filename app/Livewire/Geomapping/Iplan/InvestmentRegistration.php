@@ -5,6 +5,7 @@ namespace App\Livewire\Geomapping\Iplan;
 use App\Models\Region;
 use Livewire\Component;
 use App\Models\Province;
+use App\Models\GeoOffice;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
 use App\Models\GeomappingUser;
@@ -21,14 +22,21 @@ class InvestmentRegistration extends Component
 
     public $image;
     public $firstname, $middlename, $lastname, $ext_name, $sex;
-    public $institution, $office, $designation, $region, $province;
+    public $designation, $region, $province;
     public  $email, $contact_number;
     public $food_restriction;
     public $regions = [];
     public $provinces = [];
 
-    public $showOfficeField = 'false';
+    public $institution = "";
+    public $office = "";
+
+    // public $showOfficeField = 'false';
+    public $availableOffices = [];
+
     public $attendance_days = [];
+    public $institutions = [];
+    public $offices = [];
 
     protected $rules = [
         'image'            => 'required|image|max:2048',
@@ -57,6 +65,9 @@ class InvestmentRegistration extends Component
     {
         $this->regions = Region::all();
         $this->provinces = collect();
+        $this->institutions = GeoOffice::distinct('institution')
+            ->pluck('institution')
+            ->toArray();
     }
 
     public function updatedRegion($value)
@@ -67,9 +78,14 @@ class InvestmentRegistration extends Component
     }
     public function updatedInstitution($value)
     {
-        $this->showOfficeField = $value === 'Provincial Local Government Unit';
+        $this->availableOffices = GeoOffice::where('institution', $value)
+            ->orderBy('office')
+            ->pluck('office')
+            ->toArray();
+
         $this->office = '';
     }
+
     public function updatedImage()
     {
         $this->validate([
@@ -120,6 +136,7 @@ class InvestmentRegistration extends Component
             'attendance_days'  => implode(', ', $this->attendance_days),
 
             'login_code'       => $loginCode,
+            'role'          => 2
         ]);
 
         session()->flash('message', "✅ Registration successful! Your login code is: {$loginCode}");
