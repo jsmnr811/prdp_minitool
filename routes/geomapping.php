@@ -9,6 +9,7 @@ use Spatie\Browsershot\Browsershot;
 use Illuminate\Support\Facades\Route;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Http\Controllers\GeomappingUsersTableController;
+use App\Http\Controllers\GeomappingUserExportController;
 use App\Livewire\Geomapping\Iplan\InvestmentRegistration;
 
 Route::get('/code-login', CodeLogin::class)->name('investment-forum');
@@ -32,6 +33,7 @@ Route::name('geomapping.')->prefix('geomapping')->group(function () {
         Route::view('login', 'geomapping.iplan.login')
             ->name('login')
             ->middleware('guest-geo:geomapping');
+        Route::get('/export-users', [GeomappingUserExportController::class, 'exportCsv'])->name('export.users');
 
         Route::middleware('auth-geo:geomapping')->group(function () {
             Route::view('dashboard', 'geomapping.iplan.dashboard')->name('dashboard');
@@ -39,13 +41,9 @@ Route::name('geomapping.')->prefix('geomapping')->group(function () {
             Route::view('dashboard-3', 'geomapping.iplan.dashboard-3')->name('dashboard-3');
             Route::view('landing', 'geomapping.iplan.landing')->name('landing');
         });
-
-
-
-        //next route
-
     });
 });
+
 Route::get('sidlaner', function () {
     $user = GeomappingUser::find(1);
     $fileName = 'user-image-' . $user->id . '.png';

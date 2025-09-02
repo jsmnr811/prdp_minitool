@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\DataTables\GeomappingUsersDataTable;
+use App\Models\GeomappingUser;
 
 class GeomappingUsersTableController extends Controller
 {
@@ -21,20 +22,18 @@ class GeomappingUsersTableController extends Controller
 
     public function idCard($id)
     {
-        $user = \App\Models\GeomappingUser::findOrFail($id);
+        $user = GeomappingUser::findOrFail($id);
 
         return view('geomapping.iplan.user-id-card', compact('user'));
     }
 
     public function verifyUser($id)
     {
-        $user = \App\Models\GeomappingUser::findOrFail($id);
-         // Load logo image and convert to base64
+        $user = GeomappingUser::findOrFail($id);
         $logoPath = public_path('media/Scale-Up.png');
         $logoData = base64_encode(file_get_contents($logoPath));
         $logoSrc = 'data:image/png;base64,' . $logoData;
 
-        // Load user image and convert to base64 (check if exists, otherwise use default)
         $userImagePath = $user->image && Storage::disk('public')->exists(str_replace('storage/', '', $user->image)) && file_exists(public_path($user->image))
             ? public_path($user->image)
             : storage_path('app/public/investmentforum2025/default.png');

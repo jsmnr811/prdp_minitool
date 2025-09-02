@@ -13,4 +13,6 @@ class Province extends Authenticatable
     protected $hidden = [];
 
     public $timestamps = true;
+
+    
 }

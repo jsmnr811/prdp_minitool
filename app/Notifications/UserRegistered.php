@@ -72,7 +72,7 @@ class UserRegistered extends Notification implements ShouldQueue
 
         // Send the email with image attached
         return (new MailMessage)
-            ->subject('Welcome to Our Application')
+            ->subject('Welcome to National Agri-Fishery Investment Forum')
             ->view('emails.investment-forum-registration', [
                 'user' => $this->user,
                 'logoSrc' => $logoSrc

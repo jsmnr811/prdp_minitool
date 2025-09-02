@@ -17,17 +17,14 @@
     @livewireStyles
     @vite(['resources/js/app.js'])
     <style>
-        /* Custom styles for modern, full-width layout */
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f0f2f5;
-            /* A subtle, modern gray */
             color: #333;
         }
 
         .hero-section {
             background: linear-gradient(to right, #4CAF50, #8BC34A);
-            /* Fresh green gradient */
             color: white;
             padding: 5rem 0;
             text-align: center;
@@ -106,14 +103,11 @@
             border-radius: 50%;
             overflow: hidden;
             border: 2px solid #228E3B;
-            /* optional */
             box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
             display: flex;
             align-items: center;
             justify-content: center;
             background-color: snow;
-
-            /* optional */
         }
 
         .marker-circle img {
@@ -151,49 +145,28 @@
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="#">National Agri-Fishery Investment Forum</a>
+
             @auth('geomapping')
-            <livewire:geomapping.iplan.logout />
+            <div class="d-flex align-items-center gap-3 ms-auto">
+                @if(Auth::guard('geomapping')->check() && Auth::guard('geomapping')->user()->role == '1')
+                <a href="{{ route('investment.user-list') }}" class="nav-link">Manage User</a>
+                @endif
+
+                <livewire:geomapping.iplan.logout />
+            </div>
             @endauth
-            {{-- <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="#">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Contact</a>
-                    </li>
-                </ul>
-            </div> --}}
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <!-- <header class="hero-section mb-5">
-        <div class="container">
-            <h1>Dynamic Agricultural Planning</h1>
-            <p class="lead mt-3">Pin your location to get tailored insights on commodities and interventions.</p>
-        </div>
-    </header> -->
-
-    <!-- Main Content Section -->
     <main class="container-fluid my-4 mx-auto" style="max-width: 1400px;">
         <livewire:geomapping.iplan.main-map>
     </main>
 
-    <!-- Message Box -->
     <div id="messageBox" class="message-box d-none alert alert-success" role="alert"></div>
 
-    <!-- Footer -->
     <footer class="bg-light text-center text-lg-start mt-5">
         <div class="container p-4">
             <p class="text-center text-muted mb-0">&copy; 2025 National Agri-Fishery Investment Forum. All Rights Reserved.</p>
@@ -204,7 +177,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    {{-- <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script> --}}
 </body>
 
 </html>

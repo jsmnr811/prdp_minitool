@@ -75,7 +75,7 @@ class GeoCommodityDataTable extends DataTable
                 $query->where('region_id', request()->get('region_select'));
             }
         }
-
+$query->orderBy('id', 'asc');
         return $query;
     }
 

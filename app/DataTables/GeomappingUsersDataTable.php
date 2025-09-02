@@ -75,13 +75,10 @@ class GeomappingUsersDataTable extends DataTable
                 $query->where('region_id', request()->get('region_select'));
             }
         }
-
+        $query->orderBy('id', 'asc');
         return $query;
     }
 
-    /**
-     * Optional method if you want to use the html builder.
-     */
     public function html(): HtmlBuilder
     {
         return $this->builder()
@@ -93,25 +90,26 @@ class GeomappingUsersDataTable extends DataTable
             ])
             ->orderBy(1)
             ->selectStyleSingle()
-            ->buttons([
-                Button::make('excel'),
-            ])
             ->parameters([
+                'pagingType' => 'simple_numbers',
+                'lengthChange' => true, 
+                'lengthMenu' => [[10, 25, 50, 100], [10, 25, 50, 100]], 
+                'language' => [
+                    'paginate' => [
+                        'previous' => '&laquo;',
+                        'next' => '&raquo;',
+                    ]
+                ],
                 'initComplete' => 'function () {
-                const table = this.api();
-                $("#region_select").on("change", function() {
-                    table.ajax.reload();
-                    console.log("Region selected:", $(this).val());
-                });
-            }',
+                    const table = this.api();
+                    $("#region_select").on("change", function() {
+                        table.ajax.reload();
+                    });
+                }',
             ]);
     }
 
 
-
-    /**
-     * Get the dataTable columns definition.
-     */
     public function getColumns(): array
     {
         return [
@@ -122,8 +120,7 @@ class GeomappingUsersDataTable extends DataTable
             Column::make('contact_info')->title('Contact Info')->searchable(true)->width('20%'),
             Column::make('gropup_info')->title('Group Info')->searchable(true)->width('15%'),
             Column::make('status')->title('Status')->searchable(true)->width('5%'),
-            // Column::make('group_numnber')->searchable(true),
-            // Column::make('registration')->title('Registered')->searchable(true),
+
             Column::computed('actions')->exportable(false)->printable(false)->width('8%')->addClass('text-center'),
         ];
     }
@@ -133,12 +130,10 @@ class GeomappingUsersDataTable extends DataTable
         $isBlocked = $geomappingUser->is_blocked;
         $userId = $geomappingUser->id;
 
-        // Block / Unblock link
         $blockAction = $isBlocked
             ? '<a class="dropdown-item text-danger" href="#" onclick="Livewire.dispatch(\'confirmUpdateBlockStatus\', { user: ' . $userId . ' })">Unblock</a>'
             : '<a class="dropdown-item text-danger" href="#" onclick="Livewire.dispatch(\'confirmUpdateBlockStatus\', { user: ' . $userId . ' })">Block</a>';
 
-        // Mail ID link only if group_number & table_number exist
         $mailIdAction = '';
         if ($geomappingUser->group_number !== null && $geomappingUser->table_number !== null) {
             $mailIdAction = '
@@ -149,14 +144,12 @@ class GeomappingUsersDataTable extends DataTable
             </li>';
         }
 
-        // Build full dropdown HTML
         $html = <<<HTML
                     <div class="dropdown">
                         <button class="btn btn-secondary dropdown-toggle" type="button" id="actionsMenuButton{$userId}" data-bs-toggle="dropdown" aria-expanded="false">
                             Actions
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="actionsMenuButton{$userId}">
-                            <!-- Edit Profile -->
                             <li>
                                 <a class="dropdown-item" href="#" onclick="Livewire.dispatch('editGeomappingUser', { user: $userId })">
                                     Edit Profile
@@ -168,7 +161,6 @@ class GeomappingUsersDataTable extends DataTable
                                     Assign
                                 </a>
                             </li>
-                            <!-- Block / Unblock -->
                             <li>
                                 $blockAction
                             </li>
