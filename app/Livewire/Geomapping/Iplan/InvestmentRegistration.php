@@ -95,6 +95,7 @@ class InvestmentRegistration extends Component
 
     public function register()
     {
+        $this->validate(); 
         // If institution is "Provincial Local Government Unit", check uniqueness of office+province
         if ($this->institution === 'Provincial Local Government Unit') {
             $exists = GeomappingUser::where('institution', $this->institution)
