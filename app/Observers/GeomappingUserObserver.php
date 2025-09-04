@@ -12,7 +12,7 @@ class GeomappingUserObserver
      */
     public function created(GeomappingUser $geomappingUser): void
     {
-        $geomappingUser->notify(new UserRegistered($geomappingUser));
+        // $geomappingUser->notify(new UserRegistered($geomappingUser));
     }
 
     /**
