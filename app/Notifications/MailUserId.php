@@ -42,7 +42,7 @@ class MailUserId extends Notification implements ShouldQueue
     {
         $fileName = 'user-id-' . $this->user->id . '.png';
         $storagePath = storage_path('app/public/' . $fileName);
- // Load logo image and convert to base64
+        // Load logo image and convert to base64
         $logoPath = public_path('media/Scale-Up.png');
         $logoData = base64_encode(file_get_contents($logoPath));
         $logoSrc = 'data:image/png;base64,' . $logoData;
@@ -58,6 +58,9 @@ class MailUserId extends Notification implements ShouldQueue
 
         $html = view('components.user-id', ['user' => $this->user, 'logoSrc' => $logoSrc, 'userImageSrc' => $userImageSrc])->render();
 
+        if (file_exists($storagePath)) {
+            unlink($storagePath);
+        }
         // Generate a PNG snapshot of the HTML
         Browsershot::html($html)
             ->windowSize(350, 566)
@@ -66,11 +69,11 @@ class MailUserId extends Notification implements ShouldQueue
 
         return (new MailMessage)
             ->subject('Your Official Event ID – National Agri-Fishery Investment Forum')
-            ->greeting('Hello ' . $this->user->name . ',')
+            ->greeting('Hello ' . ucwords($this->user->name) . ',')
             ->line('We are excited to welcome you to the **National Agri-Fishery Investment Forum**.')
             ->line('Here are your event details:')
-            ->line('- **Group Number:** ' . $this->user->group_number)
-            ->line('- **Table Number:** ' . $this->user->table_number)
+            // ->line('- **Group Number:** ' . $this->user->group_number)
+            // ->line('- **Table Number:** ' . $this->user->table_number)
             ->line('Your official event ID is attached as an image file. Please bring a **printed** or **digital copy** with you for entry to the event.')
             ->line('Thank you for your participation — we look forward to seeing you at the forum!')
             ->salutation('Warm regards,')

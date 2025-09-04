@@ -16,6 +16,7 @@
 <!-- Scripts -->
 @script
 <script>
+    
     window.mapSearch = function(provinceGeo, temporaryGeo) {
         return {
             // Reactive state

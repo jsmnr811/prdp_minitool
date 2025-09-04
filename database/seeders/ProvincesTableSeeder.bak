@@ -15,16 +15,14 @@ class ProvincesTableSeeder extends Seeder
      */
     public function run()
     {
-        
 
         DB::table('provinces')->delete();
-        
+
         DB::table('provinces')->insert(array (
-            0 => 
+            0 =>
             array (
                 'id' => 1,
                 'name' => 'Ilocos Norte',
-                'abbr' => 'Ilocos Norte',
                 'region_code' => '1',
                 'code' => '1',
                 'order' => 11,
@@ -33,11 +31,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            1 => 
+            1 =>
             array (
                 'id' => 2,
                 'name' => 'Ilocos Sur',
-                'abbr' => 'Ilocos Sur',
                 'region_code' => '1',
                 'code' => '2',
                 'order' => 12,
@@ -46,11 +43,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            2 => 
+            2 =>
             array (
                 'id' => 3,
                 'name' => 'La Union',
-                'abbr' => 'La Union',
                 'region_code' => '1',
                 'code' => '3',
                 'order' => 13,
@@ -59,11 +55,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            3 => 
+            3 =>
             array (
                 'id' => 4,
                 'name' => 'Pangasinan',
-                'abbr' => 'Pangasinan',
                 'region_code' => '1',
                 'code' => '4',
                 'order' => 14,
@@ -72,11 +67,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            4 => 
+            4 =>
             array (
                 'id' => 5,
                 'name' => 'Batanes',
-                'abbr' => 'Batanes',
                 'region_code' => '2',
                 'code' => '5',
                 'order' => 15,
@@ -85,11 +79,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            5 => 
+            5 =>
             array (
                 'id' => 6,
                 'name' => 'Cagayan',
-                'abbr' => 'Cagayan',
                 'region_code' => '2',
                 'code' => '6',
                 'order' => 16,
@@ -98,11 +91,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            6 => 
+            6 =>
             array (
                 'id' => 7,
                 'name' => 'Isabela',
-                'abbr' => 'Isabela',
                 'region_code' => '2',
                 'code' => '7',
                 'order' => 17,
@@ -111,11 +103,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            7 => 
+            7 =>
             array (
                 'id' => 8,
                 'name' => 'Nueva Vizcaya',
-                'abbr' => 'Nueva Vizcaya',
                 'region_code' => '2',
                 'code' => '8',
                 'order' => 18,
@@ -124,11 +115,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            8 => 
+            8 =>
             array (
                 'id' => 9,
                 'name' => 'Quirino',
-                'abbr' => 'Quirino',
                 'region_code' => '2',
                 'code' => '9',
                 'order' => 19,
@@ -137,11 +127,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            9 => 
+            9 =>
             array (
                 'id' => 10,
                 'name' => 'Bataan',
-                'abbr' => 'Bataan',
                 'region_code' => '3',
                 'code' => '10',
                 'order' => 21,
@@ -150,11 +139,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            10 => 
+            10 =>
             array (
                 'id' => 11,
                 'name' => 'Bulacan',
-                'abbr' => 'Bulacan',
                 'region_code' => '3',
                 'code' => '11',
                 'order' => 22,
@@ -163,11 +151,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            11 => 
+            11 =>
             array (
                 'id' => 12,
                 'name' => 'Nueva Ecija',
-                'abbr' => 'Nueva Ecija',
                 'region_code' => '3',
                 'code' => '12',
                 'order' => 23,
@@ -176,11 +163,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            12 => 
+            12 =>
             array (
                 'id' => 13,
                 'name' => 'Pampanga',
-                'abbr' => 'Pampanga',
                 'region_code' => '3',
                 'code' => '13',
                 'order' => 24,
@@ -189,11 +175,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            13 => 
+            13 =>
             array (
                 'id' => 14,
                 'name' => 'Tarlac',
-                'abbr' => 'Tarlac',
                 'region_code' => '3',
                 'code' => '14',
                 'order' => 25,
@@ -202,11 +187,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            14 => 
+            14 =>
             array (
                 'id' => 15,
                 'name' => 'Zambales',
-                'abbr' => 'Zambales',
                 'region_code' => '3',
                 'code' => '15',
                 'order' => 26,
@@ -215,11 +199,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            15 => 
+            15 =>
             array (
                 'id' => 16,
                 'name' => 'Aurora',
-                'abbr' => 'Aurora',
                 'region_code' => '3',
                 'code' => '16',
                 'order' => 20,
@@ -228,11 +211,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            16 => 
+            16 =>
             array (
                 'id' => 17,
                 'name' => 'Batangas',
-                'abbr' => 'Batangas',
                 'region_code' => '40',
                 'code' => '17',
                 'order' => 27,
@@ -241,11 +223,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            17 => 
+            17 =>
             array (
                 'id' => 18,
                 'name' => 'Cavite',
-                'abbr' => 'Cavite',
                 'region_code' => '40',
                 'code' => '18',
                 'order' => 28,
@@ -254,11 +235,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            18 => 
+            18 =>
             array (
                 'id' => 19,
                 'name' => 'Laguna',
-                'abbr' => 'Laguna',
                 'region_code' => '40',
                 'code' => '19',
                 'order' => 29,
@@ -267,11 +247,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            19 => 
+            19 =>
             array (
                 'id' => 20,
                 'name' => 'Quezon',
-                'abbr' => 'Quezon',
                 'region_code' => '40',
                 'code' => '20',
                 'order' => 30,
@@ -280,11 +259,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            20 => 
+            20 =>
             array (
                 'id' => 21,
                 'name' => 'Rizal',
-                'abbr' => 'Rizal',
                 'region_code' => '40',
                 'code' => '21',
                 'order' => 31,
@@ -293,11 +271,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            21 => 
+            21 =>
             array (
                 'id' => 22,
                 'name' => 'Albay',
-                'abbr' => 'Albay',
                 'region_code' => '5',
                 'code' => '22',
                 'order' => 37,
@@ -306,11 +283,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            22 => 
+            22 =>
             array (
                 'id' => 23,
                 'name' => 'Camarines Norte',
-                'abbr' => 'Camarines Norte',
                 'region_code' => '5',
                 'code' => '23',
                 'order' => 38,
@@ -319,11 +295,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            23 => 
+            23 =>
             array (
                 'id' => 24,
                 'name' => 'Camarines Sur',
-                'abbr' => 'Camarines Sur',
                 'region_code' => '5',
                 'code' => '24',
                 'order' => 39,
@@ -332,11 +307,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            24 => 
+            24 =>
             array (
                 'id' => 25,
                 'name' => 'Catanduanes',
-                'abbr' => 'Catanduanes',
                 'region_code' => '5',
                 'code' => '25',
                 'order' => 40,
@@ -345,11 +319,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            25 => 
+            25 =>
             array (
                 'id' => 26,
                 'name' => 'Masbate',
-                'abbr' => 'Masbate',
                 'region_code' => '5',
                 'code' => '26',
                 'order' => 41,
@@ -358,11 +331,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            26 => 
+            26 =>
             array (
                 'id' => 27,
                 'name' => 'Sorsogon',
-                'abbr' => 'Sorsogon',
                 'region_code' => '5',
                 'code' => '27',
                 'order' => 42,
@@ -371,11 +343,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            27 => 
+            27 =>
             array (
                 'id' => 28,
                 'name' => 'Aklan',
-                'abbr' => 'Aklan',
                 'region_code' => '6',
                 'code' => '28',
                 'order' => 43,
@@ -384,11 +355,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            28 => 
+            28 =>
             array (
                 'id' => 29,
                 'name' => 'Antique',
-                'abbr' => 'Antique',
                 'region_code' => '6',
                 'code' => '29',
                 'order' => 44,
@@ -397,11 +367,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            29 => 
+            29 =>
             array (
                 'id' => 30,
                 'name' => 'Capiz',
-                'abbr' => 'Capiz',
                 'region_code' => '6',
                 'code' => '30',
                 'order' => 45,
@@ -410,11 +379,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            30 => 
+            30 =>
             array (
                 'id' => 31,
                 'name' => 'Iloilo',
-                'abbr' => 'Iloilo',
                 'region_code' => '6',
                 'code' => '31',
                 'order' => 46,
@@ -423,11 +391,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            31 => 
+            31 =>
             array (
                 'id' => 32,
                 'name' => 'Negros Occidental',
-                'abbr' => 'Negros Occidental',
                 'region_code' => '6',
                 'code' => '32',
                 'order' => 47,
@@ -436,11 +403,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => '2025-08-07 09:19:50',
             ),
-            32 => 
+            32 =>
             array (
                 'id' => 33,
                 'name' => 'Guimaras',
-                'abbr' => 'Guimaras',
                 'region_code' => '6',
                 'code' => '33',
                 'order' => 48,
@@ -449,11 +415,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            33 => 
+            33 =>
             array (
                 'id' => 34,
                 'name' => 'Bohol',
-                'abbr' => 'Bohol',
                 'region_code' => '7',
                 'code' => '34',
                 'order' => 49,
@@ -462,11 +427,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            34 => 
+            34 =>
             array (
                 'id' => 35,
                 'name' => 'Cebu',
-                'abbr' => 'Cebu',
                 'region_code' => '7',
                 'code' => '35',
                 'order' => 50,
@@ -475,11 +439,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            35 => 
+            35 =>
             array (
                 'id' => 36,
                 'name' => 'Negros Oriental',
-                'abbr' => 'Negros Oriental',
                 'region_code' => '7',
                 'code' => '36',
                 'order' => 51,
@@ -488,11 +451,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => '2025-08-07 09:20:08',
             ),
-            36 => 
+            36 =>
             array (
                 'id' => 37,
                 'name' => 'Siquijor',
-                'abbr' => 'Siquijor',
                 'region_code' => '7',
                 'code' => '37',
                 'order' => 52,
@@ -501,11 +463,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => '2025-08-07 09:19:24',
             ),
-            37 => 
+            37 =>
             array (
                 'id' => 38,
                 'name' => 'Eastern Samar',
-                'abbr' => 'Eastern Samar',
                 'region_code' => '8',
                 'code' => '38',
                 'order' => 54,
@@ -514,11 +475,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            38 => 
+            38 =>
             array (
                 'id' => 39,
                 'name' => 'Leyte',
-                'abbr' => 'Leyte',
                 'region_code' => '8',
                 'code' => '39',
                 'order' => 55,
@@ -527,11 +487,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            39 => 
+            39 =>
             array (
                 'id' => 40,
                 'name' => 'Northern Samar',
-                'abbr' => 'Northern Samar',
                 'region_code' => '8',
                 'code' => '40',
                 'order' => 56,
@@ -540,11 +499,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            40 => 
+            40 =>
             array (
                 'id' => 41,
                 'name' => 'Samar',
-                'abbr' => 'Samar',
                 'region_code' => '8',
                 'code' => '41',
                 'order' => 57,
@@ -553,11 +511,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            41 => 
+            41 =>
             array (
                 'id' => 42,
                 'name' => 'Southern Leyte',
-                'abbr' => 'Southern Leyte',
                 'region_code' => '8',
                 'code' => '42',
                 'order' => 58,
@@ -566,11 +523,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            42 => 
+            42 =>
             array (
                 'id' => 43,
                 'name' => 'Biliran',
-                'abbr' => 'Biliran',
                 'region_code' => '8',
                 'code' => '43',
                 'order' => 53,
@@ -579,11 +535,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            43 => 
+            43 =>
             array (
                 'id' => 44,
                 'name' => 'Zamboanga del Norte',
-                'abbr' => 'Zamboanga del Norte',
                 'region_code' => '9',
                 'code' => '44',
                 'order' => 59,
@@ -592,11 +547,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            44 => 
+            44 =>
             array (
                 'id' => 45,
                 'name' => 'Zamboanga del Sur',
-                'abbr' => 'Zamboanga del Sur',
                 'region_code' => '9',
                 'code' => '45',
                 'order' => 60,
@@ -605,11 +559,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            45 => 
+            45 =>
             array (
                 'id' => 46,
                 'name' => 'Zamboanga Sibugay',
-                'abbr' => 'Zamboanga Sibugay',
                 'region_code' => '9',
                 'code' => '46',
                 'order' => 61,
@@ -618,11 +571,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            46 => 
+            46 =>
             array (
                 'id' => 47,
                 'name' => 'Bukidnon',
-                'abbr' => 'Bukidnon',
                 'region_code' => '10',
                 'code' => '47',
                 'order' => 62,
@@ -631,11 +583,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            47 => 
+            47 =>
             array (
                 'id' => 48,
                 'name' => 'Camiguin',
-                'abbr' => 'Camiguin',
                 'region_code' => '10',
                 'code' => '48',
                 'order' => 63,
@@ -644,11 +595,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            48 => 
+            48 =>
             array (
                 'id' => 49,
                 'name' => 'Lanao del Norte',
-                'abbr' => 'Lanao del Norte',
                 'region_code' => '10',
                 'code' => '49',
                 'order' => 64,
@@ -657,11 +607,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            49 => 
+            49 =>
             array (
                 'id' => 50,
                 'name' => 'Misamis Occidental',
-                'abbr' => 'Misamis Occidental',
                 'region_code' => '10',
                 'code' => '50',
                 'order' => 65,
@@ -670,11 +619,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            50 => 
+            50 =>
             array (
                 'id' => 51,
                 'name' => 'Misamis Oriental',
-                'abbr' => 'Misamis Oriental',
                 'region_code' => '10',
                 'code' => '51',
                 'order' => 66,
@@ -683,11 +631,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            51 => 
+            51 =>
             array (
                 'id' => 52,
                 'name' => 'Davao del Norte',
-                'abbr' => 'Davao del Norte',
                 'region_code' => '11',
                 'code' => '52',
                 'order' => 69,
@@ -696,11 +643,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            52 => 
+            52 =>
             array (
                 'id' => 53,
                 'name' => 'Davao del Sur',
-                'abbr' => 'Davao del Sur',
                 'region_code' => '11',
                 'code' => '53',
                 'order' => 70,
@@ -709,11 +655,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            53 => 
+            53 =>
             array (
                 'id' => 54,
                 'name' => 'Davao Oriental',
-                'abbr' => 'Davao Oriental',
                 'region_code' => '11',
                 'code' => '54',
                 'order' => 71,
@@ -722,11 +667,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            54 => 
+            54 =>
             array (
                 'id' => 55,
             'name' => 'Davao de Oro (formerly Compostela Valley)',
-                'abbr' => 'Davao de Oro',
                 'region_code' => '11',
                 'code' => '55',
                 'order' => 68,
@@ -735,11 +679,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            55 => 
+            55 =>
             array (
                 'id' => 56,
                 'name' => 'Davao Occidental',
-                'abbr' => 'Davao Occidental',
                 'region_code' => '11',
                 'code' => '56',
                 'order' => 72,
@@ -748,11 +691,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            56 => 
+            56 =>
             array (
                 'id' => 57,
             'name' => 'Cotabato (North Cotabato)',
-                'abbr' => 'North Cotabato',
                 'region_code' => '12',
                 'code' => '57',
                 'order' => 73,
@@ -761,11 +703,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            57 => 
+            57 =>
             array (
                 'id' => 58,
                 'name' => 'South Cotabato',
-                'abbr' => 'South Cotabato',
                 'region_code' => '12',
                 'code' => '58',
                 'order' => 75,
@@ -774,11 +715,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            58 => 
+            58 =>
             array (
                 'id' => 59,
                 'name' => 'Sultan Kudarat',
-                'abbr' => 'Sultan Kudarat',
                 'region_code' => '12',
                 'code' => '59',
                 'order' => 76,
@@ -787,11 +727,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            59 => 
+            59 =>
             array (
                 'id' => 60,
                 'name' => 'Sarangani',
-                'abbr' => 'Sarangani',
                 'region_code' => '12',
                 'code' => '60',
                 'order' => 74,
@@ -800,11 +739,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            60 => 
+            60 =>
             array (
                 'id' => 61,
                 'name' => 'Metro Manila',
-                'abbr' => 'Metro Manila',
                 'region_code' => '16',
                 'code' => '61',
                 'order' => 0,
@@ -813,11 +751,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            61 => 
+            61 =>
             array (
                 'id' => 62,
                 'name' => 'Abra',
-                'abbr' => 'Abra',
                 'region_code' => '15',
                 'code' => '62',
                 'order' => 5,
@@ -826,11 +763,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            62 => 
+            62 =>
             array (
                 'id' => 63,
                 'name' => 'Apayao',
-                'abbr' => 'Apayao',
                 'region_code' => '15',
                 'code' => '63',
                 'order' => 6,
@@ -839,11 +775,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            63 => 
+            63 =>
             array (
                 'id' => 64,
                 'name' => 'Benguet',
-                'abbr' => 'Benguet',
                 'region_code' => '15',
                 'code' => '64',
                 'order' => 7,
@@ -852,11 +787,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            64 => 
+            64 =>
             array (
                 'id' => 65,
                 'name' => 'Ifugao',
-                'abbr' => 'Ifugao',
                 'region_code' => '15',
                 'code' => '65',
                 'order' => 8,
@@ -865,11 +799,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            65 => 
+            65 =>
             array (
                 'id' => 66,
                 'name' => 'Kalinga',
-                'abbr' => 'Kalinga',
                 'region_code' => '15',
                 'code' => '66',
                 'order' => 9,
@@ -878,11 +811,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            66 => 
+            66 =>
             array (
                 'id' => 67,
                 'name' => 'Mountain Province',
-                'abbr' => 'Mountain Province',
                 'region_code' => '15',
                 'code' => '67',
                 'order' => 10,
@@ -891,11 +823,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            67 => 
+            67 =>
             array (
                 'id' => 68,
                 'name' => 'Agusan del Norte',
-                'abbr' => 'Agusan del Norte',
                 'region_code' => '13',
                 'code' => '68',
                 'order' => 77,
@@ -904,11 +835,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            68 => 
+            68 =>
             array (
                 'id' => 69,
                 'name' => 'Agusan del Sur',
-                'abbr' => 'Agusan del Sur',
                 'region_code' => '13',
                 'code' => '69',
                 'order' => 78,
@@ -917,11 +847,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            69 => 
+            69 =>
             array (
                 'id' => 70,
                 'name' => 'Dinagat Islands',
-                'abbr' => 'Dinagat Islands',
                 'region_code' => '13',
                 'code' => '70',
                 'order' => 79,
@@ -930,11 +859,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            70 => 
+            70 =>
             array (
                 'id' => 71,
                 'name' => 'Surigao del Norte',
-                'abbr' => 'Surigao del Norte',
                 'region_code' => '13',
                 'code' => '71',
                 'order' => 80,
@@ -943,11 +871,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            71 => 
+            71 =>
             array (
                 'id' => 72,
                 'name' => 'Surigao del Sur',
-                'abbr' => 'Surigao del Sur',
                 'region_code' => '13',
                 'code' => '72',
                 'order' => 81,
@@ -956,11 +883,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            72 => 
+            72 =>
             array (
                 'id' => 73,
                 'name' => 'Basilan',
-                'abbr' => 'Basilan',
                 'region_code' => '14',
                 'code' => '73',
                 'order' => 83,
@@ -969,11 +895,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            73 => 
+            73 =>
             array (
                 'id' => 74,
                 'name' => 'Lanao del Sur',
-                'abbr' => 'Lanao del Sur',
                 'region_code' => '14',
                 'code' => '74',
                 'order' => 84,
@@ -982,11 +907,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            74 => 
+            74 =>
             array (
                 'id' => 75,
                 'name' => 'Maguindanao',
-                'abbr' => 'Maguindanao',
                 'region_code' => '14',
                 'code' => '75',
                 'order' => 85,
@@ -995,11 +919,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            75 => 
+            75 =>
             array (
                 'id' => 76,
                 'name' => 'Sulu',
-                'abbr' => 'Sulu',
                 'region_code' => '14',
                 'code' => '76',
                 'order' => 86,
@@ -1008,11 +931,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            76 => 
+            76 =>
             array (
                 'id' => 77,
                 'name' => 'Tawi-Tawi',
-                'abbr' => 'Tawi-Tawi',
                 'region_code' => '14',
                 'code' => '77',
                 'order' => 87,
@@ -1021,11 +943,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            77 => 
+            77 =>
             array (
                 'id' => 78,
                 'name' => 'Marinduque',
-                'abbr' => 'Marinduque',
                 'region_code' => '41',
                 'code' => '78',
                 'order' => 32,
@@ -1034,11 +955,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            78 => 
+            78 =>
             array (
                 'id' => 79,
                 'name' => 'Occidental Mindoro',
-                'abbr' => 'Occidental Mindoro',
                 'region_code' => '41',
                 'code' => '79',
                 'order' => 33,
@@ -1047,11 +967,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            79 => 
+            79 =>
             array (
                 'id' => 80,
                 'name' => 'Oriental Mindoro',
-                'abbr' => 'Oriental Mindoro',
                 'region_code' => '41',
                 'code' => '80',
                 'order' => 34,
@@ -1060,11 +979,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            80 => 
+            80 =>
             array (
                 'id' => 81,
                 'name' => 'Palawan',
-                'abbr' => 'Palawan',
                 'region_code' => '41',
                 'code' => '81',
                 'order' => 35,
@@ -1073,11 +991,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            81 => 
+            81 =>
             array (
                 'id' => 82,
                 'name' => 'Romblon',
-                'abbr' => 'Romblon',
                 'region_code' => '41',
                 'code' => '82',
                 'order' => 36,
@@ -1086,11 +1003,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            82 => 
+            82 =>
             array (
                 'id' => 83,
             'name' => 'First District (Manila)',
-                'abbr' => 'First District',
                 'region_code' => '16',
                 'code' => '83',
                 'order' => 1,
@@ -1099,11 +1015,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            83 => 
+            83 =>
             array (
                 'id' => 84,
             'name' => 'Second District (Mandaluyong, Marikina, Pasig, Quezon City, San Juan)',
-                'abbr' => 'Second District',
                 'region_code' => '16',
                 'code' => '84',
                 'order' => 2,
@@ -1112,11 +1027,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            84 => 
+            84 =>
             array (
                 'id' => 85,
             'name' => 'Third District (Caloocan, Malabon, Navotas, Valenzuela)',
-                'abbr' => 'Third District',
                 'region_code' => '16',
                 'code' => '85',
                 'order' => 3,
@@ -1125,11 +1039,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            85 => 
+            85 =>
             array (
                 'id' => 86,
             'name' => 'Fourth District (Las Piñas, Makati, Muntinlupa, Parañaque, Pasay, Pateros, Taguig)',
-                'abbr' => 'Fourth District',
                 'region_code' => '16',
                 'code' => '86',
                 'order' => 4,
@@ -1138,11 +1051,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            86 => 
+            86 =>
             array (
                 'id' => 87,
                 'name' => 'Cagayan de Oro',
-                'abbr' => 'Cagayan de Oro',
                 'region_code' => '10',
                 'code' => '87',
                 'order' => 67,
@@ -1151,11 +1063,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            87 => 
+            87 =>
             array (
                 'id' => 88,
                 'name' => 'Butuan',
-                'abbr' => 'Butuan',
                 'region_code' => '13',
                 'code' => '88',
                 'order' => 82,
@@ -1164,11 +1075,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => NULL,
                 'updated_at' => NULL,
             ),
-            88 => 
+            88 =>
             array (
                 'id' => 89,
             'name' => 'Negros Occidental (NIR)',
-                'abbr' => 'Negros Occidental',
                 'region_code' => '42',
                 'code' => '89',
                 'order' => 89,
@@ -1177,11 +1087,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => '2025-08-07 09:21:15',
                 'updated_at' => '2025-08-07 09:21:15',
             ),
-            89 => 
+            89 =>
             array (
                 'id' => 90,
             'name' => 'Negros Oriental (NIR)',
-                'abbr' => 'Negros Oriental',
                 'region_code' => '42',
                 'code' => '90',
                 'order' => 90,
@@ -1190,11 +1099,10 @@ class ProvincesTableSeeder extends Seeder
                 'created_at' => '2025-08-07 09:22:46',
                 'updated_at' => '2025-08-07 09:22:46',
             ),
-            90 => 
+            90 =>
             array (
                 'id' => 91,
             'name' => 'Siquijor (NIR)',
-                'abbr' => 'Siquijor',
                 'region_code' => '42',
                 'code' => '91',
                 'order' => 91,
@@ -1204,7 +1112,7 @@ class ProvincesTableSeeder extends Seeder
                 'updated_at' => '2025-08-07 09:23:01',
             ),
         ));
-        
-        
+
+
     }
 }

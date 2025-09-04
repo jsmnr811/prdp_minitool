@@ -42,18 +42,12 @@ class MainMap extends Component
         $this->interventions = Cache::rememberForever('interventions_all', function () {
             return Intervention::orderBy('name', 'asc')->get();
         });
-        if (intval($this->userRole) === 1) {
-            $this->commodities = Cache::rememberForever('commodities_all', function () {
+         $this->commodities = Cache::rememberForever('commodities_all', function () {
                 return Commodity::orderBy('name', 'asc')->get();
             });
+        if (intval($this->userRole) === 1) {
             $this->provinceGeo = GeoCommodity::where('province_id', 1)->with('commodity', 'geoInterventions.intervention')->get()->toArray();
         } else {
-            $groupCommodityIds = CommodityGroup::where('group_number', $user->group_number)
-                ->pluck('commodity_id')
-                ->toArray();
-            $this->commodities = Commodity::whereIn('id', $groupCommodityIds)
-                ->orderBy('name', 'asc')
-                ->get();
             $this->provinceGeo = GeoCommodity::where('province_id', 1)
                 ->where('user_id', $user->id)
                 ->whereNotIn('id', $this->temporaryForDeletion)
@@ -219,6 +213,7 @@ class MainMap extends Component
         $this->lon = 0;
 
         LivewireAlert::title('Updated!')->text('The commodities entries have been updated.')->success()->toast()->position('top-end')->show();
+        
     }
 
     public function render()

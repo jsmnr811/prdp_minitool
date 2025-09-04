@@ -14,13 +14,14 @@
 
     .id-card {
         width: 350px;
-        height: 566px;
+        height: 525px;
         border: 1px solid #ccc;
         border-radius: 8px;
         padding: 20px;
         text-align: center;
         font-family: Arial, sans-serif;
         position: relative;
+        overflow: visible;
     }
 
     .header-logos {
@@ -37,24 +38,24 @@
     .event-title {
         font-size: 14px;
         font-weight: bold;
-        margin-bottom: 12px;
+        margin: 12px auto 12px auto;
     }
 
     .profile-pic {
         width: 150px;
         height: 180px;
-        object-fit: cover;
+        object-fit: contain;
         border: 1px solid #ccc;
-        margin: 0 auto 8px auto;
+        margin: 10px auto 10px auto;
     }
 
     .user-info .name {
-        font-size: 16px;
+        font-size: 24px;
         font-weight: bold;
     }
 
     .user-info .role {
-        font-size: 13px;
+        font-size: 10px;
         font-weight: bold;
         margin-top: 2px;
     }
@@ -66,10 +67,11 @@
 
     .footer {
         margin-top: 18px;
-        display: flex;
-        justify-content: space-between;
         font-size: 12px;
+        text-align: left;
+        display: block;
     }
+
 
     .qr-code {
         margin: 6px auto 0;
@@ -101,29 +103,16 @@
         <img class="profile-pic" src="{{ $userImageSrc }}" alt="Profile Picture">
 
         <div class="user-info">
-            <div class="name">{{ $user->name }}</div>
-            <div class="role">{{ $user->position }}</div>
-            <div class="department">{{ $user->department }}</div>
+            <div class="name">{{ strtoupper($user->name) }}</div>
+            <div class="role" style="font-size:1rem;">{{ strtoupper($user->designation) }}</div>
         </div>
 
-        <div class="qr-code">
+        <div class="qr-code" style="font-size:0.7rem; margin-top:15px">
             {!! SimpleSoftwareIO\QrCode\Facades\QrCode::size(72)->margin(2)->generate(route('investment.user-verification', ['id' => $user->id])) !!}
         </div>
 
-        <div class="text-center text-muted" style="font-size:0.5rem; margin-top:0.7rem;">
+        <div class="text-center text-muted" style="font-size:0.7rem; margin-top:15px">
             ID #: {{ $user->login_code }}
-        </div>
-
-        <div class="footer">
-            <div class="category">
-                Office: {{ $user->office }}<br>
-                Designation:<br>{{ $user->designation }}
-            </div>
-            <div class="assignment">
-                Assignment:<br>
-                Group: {{ $user->group_number }}<br>
-                Seat: {{ $user->table_number }}
-            </div>
         </div>
 
         <div class="powered">Powered by: DA-PRDP</div>

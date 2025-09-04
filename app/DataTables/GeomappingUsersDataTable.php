@@ -28,10 +28,10 @@ class GeomappingUsersDataTable extends DataTable
                 $query->whereRaw("DATE_FORMAT(created_at, '%M %d, %Y') like ?", ["%$keyword%"]);
             })->addColumn('region', function (GeomappingUser $geomappingUser) {
                 $html = <<<HTML
-                            <div><span>Region:</span><span class="badge ms-2 badge-sm bg-primary">{$geomappingUser->region->name}</span></div>
-                             <div><span>Province:</span><span class="badge ms-2 badge-sm bg-info">{$geomappingUser->province->name}</span></div>
-                             <div><span>Office:</span><span class="badge ms-2 badge-sm bg-success">{$geomappingUser->office}</span></div>
-                             <div><span>Designation:</span><span class="badge ms-2 badge-sm bg-success">{$geomappingUser->designation}</span></div>
+                            <div><span>Region:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->region->abbr}</span></div>
+                             <div><span>Province:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->province->abbr}</span></div>
+                             <div><span>Office:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->office}</span></div>
+                             <div><span>Designation:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->designation}</span></div>
                  HTML;
                 return new HtmlString($html);
             })->filterColumn('region', function ($query, $keyword) {
@@ -43,8 +43,8 @@ class GeomappingUsersDataTable extends DataTable
             })
             ->addColumn('contact_info', function (GeomappingUser $geomappingUser) {
                 $html = <<<HTML
-                            <div><span>Email:</span><span class="badge ms-2 badge-sm bg-primary">{$geomappingUser->email}</span></div>
-                             <div><span>Contact #:</span><span class="badge ms-2 badge-sm bg-info">{$geomappingUser->contact_number}</span></div>
+                            <div><span>Email:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->email}</span></div>
+                             <div><span>Contact #:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->contact_number}</span></div>
                  HTML;
                 return new HtmlString($html);
             })->filterColumn('contact_info', function ($query, $keyword) {
@@ -52,15 +52,51 @@ class GeomappingUsersDataTable extends DataTable
             })
             ->addColumn('gropup_info', function (GeomappingUser $geomappingUser) {
                 $html = <<<HTML
-                            <div><span>Group #:</span><span class="badge ms-2 badge-sm bg-primary">{$geomappingUser->group_number}</span></div>
-                             <div><span>Table #:</span><span class="badge ms-2 badge-sm bg-info">{$geomappingUser->table_number}</span></div>
+                            <div><span>Group #:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->group_number}</span></div>
+                             <div><span>Table #:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->table_number}</span></div>
                  HTML;
                 return new HtmlString($html);
             })->filterColumn('gropup_info', function ($query, $keyword) {
                 $query->where('group_number', 'like', "%$keyword%")->orWhere('table_number', 'like', "%$keyword%");
             })
             ->addColumn('status', fn($geomappingUser) => $geomappingUser->is_blocked ? new HtmlString('<span class="badge bg-danger">Blocked</span>') : new HtmlString('<span class="badge bg-success">Active</span>'))
+            ->addColumn('name_role', function (GeomappingUser $user) {
+                if ($user->role == 2) {
+                    $roleLabel = '<span class="badge bg-secondary badge-sm">Participant</span>';
+                } elseif ($user->role == 1 && $user->is_iplan == 1) {
+                    $roleLabel = '<span class="badge bg-success badge-sm">I-PLAN Administrator</span>';
+                } elseif ($user->role == 1) {
+                    $roleLabel = '<span class="badge bg-primary badge-sm">Administrator</span>';
+                } else {
+                    $roleLabel = '<span class="badge bg-warning badge-sm">Unknown Role</span>';
+                }
+                $html = <<<HTML
+                            <div>
+                                <div>{$user->name}</div>
+                                <div class="mt-1">{$roleLabel}</div>
+                            </div>
+                        HTML;
+                return new HtmlString($html);
+            })
+            ->filterColumn('name_role', function ($query, $keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $keywordLower = strtolower($keyword);
 
+                    $q->where('name', 'like', "%$keyword%");
+
+                    if (strpos('participant', $keywordLower) !== false) {
+                        $q->orWhere('role', 2);
+                    }
+                    if (strpos('administrator', $keywordLower) !== false) {
+                        $q->orWhere('role', 1);
+                    }
+                    if (strpos('i-plan', $keywordLower) !== false || strpos('iplan', $keywordLower) !== false) {
+                        $q->orWhere(function ($q2) {
+                            $q2->where('role', 1)->where('is_iplan', 1);
+                        });
+                    }
+                });
+            })
             ->setRowId('id');
     }
 
@@ -92,8 +128,8 @@ class GeomappingUsersDataTable extends DataTable
             ->selectStyleSingle()
             ->parameters([
                 'pagingType' => 'simple_numbers',
-                'lengthChange' => true, 
-                'lengthMenu' => [[10, 25, 50, 100], [10, 25, 50, 100]], 
+                'lengthChange' => true,
+                'lengthMenu' => [[10, 25, 50, 100], [10, 25, 50, 100]],
                 'language' => [
                     'paginate' => [
                         'previous' => '&laquo;',
@@ -115,7 +151,7 @@ class GeomappingUsersDataTable extends DataTable
         return [
             Column::make('id'),
             Column::make('firstname')->visible(false),
-            Column::make('name')->searchable(true)->width('30%'),
+            Column::make('name_role')->title('Name')->searchable(true)->width('30%'),
             Column::make('region')->title('Office')->searchable(true)->width('20%'),
             Column::make('contact_info')->title('Contact Info')->searchable(true)->width('20%'),
             Column::make('gropup_info')->title('Group Info')->searchable(true)->width('15%'),
@@ -135,14 +171,14 @@ class GeomappingUsersDataTable extends DataTable
             : '<a class="dropdown-item text-danger" href="#" onclick="Livewire.dispatch(\'confirmUpdateBlockStatus\', { user: ' . $userId . ' })">Block</a>';
 
         $mailIdAction = '';
-        if ($geomappingUser->group_number !== null && $geomappingUser->table_number !== null) {
-            $mailIdAction = '
+        // if ($geomappingUser->group_number !== null && $geomappingUser->table_number !== null) {
+        $mailIdAction = '
             <li>
                 <a class="dropdown-item" href="#" onclick="Livewire.dispatch(\'confirmSendGeomappingUserId\', { user: ' . $userId . ' })">
                     Mail ID
                 </a>
             </li>';
-        }
+        // }
 
         $html = <<<HTML
                     <div class="dropdown">

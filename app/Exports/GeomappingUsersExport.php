@@ -28,6 +28,8 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
                 'contact_number',
                 'food_restriction',
                 'attendance_days',
+                'role',
+                'is_iplan',
                 'group_number',
                 'table_number',
                 'created_at',
@@ -54,6 +56,7 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
             'Contact Number',
             'Food Restriction',
             'Attendance Days',
+            'Role',
             'Group Number',
             'Table Number',
             'Created At',
@@ -63,6 +66,14 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
 
     public function map($user): array
     {
+        if ($user->role == 1) {
+            $role = $user->is_iplan ? 'I-PLAN Administrator' : 'Administrator';
+        } elseif ($user->role == 2) {
+            $role = 'Participant';
+        } else {
+            $role = 'Unknown';
+        }
+
         return [
             $user->id,
             $user->firstname,
@@ -79,6 +90,7 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
             $user->contact_number,
             $user->food_restriction,
             $user->attendance_days,
+            $role,
             $user->group_number,
             $user->table_number,
             $user->created_at?->format('Y-m-d H:i'),

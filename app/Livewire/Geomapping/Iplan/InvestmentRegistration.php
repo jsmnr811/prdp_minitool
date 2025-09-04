@@ -117,7 +117,7 @@ class InvestmentRegistration extends Component
 
         GeomappingUser::create([
             'image'            => $imagePath,
-            'name' => implode(' ', array_filter([$this->firstname, $this->lastname, $this->ext_name])),
+            'name' => implode(' ', array_filter([$this->firstname, $this->lastname])),
             'firstname'        => $this->firstname,
             'middlename'       => $this->middlename,
             'lastname'         => $this->lastname,

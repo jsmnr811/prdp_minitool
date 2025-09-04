@@ -4,14 +4,15 @@
 
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>Manage Users</span>
+                    <span>Manage Commodity</span>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('geomapping.iplan.export.users') }}" class="btn btn-success">
-                            📤 Export CSV
-                        </a>
                         <a href="{{ route('geomapping.iplan.landing') }}" class="btn btn-outline-primary">
                             Go to 🗺️ Map
                         </a>
+                        <button wire:click="$emit('openAddCommodityModal')" type="button" class="btn btn-primary">
+                            + Add Commodity
+                        </button>
+
                     </div>
                 </div>
                 <div class="card-body">
@@ -25,7 +26,7 @@
     </section>
 
     @push('modals')
-    <livewire:geomapping.iplan.user-list-modal />
+    <livewire:geomapping.iplan.commodity-list-modal />
     @endpush
 
     @push('styles')
@@ -67,6 +68,7 @@
     @endpush
 
     @push('scripts')
+
     <!-- jQuery first -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 
@@ -90,5 +92,6 @@
             $('#model-table').DataTable().ajax.reload();
         })
     </script>
+
     @endpush
 </x-layouts.investmentForum2025.app>
