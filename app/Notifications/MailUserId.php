@@ -67,20 +67,47 @@ class MailUserId extends Notification implements ShouldQueue
             ->waitUntilNetworkIdle() // ensures images/fonts are loaded
             ->save($storagePath);
 
-        return (new MailMessage)
-            ->subject('Your Official Event ID – National Agri-Fishery Investment Forum')
-            ->greeting('Hello ' . ucwords($this->user->name) . ',')
-            ->line('We are excited to welcome you to the **National Agri-Fishery Investment Forum**.')
-            ->line('Here are your event details:')
-            // ->line('- **Group Number:** ' . $this->user->group_number)
-            // ->line('- **Table Number:** ' . $this->user->table_number)
-            ->line('Your official event ID is attached as an image file. Please bring a **printed** or **digital copy** with you for entry to the event.')
-            ->line('Thank you for your participation — we look forward to seeing you at the forum!')
-            ->salutation('Warm regards,')
+        if ($this->user->is_blocked) {
+            $salutation = ($this->user->sex === 'Male') ? 'Mr.' : 'Ms.';
+
+            return (new MailMessage)
+                ->subject('National Agri-Fishery Investment Forum')
+                ->greeting('Dear ' . $salutation . ' ' . ucwords($this->user->firstname) . ' ' . ucwords($this->user->lastname) . ',')
+                ->line('Thank you for your interest in the National Agri-Fishery Investment Forum to be held on September 16–18, 2025 at Palacio de Maynila, Malate, Manila.')
+                ->line('We highly appreciate your willingness to participate and contribute to this important event.')
+                ->line('')
+                ->line('However, we regret to inform you that your registration cannot be confirmed at this time. The Forum has limited slots, and as part of the event guidelines:')
+                ->line('')
+                ->line('Only one official participant per office is allowed to ensure equitable representation across all provinces, or')
+                ->line('')
+                ->line('Priority is given to the following key officials as invited participants of the activity:')
+                ->line('1. Office of the Governor – Governor')
+                ->line('2. Sangguniang Panlalawigan Committee on Agriculture – Chairperson')
+                ->line('3. Provincial Planning and Development Office – Provincial Planning and Development Coordinator (Head)')
+                ->line('4. Provincial Agriculture Office – Provincial Agriculturist (Head)')
+                ->line('5. Provincial Veterinary Office – Provincial Veterinarian (Head)')
+                ->line('')
+                ->line('We sincerely apologize for any inconvenience this may cause and kindly request your understanding.')
+                ->line('Should there be changes in the allocation of slots or if additional participation becomes possible, we will immediately reach out to you.')
+                ->line('')
+                ->line('Thank you once again for your interest and support. We look forward to future opportunities where we can work together in advancing agri-fishery investments.')
+                ->line('')
+                ->line('')
+                ->line('')
+                ->line('Respectfully,')
+                ->salutation('National Agri-Fishery Investment Forum Secretariat');
+        } else {
+            return (new MailMessage)
+            ->subject('Welcome to National Agri-Fishery Investment Forum')
+            ->view('emails.investment-forum-registration', [
+                'user' => $this->user,
+                'logoSrc' => $logoSrc
+            ])
             ->attach($storagePath, [
-                'as' => 'Event-ID.png',
+                'as' => 'welcome-image.png',
                 'mime' => 'image/png',
             ]);
+        }
     }
 
     /**
