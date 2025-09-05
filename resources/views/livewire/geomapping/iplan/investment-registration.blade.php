@@ -9,32 +9,54 @@
             dd(Storage::disk('public')->path(str_replace('storage/', '', $user->image)));
 
         @endphp --}}
+
         {{-- Form Start --}}
         <form wire:submit.prevent="register" enctype="multipart/form-data" class="space-y-10">
             {{-- ✅ Upload Profile Image --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Profile Image</label>
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <div>
-                        @if ($image)
-                            <img src="{{ $image->temporaryUrl() }}" class="w-28 h-28 object-cover rounded-lg border">
-                        @else
-                            <div
-                                class="w-28 h-28 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg text-gray-400 dark:border-gray-600">
-                                No Image
-                            </div>
-                        @endif
-                    </div>
-
-                    <div class="w-full sm:w-auto">
-                        <input type="file" wire:model="image" accept="image/*" capture="environment"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2 cursor-pointer dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        @error('image')
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                        @enderror
-                    </div>
+       <div>
+    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Profile Image</label>
+    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+        {{-- Image Upload --}}
+        <div>
+            @if ($image)
+                <img src="{{ $image->temporaryUrl() }}" class="w-28 h-28 object-cover rounded-lg border">
+            @else
+                <div
+                    class="w-28 h-28 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg text-gray-400 dark:border-gray-600">
+                    No Image
                 </div>
+            @endif
+
+            <div class="mt-3 w-full sm:w-auto">
+                <input type="file" wire:model="image" accept="image/*" capture="environment"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2 cursor-pointer dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                @error('image')
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                @enderror
             </div>
+        </div>
+
+        {{-- Alert Reminder --}}
+        <div class="flex-1">
+            <div class="p-4 text-sm text-blue-800 rounded-lg bg-blue-50 border border-blue-200
+                        dark:bg-gray-800 dark:text-blue-300 dark:border-blue-700" role="alert">
+                <span class="font-semibold">Reminder:</span> For PLGU participants, each province is encouraged to send one (1) representative per office, preferably the Head or another decision-maker, to ensure meaningful participation.
+                <br><br>
+                <span class="font-semibold">Expected participants:</span>
+                <ul class="list-disc list-inside ml-4">
+                    <li>Governor</li>
+                    <li>SP Committee on Agriculture Chair</li>
+                    <li>Provincial Planning and Development Coordinator</li>
+                    <li>Provincial Agriculturist</li>
+                    <li>Provincial Veterinarian</li>
+                </ul>
+                <br>
+                <span class="font-semibold">Optional:</span> PPMIU Head (if not already covered).
+            </div>
+        </div>
+    </div>
+</div>
+
             {{-- 🆔 Primary Info --}}
             <div>
                 <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Primary Info</h3>
