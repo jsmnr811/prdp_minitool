@@ -18,9 +18,9 @@ class TestController extends Controller
 
     public function store(Request $request)
 {
-    $request->validate([
-        'image' => 'required|image|max:25600', // 25MB
-    ]);
+    // $request->validate([
+    //     'image' => 'required|image|max:25600', // 25MB
+    // ]);
 
     if ($request->hasFile('image')) {
         $path = $request->file('image')->store('uploads', 'public');
