@@ -89,7 +89,7 @@ class InvestmentRegistration extends Component
     public function updatedImage()
     {
         $this->validate([
-            'image' => 'required|image|mimes:jpeg,png|max:2048', // max 2MB example
+            'image' => 'required|image|mimes:jpeg,png|max:25600', // max 2MB example
         ]);
     }
 

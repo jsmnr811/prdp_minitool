@@ -28,7 +28,7 @@ class InvestmentRegistration extends Component
     public $attendance_days = [];
 
     protected $rules = [
-        'image'            => 'required|image|max:2048',
+        'image'            => 'required|image|max:25600',
         'firstname'        => 'required|string|min:2',
         'middlename'       => 'nullable|string|min:2',
         'lastname'         => 'required|string|min:2',
