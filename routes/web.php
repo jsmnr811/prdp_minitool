@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\TestController;
 use App\Livewire\AddPassword;
 use App\Livewire\Login;
 use App\Livewire\UserPassword;
@@ -12,6 +13,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/login', Login::class)->name('login');
 Route::get('/add-password/{email}', AddPassword::class)->name('add-password');
 Route::get('/user-password/{email}', UserPassword::class)->name('user-password');
+Route::post('/testor', [TestController::class, 'store'])->name('testor');
+Route::get('/testor', [TestController::class, 'index'])->name('testor.index');
+
 
 // Route::controller(PublicController::class)->name('public.')->group(function () {
 //     Route::get('/', 'auctions')->name('auctions');
