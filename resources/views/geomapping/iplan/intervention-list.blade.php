@@ -4,7 +4,7 @@
 
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>Manage Users</span>
+                    <span>Manage Commodity</span>
                     <div class="d-flex gap-2">
                         @if(Auth::guard('geomapping')->check() && Auth::guard('geomapping')->user()->role == '1')
                         <div class="dropdown">
@@ -13,17 +13,18 @@
                             </a>
 
                             <ul class="dropdown-menu" aria-labelledby="geomappingDropdown">
-                                <li><a class="dropdown-item" href="{{ route('geomapping.iplan.investment.commodity-list') }}">Commodity</a></li>
-                                <li><a class="dropdown-item" href="{{ route('geomapping.iplan.investment.intervention-list') }}">Intervention</a></li>
+                                <li><a class="dropdown-item" href="{{ route('geomapping.iplan.investment.user-list') }}">Manage User</a></li>
+                                <li><a class="dropdown-item" href="{{ route('geomapping.iplan.investment.commodity-list') }}">Manage Commodity</a></li>
                             </ul>
                         </div>
                         @endif
-                        <a href="{{ route('geomapping.iplan.export.users') }}" class="btn btn-success">
-                            📤 Export CSV
-                        </a>
+
                         <a href="{{ route('geomapping.iplan.landing') }}" class="btn btn-outline-primary">
                             Go to 🗺️ Map
                         </a>
+
+                        <livewire:geomapping.iplan.intervention-list-modal />
+
                     </div>
                 </div>
                 <div class="card-body">
@@ -37,7 +38,6 @@
     </section>
 
     @push('modals')
-    <livewire:geomapping.iplan.user-list-modal />
     @endpush
 
     @push('styles')
@@ -45,7 +45,8 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
     <!-- Buttons CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
     <link href="{{ asset('assets/datatables/datatables.bundle.css') }}" rel="stylesheet" type="text/css" />
     <style>
         /* Keep hover */
@@ -92,7 +93,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-..." crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-..."
+        crossorigin="anonymous"></script>
 
     {{-- DataTable scripts --}}
     {{ $dataTable->scripts(attributes: ['type' => 'module']) }}

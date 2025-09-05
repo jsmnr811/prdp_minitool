@@ -11,6 +11,8 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Http\Controllers\GeomappingUsersTableController;
 use App\Http\Controllers\GeomappingUserExportController;
 use App\Http\Controllers\GeomappingCommoditiesTableController;
+use App\Http\Controllers\GeomappingInterventionsTableController;
+
 use App\Livewire\Geomapping\Iplan\InvestmentRegistration;
 
 Route::get('/code-login', CodeLogin::class)->name('investment-forum');
@@ -28,9 +30,10 @@ Route::view('/', 'geomapping.iplan.login')
 
 Route::name('geomapping.')->prefix('geomapping')->group(function () {
     Route::name('iplan.')->prefix('iplan')->group(function () {
-
+        Route::get('/investment-forum-user-list', [GeomappingUsersTableController::class, 'index'])->name('investment.user-list')->middleware('auth-geo:geomapping');
         Route::get('/investment-forum-registration', InvestmentRegistration::class)->name('investment.registration')->middleware('guest-geo:geomapping');
         Route::get('/investment-forum-commodity-list', [GeomappingCommoditiesTableController::class, 'index'])->name('investment.commodity-list');
+        Route::get('/investment-forum-intervention-list', [GeomappingInterventionsTableController::class, 'index'])->name('investment.intervention-list');
 
         Route::view('login', 'geomapping.iplan.login')
             ->name('login')

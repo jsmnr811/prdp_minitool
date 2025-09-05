@@ -152,8 +152,20 @@
             @auth('geomapping')
             <div class="d-flex align-items-center gap-3 ms-auto">
                 @if(Auth::guard('geomapping')->check() && Auth::guard('geomapping')->user()->role == '1')
-                <a href="{{ route('investment.user-list') }}" class="nav-link">Manage User</a>
+                <div class="dropdown">
+                    <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="geomappingDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        Manage
+                    </a>
+
+                    <ul class="dropdown-menu" aria-labelledby="geomappingDropdown">
+                        <li><a class="dropdown-item" href="{{ route('geomapping.iplan.investment.user-list') }}">User</a></li>
+                        <li><a class="dropdown-item" href="{{ route('geomapping.iplan.investment.commodity-list') }}">Commodity</a></li>
+                        <li><a class="dropdown-item" href="{{ route('geomapping.iplan.investment.intervention-list') }}">Intervention</a></li>
+                    </ul>
+                </div>
                 @endif
+
+
 
                 <livewire:geomapping.iplan.logout />
             </div>

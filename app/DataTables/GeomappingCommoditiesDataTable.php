@@ -19,7 +19,11 @@ class GeomappingCommoditiesDataTable extends DataTable
     {
         return (new EloquentDataTable($query))
             ->addColumn('icon', function (Commodity $commodity) {
-                $imagePath = asset('icons/commodities/' . basename($commodity->icon));
+                $iconFile = $commodity->icon && file_exists(public_path('icons/commodities/' . basename($commodity->icon)))
+                    ? basename($commodity->icon)
+                    : 'default.png';
+
+                $imagePath = asset('icons/commodities/' . $iconFile);
                 return '<img src="' . $imagePath . '" alt="' . e($commodity->name) . '" style="width:40px; height:auto; border-radius:4px;">';
             })
             ->addColumn('actions', fn(Commodity $commodity) => $this->actions($commodity))
