@@ -150,25 +150,34 @@
             <a class="navbar-brand" href="#">National Agri-Fishery Investment Forum</a>
 
             @auth('geomapping')
-            <div class="d-flex align-items-center gap-3 ms-auto">
-                @if(Auth::guard('geomapping')->check() && Auth::guard('geomapping')->user()->role == '1')
-                <div class="dropdown">
-                    <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="geomappingDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        Manage
-                    </a>
+                <div class="d-flex align-items-center gap-3 ms-auto">
+                    @if (Auth::guard('geomapping')->check() && Auth::guard('geomapping')->user()->role == '1')
+                        <!-- Dashboard Button -->
+                        <a class="btn btn-primary" href="{{ route('geomapping.iplan.investment.user-dashboard') }}">
+                            Dashboard
+                        </a>
+                        <div class="dropdown">
+                            <a class="btn btn-secondary dropdown-toggle" href="#" role="button"
+                                id="geomappingDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                Manage
+                            </a>
 
-                    <ul class="dropdown-menu" aria-labelledby="geomappingDropdown">
-                        <li><a class="dropdown-item" href="{{ route('geomapping.iplan.investment.user-list') }}">User</a></li>
-                        <li><a class="dropdown-item" href="{{ route('geomapping.iplan.investment.commodity-list') }}">Commodity</a></li>
-                        <li><a class="dropdown-item" href="{{ route('geomapping.iplan.investment.intervention-list') }}">Intervention</a></li>
-                    </ul>
+                            <ul class="dropdown-menu" aria-labelledby="geomappingDropdown">
+                                <li><a class="dropdown-item"
+                                        href="{{ route('geomapping.iplan.investment.user-list') }}">User</a></li>
+                                <li><a class="dropdown-item"
+                                        href="{{ route('geomapping.iplan.investment.commodity-list') }}">Commodity</a></li>
+                                <li><a class="dropdown-item"
+                                        href="{{ route('geomapping.iplan.investment.intervention-list') }}">Intervention</a>
+                                </li>
+                            </ul>
+                        </div>
+                    @endif
+
+
+
+                    <livewire:geomapping.iplan.logout />
                 </div>
-                @endif
-
-
-
-                <livewire:geomapping.iplan.logout />
-            </div>
             @endauth
         </div>
     </nav>
@@ -181,7 +190,8 @@
 
     <footer class="bg-light text-center text-lg-start mt-5">
         <div class="container p-4">
-            <p class="text-center text-muted mb-0">&copy; 2025 National Agri-Fishery Investment Forum. All Rights Reserved.</p>
+            <p class="text-center text-muted mb-0">&copy; 2025 National Agri-Fishery Investment Forum. All Rights
+                Reserved.</p>
         </div>
     </footer>
     @livewireScripts

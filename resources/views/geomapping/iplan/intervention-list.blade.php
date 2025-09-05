@@ -7,6 +7,11 @@
                     <span>Manage Commodity</span>
                     <div class="d-flex gap-2">
                         @if(Auth::guard('geomapping')->check() && Auth::guard('geomapping')->user()->role == '1')
+                        <!-- Dashboard Button -->
+                                <a class="btn btn-primary"
+                                    href="{{ route('geomapping.iplan.investment.user-dashboard') }}">
+                                    Dashboard
+                                </a>
                         <div class="dropdown">
                             <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="geomappingDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 Manage

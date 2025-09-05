@@ -6,6 +6,24 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Dashboard</span>
                     <div class="d-flex gap-2">
+                        @if (Auth::guard('geomapping')->check() && Auth::guard('geomapping')->user()->role == '1')
+                        <div class="dropdown">
+                            <a class="btn btn-secondary dropdown-toggle" href="#" role="button"
+                                id="geomappingDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                Manage
+                            </a>
+
+                            <ul class="dropdown-menu" aria-labelledby="geomappingDropdown">
+                                <li><a class="dropdown-item"
+                                        href="{{ route('geomapping.iplan.investment.user-list') }}">User</a></li>
+                                <li><a class="dropdown-item"
+                                        href="{{ route('geomapping.iplan.investment.commodity-list') }}">Commodity</a></li>
+                                <li><a class="dropdown-item"
+                                        href="{{ route('geomapping.iplan.investment.intervention-list') }}">Intervention</a>
+                                </li>
+                            </ul>
+                        </div>
+                    @endif
                         <button id="exportExcel" class="btn btn-success">
                             📤 Export Excel
                         </button>
@@ -15,7 +33,9 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    <div class="mb-2">
                     <livewire:geomapping.iplan.user-dashboard-header lazy >
+                    </div>
                     <div class="table-responsive">
                         <table class="table align-middle table-row-dashed fs-7 mb-0 dataTable no-footer align-center"
                             id="model-table">
