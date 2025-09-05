@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ProductSeeder::class,
             FakerUserSeeder::class,
-            CommoditiesSeeder::class
+            CommoditiesTableSeeder::class
         ]);
         $this->call(RegionsTableSeeder::class);
         $this->call(ProvincesTableSeeder::class);
