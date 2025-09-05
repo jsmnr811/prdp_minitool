@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class CommoditiesTableSeeder extends Seeder
 {
@@ -16,9 +17,9 @@ class CommoditiesTableSeeder extends Seeder
     {
         
 
-        \DB::table('commodities')->delete();
+        DB::table('commodities')->delete();
         
-        \DB::table('commodities')->insert(array (
+        DB::table('commodities')->insert(array (
             0 => 
             array (
                 'id' => 1,
