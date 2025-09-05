@@ -13,7 +13,7 @@ use Yajra\DataTables\Html\Editor\Editor;
 use Yajra\DataTables\Html\Editor\Fields;
 use Yajra\DataTables\Services\DataTable;
 
-class GeomappingUsersDataTable extends DataTable
+class GeomappingUserDashboardDataTable extends DataTable
 {
     /**
      * Build the DataTable class.
@@ -21,26 +21,41 @@ class GeomappingUsersDataTable extends DataTable
     public function dataTable(QueryBuilder $query): EloquentDataTable
     {
         return (new EloquentDataTable($query))
-            ->addColumn('actions', fn($geomappingUser) => $this->actions($geomappingUser))
-            ->addColumn('registration', function (GeomappingUser $geomappingUser) {
-                return date('F d, Y', strtotime($geomappingUser->created_at));
-            })->filterColumn('registration', function ($query, $keyword) {
-                $query->whereRaw("DATE_FORMAT(created_at, '%M %d, %Y') like ?", ["%$keyword%"]);
-            })->addColumn('region', function (GeomappingUser $geomappingUser) {
-                $html = <<<HTML
-                            <div><span>Region:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->region->abbr}</span></div>
-                             <div><span>Province:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->province->abbr}</span></div>
-                             <div><span>Office:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->office}</span></div>
-                             <div><span>Designation:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->designation}</span></div>
-                 HTML;
-                return new HtmlString($html);
-            })->filterColumn('region', function ($query, $keyword) {
-                $query->whereHas('region', function ($query) use ($keyword) {
-                    $query->where('name', 'like', "%$keyword%");
-                })->orWhereHas('province', function ($query) use ($keyword) {
-                    $query->where('name', 'like', "%$keyword%");
-                })->orWhere('office', 'like', "%$keyword%")->orWhere('designation', 'like', "%$keyword%");
+            ->addColumn('region', function (GeomappingUser $geomappingUser) {
+                return $geomappingUser->region->name;
             })
+            ->filterColumn('region', function ($query, $keyword) {
+                return $query->whereHas('region', function ($query) use ($keyword) {
+                    $query->where('name', 'like', "%$keyword%");
+                });
+            })
+            ->addColumn('province', function (GeomappingUser $geomappingUser) {
+                return $geomappingUser->province->name;
+            })
+            ->filterColumn('province', function ($query, $keyword) {
+                return $query->whereHas('province', function ($query) use ($keyword) {
+                    $query->where('name', 'like', "%$keyword%");
+                });
+            })
+            ->addColumn('count_provincial_governors', function (GeomappingUser $geomappingUser) {
+                return $geomappingp->getCountOfficeParticipants('Provincial Local Government Units', 'Governor');
+            })
+
+            //    ->addColumn('region', function (GeomappingUser $geomappingUser) {
+            //         $html = <<<HTML
+            //                     <div><span>Region:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->region->abbr}</span></div>
+            //                      <div><span>Province:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->province->abbr}</span></div>
+            //                      <div><span>Office:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->office}</span></div>
+            //                      <div><span>Designation:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->designation}</span></div>
+            //          HTML;
+            //         return new HtmlString($html);
+            //     })->filterColumn('region', function ($query, $keyword) {
+            //         $query->whereHas('region', function ($query) use ($keyword) {
+            //             $query->where('name', 'like', "%$keyword%");
+            //         })->orWhereHas('province', function ($query) use ($keyword) {
+            //             $query->where('name', 'like', "%$keyword%");
+            //         })->orWhere('office', 'like', "%$keyword%")->orWhere('designation', 'like', "%$keyword%");
+            //     })
             ->addColumn('contact_info', function (GeomappingUser $geomappingUser) {
                 $html = <<<HTML
                             <div><span>Email:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->email}</span></div>
@@ -50,46 +65,15 @@ class GeomappingUsersDataTable extends DataTable
             })->filterColumn('contact_info', function ($query, $keyword) {
                 $query->where('email', 'like', "%$keyword%")->orWhere('contact_number', 'like', "%$keyword%");
             })
-            ->addColumn('attendance_days', function (GeomappingUser $geomappingUser) {
-                $days = $geomappingUser->attendance_days
-                    ? explode(',', $geomappingUser->attendance_days)
-                    : [];
-
-                $badges = collect($days)->map(function ($day) {
-                    return "<span class='badge bg-info text-dark me-1'>" . trim($day) . "</span>";
-                })->implode(' ');
-
-                return new HtmlString($badges);
-            })
             ->addColumn('gropup_info', function (GeomappingUser $geomappingUser) {
-                $liveInClass = $geomappingUser->is_livein ? 'bg-success text-white' : 'bg-danger text-white';
-                $liveInText  = $geomappingUser->is_livein ? 'Yes' : 'No';
-
                 $html = <<<HTML
                             <div><span>Group #:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->group_number}</span></div>
-                            <div><span>Table #:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->table_number}</span></div>
-                            <div>
-                                <span>Is Live In:</span>
-                                <span class="badge ms-2 badge-sm {$liveInClass}">{$liveInText}</span>
-                            </div>
-                            <div><span>Room #:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->room_assignment}</span></div>
-                        HTML;
-
-                return new \Illuminate\Support\HtmlString($html);
+                             <div><span>Table #:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->table_number}</span></div>
+                 HTML;
+                return new HtmlString($html);
+            })->filterColumn('gropup_info', function ($query, $keyword) {
+                $query->where('group_number', 'like', "%$keyword%")->orWhere('table_number', 'like', "%$keyword%");
             })
-            ->filterColumn('gropup_info', function ($query, $keyword) {
-                $query->where('group_number', 'like', "%$keyword%")
-                    ->orWhere('table_number', 'like', "%$keyword%")
-                    ->orWhere('room_assignment', 'like', "%$keyword%")
-                    ->orWhere(function ($q) use ($keyword) {
-                        if (stripos('yes', $keyword) !== false) {
-                            $q->where('is_livein', 1);
-                        } elseif (stripos('no', $keyword) !== false) {
-                            $q->where('is_livein', 0);
-                        }
-                    });
-            })
-
             ->addColumn('is_verified', function (GeomappingUser $geomappingUser) {
                 $class = $geomappingUser->is_verified ? 'success' : 'danger';
                 $label = $geomappingUser->is_verified ? 'Verified' : 'Not Verified';
@@ -188,20 +172,17 @@ class GeomappingUsersDataTable extends DataTable
     public function getColumns(): array
     {
         return [
-            Column::make('id')->width('5%')->addClass('text-center'),
+            Column::make('id'),
             Column::make('firstname')->visible(false),
-
-            Column::make('name_role')->title('Name')->searchable(true)->width('20%'),
-            Column::make('region')->title('Office')->searchable(true)->width('15%'),
-            Column::make('contact_info')->title('Contact Info')->searchable(true)->width('15%'),
+            Column::make('name_role')->title('Name')->searchable(true)->width('30%'),
+            Column::make('region')->title('Office')->searchable(true)->width('20%'),
+            Column::make('contact_info')->title('Contact Info')->searchable(true)->width('20%'),
             Column::make('gropup_info')->title('Group Info')->searchable(true)->width('15%'),
-            Column::make('attendance_days')->title('Attendance')->width('10%'),
             Column::make('is_verified')->title('Is Verified')->width('5%'),
             Column::make('status')->title('Status')->searchable(true)->width('5%'),
-            Column::computed('actions')->exportable(false)->printable(false)->width('10%')->addClass('text-center'),
+            Column::computed('actions')->exportable(false)->printable(false)->width('8%')->addClass('text-center'),
         ];
     }
-
 
     public function actions(GeomappingUser $geomappingUser)
     {

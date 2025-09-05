@@ -14,5 +14,9 @@ class Region extends Authenticatable
 
     public $timestamps = true;
 
-    
+
+    public function provinces()
+    {
+        return $this->hasMany(Province::class, 'region_code', 'code');
+    }
 }

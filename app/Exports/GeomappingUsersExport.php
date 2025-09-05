@@ -32,6 +32,8 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
                 'is_iplan',
                 'group_number',
                 'table_number',
+                'room_assignment',
+                'is_livein',
                 'created_at',
                 'updated_at',
             ])
@@ -55,10 +57,14 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
             'Email',
             'Contact Number',
             'Food Restriction',
-            'Attendance Days',
+            'Attendance Day 1',
+            'Attendance Day 2',
+            'Attendance Day 3',
             'Role',
             'Group Number',
             'Table Number',
+            'Room Assignment',
+            'Is Live In?',
             'Created At',
             'Updated At',
         ];
@@ -73,6 +79,16 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
         } else {
             $role = 'Unknown';
         }
+
+        // Convert attendance string ("Day 1, Day 2, Day 3") into array
+        $days = $user->attendance_days
+            ? array_map('trim', explode(',', $user->attendance_days))
+            : [];
+
+        // Create columns for Day 1, Day 2, Day 3
+        $day1 = in_array('Day 1', $days) ? 'Yes' : 'No';
+        $day2 = in_array('Day 2', $days) ? 'Yes' : 'No';
+        $day3 = in_array('Day 3', $days) ? 'Yes' : 'No';
 
         return [
             $user->id,
@@ -89,10 +105,14 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
             $user->email,
             $user->contact_number,
             $user->food_restriction,
-            $user->attendance_days,
+            $day1,
+            $day2,
+            $day3,
             $role,
             $user->group_number,
             $user->table_number,
+            $user->room_assignment,
+            $user->is_livein,
             $user->created_at?->format('Y-m-d H:i'),
             $user->updated_at?->format('Y-m-d H:i'),
         ];

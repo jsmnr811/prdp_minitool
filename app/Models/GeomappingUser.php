@@ -40,6 +40,8 @@ class GeomappingUser extends Authenticatable
         'table_number',
         'is_iplan',
         'is_blocked',
+        'is_verified',
+        'room_assignment',
         'role'
     ];
 
@@ -56,5 +58,7 @@ class GeomappingUser extends Authenticatable
     {
         return $this->belongsTo(Province::class, 'province_id', 'code');
     }
+
+
 
 }
