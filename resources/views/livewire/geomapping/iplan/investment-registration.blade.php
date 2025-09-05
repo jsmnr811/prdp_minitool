@@ -27,7 +27,7 @@
                     </div>
 
                     <div class="w-full sm:w-auto">
-                        <input type="file" wire:model="image" accept=".jpeg,.jpg,.png,.gif" capture="environment"
+                        <input type="file" wire:model="image" accept=".jpeg,.jpg,.png,.gif,.webp,.webm,.heic" 
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2 cursor-pointer dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         @error('image')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
