@@ -12,6 +12,7 @@ use App\Models\GeomappingUser;
 use Livewire\Attributes\Layout;
 use PHPMailer\PHPMailer\PHPMailer;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use App\Notifications\UserRegistered;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
@@ -63,6 +64,15 @@ class InvestmentRegistration extends Component
 
     public function mount()
     {
+        if (Auth::guard('geomapping')->check()) {
+            $user = Auth::guard('geomapping')->user();
+
+            if ((int) $user->role === 1) {
+                return redirect()->route('investment.user-list');
+            }
+
+            return redirect()->route('geomapping.iplan.landing');
+        }
         $this->regions = Region::all();
         $this->provinces = collect();
         $this->institutions = GeoOffice::distinct('institution')
