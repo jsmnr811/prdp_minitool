@@ -10,7 +10,7 @@
     {{-- @vite('resources/js/app.js') --}}
 
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js']) 
 
 
     @livewireStyles
@@ -20,10 +20,10 @@
 </head>
 
 
-<body class="bg-gradient-to-br from-gray-50 to-gray-100">
+<body class="bg-gray-50 ">
     <div class="min-h-screen flex flex-col">
         <header>
-            <nav class="bg-gradient-to-r from-white to-gray-50 border-b border-gray-200 px-4 lg:px-6 py-3 shadow-lg dark:bg-gray-800">
+            <nav class="bg-white border-gray-200 px-4 lg:px-6 py-2.5 dark:bg-gray-800">
                 <div class="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
                     <!-- Logo -->
                     <a href="#" class="flex items-center">
@@ -86,12 +86,12 @@
             </nav>
         </header>
 
-        <main class="flex-grow w-full px-2 py-4">
+        <main class="flex-grow w-full px-6 py-6">
             {{ $slot }}
         </main>
 
         {{-- ✅ Footer --}}
-        <footer class="bg-gradient-to-r from-white to-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 py-10 shadow-inner">
+        <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 py-8">
             <div class="max-w-screen-xl mx-auto px-4 text-center">
                 <!-- Logo -->
                 <div class="flex justify-center mb-4">

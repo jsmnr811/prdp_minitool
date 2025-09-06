@@ -1,345 +1,378 @@
-<x-layouts.investmentForum2025.app title="Manage Users">
-    <section class="bg-white dark:bg-gray-900 space-y-10">
-        <div class="py-8 px-4 mx-auto max-w-7xl lg:py-8">
-
+<x-layouts.geomapping.iplan.app>
+    @push('breadcrumbs')
+        <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">User Dashboard
+        </li>
+    @endpush
+    <div class="row g-4">
+        <div class="col-lg-12">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>Dashboard</span>
-                    <div class="d-flex gap-2">
-                        <button id="exportExcel" class="btn btn-success">
-                            📤 Export Excel
-                        </button>
-                        <a href="{{ route('geomapping.iplan.landing') }}" class="btn btn-outline-primary">
-                            Go to 🗺️ Map
-                        </a>
-                    </div>
+                <div class="card-header p-3 d-flex justify-content-end align-items-center gap-3">
+                    <button  id="exportExcel"  class="btn btn-success d-flex align-items-center">
+                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>Export CSV
+                    </button>
+
                 </div>
                 <div class="card-body">
-                    <livewire:geomapping.iplan.user-dashboard-header lazy >
-                    <div class="table-responsive">
-                        <table class="table align-middle table-row-dashed fs-7 mb-0 dataTable no-footer align-center"
-                            id="model-table">
-                            <thead>
-                                <tr>
-                                    <th rowspan=2>Region</th>
-                                    <th rowspan=2>Province</th>
-                                    <th colspan="6">Registered LGU Participants</th>
-                                    <th colspan="6">Verified LGU Participants</th>
-                                </tr>
-                                <tr>
-                                    <th class="bg-primary">Provincial Governor</th>
-                                    <th class="bg-primary">SP Committee on Agriculture</th>
-                                    <th class="bg-primary">PPDO</th>
-                                    <th class="bg-primary">Provincial Agriculturist</th>
-                                    <th class="bg-primary">Provincial Veterenarian</th>
-                                    <th class="bg-primary">PPMIU Head</th>
-                                    <th class="bg-success">Provincial Governor</th>
-                                    <th class="bg-success">SP Committee on Agriculture</th>
-                                    <th class="bg-success">PPDO</th>
-                                    <th class="bg-success">Provincial Agriculturist</th>
-                                    <th class="bg-success">Provincial Veterenarian</th>
-                                    <th class="bg-success">PPMIU Head</th>
-                                </tr>
-                            </thead>
+                    <livewire:geomapping.iplan.user-dashboard-header lazy>
+                        <div class="table-responsive">
+                            <table
+                                class="table align-middle table-row-dashed fs-7 mb-0 dataTable no-footer align-center"
+                                id="model-table">
+                                <thead>
+                                    <tr>
+                                        <th rowspan=2>Region</th>
+                                        <th rowspan=2>Province</th>
+                                        <th colspan="6">Registered LGU Participants</th>
+                                        <th colspan="6">Verified LGU Participants</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="bg-primary">Provincial Governor</th>
+                                        <th class="bg-primary">SP Committee on Agriculture</th>
+                                        <th class="bg-primary">PPDO</th>
+                                        <th class="bg-primary">Provincial Agriculturist</th>
+                                        <th class="bg-primary">Provincial Veterenarian</th>
+                                        <th class="bg-primary">PPMIU Head</th>
+                                        <th class="bg-success">Provincial Governor</th>
+                                        <th class="bg-success">SP Committee on Agriculture</th>
+                                        <th class="bg-success">PPDO</th>
+                                        <th class="bg-success">Provincial Agriculturist</th>
+                                        <th class="bg-success">Provincial Veterenarian</th>
+                                        <th class="bg-success">PPMIU Head</th>
+                                    </tr>
+                                </thead>
 
-                            {{-- Overall Total Row (Sticky) --}}
-                            @php
-                                $overallTotals = [
-                                    'governor_reg' => $regions->sum(
-                                        fn($r) => $r->provinces->sum(
-                                            fn($p) => $p->paxCount('Provincial Local Government Units', 'Governor'),
-                                        ),
-                                    ),
-                                    'sp_committee_reg' => $regions->sum(
-                                        fn($r) => $r->provinces->sum(
-                                            fn($p) => $p->paxCount(
-                                                'Provincial Local Government Units',
-                                                'SP Committee on Agriculture',
-                                            ),
-                                        ),
-                                    ),
-                                    'ppdo_reg' => $regions->sum(
-                                        fn($r) => $r->provinces->sum(
-                                            fn($p) => $p->paxCount('Provincial Local Government Units', 'PPDO'),
-                                        ),
-                                    ),
-                                    'agriculturist_reg' => $regions->sum(
-                                        fn($r) => $r->provinces->sum(
-                                            fn($p) => $p->paxCount(
-                                                'Provincial Local Government Units',
-                                                'Provincial Agriculturist',
-                                            ),
-                                        ),
-                                    ),
-                                    'veterenarian_reg' => $regions->sum(
-                                        fn($r) => $r->provinces->sum(
-                                            fn($p) => $p->paxCount(
-                                                'Provincial Local Government Units',
-                                                'Provincial Veterenarian',
-                                            ),
-                                        ),
-                                    ),
-                                    'ppmiu_reg' => $regions->sum(
-                                        fn($r) => $r->provinces->sum(
-                                            fn($p) => $p->paxCount('Provincial Local Government Units', 'PPMIU Head'),
-                                        ),
-                                    ),
-                                    'governor_ver' => $regions->sum(
-                                        fn($r) => $r->provinces->sum(
-                                            fn($p) => $p->paxCount(
-                                                'Provincial Local Government Units',
-                                                'Governor',
-                                                true,
-                                            ),
-                                        ),
-                                    ),
-                                    'sp_committee_ver' => $regions->sum(
-                                        fn($r) => $r->provinces->sum(
-                                            fn($p) => $p->paxCount(
-                                                'Provincial Local Government Units',
-                                                'SP Committee on Agriculture',
-                                                true,
-                                            ),
-                                        ),
-                                    ),
-                                    'ppdo_ver' => $regions->sum(
-                                        fn($r) => $r->provinces->sum(
-                                            fn($p) => $p->paxCount('Provincial Local Government Units', 'PPDO', true),
-                                        ),
-                                    ),
-                                    'agriculturist_ver' => $regions->sum(
-                                        fn($r) => $r->provinces->sum(
-                                            fn($p) => $p->paxCount(
-                                                'Provincial Local Government Units',
-                                                'Provincial Agriculturist',
-                                                true,
-                                            ),
-                                        ),
-                                    ),
-                                    'veterenarian_ver' => $regions->sum(
-                                        fn($r) => $r->provinces->sum(
-                                            fn($p) => $p->paxCount(
-                                                'Provincial Local Government Units',
-                                                'Provincial Veterenarian',
-                                                true,
-                                            ),
-                                        ),
-                                    ),
-                                    'ppmiu_ver' => $regions->sum(
-                                        fn($r) => $r->provinces->sum(
-                                            fn($p) => $p->paxCount(
-                                                'Provincial Local Government Units',
-                                                'PPMIU Head',
-                                                true,
-                                            ),
-                                        ),
-                                    ),
-                                ];
-                            @endphp
-
-                            <thead class="sticky-total">
-                                <tr class="table-info fw-bold">
-                                    <td class="text-center"><strong>OVERALL TOTAL</strong></td>
-                                    <td class="text-center"><strong>ALL PROVINCES</strong></td>
-                                    <td class="text-center bg-primary-light">
-                                        <strong>{{ $overallTotals['governor_reg'] }}</strong></td>
-                                    <td class="text-center bg-primary-light">
-                                        <strong>{{ $overallTotals['sp_committee_reg'] }}</strong></td>
-                                    <td class="text-center bg-primary-light">
-                                        <strong>{{ $overallTotals['ppdo_reg'] }}</strong></td>
-                                    <td class="text-center bg-primary-light">
-                                        <strong>{{ $overallTotals['agriculturist_reg'] }}</strong></td>
-                                    <td class="text-center bg-primary-light">
-                                        <strong>{{ $overallTotals['veterenarian_reg'] }}</strong></td>
-                                    <td class="text-center bg-primary-light">
-                                        <strong>{{ $overallTotals['ppmiu_reg'] }}</strong></td>
-                                    <td class="text-center bg-success-light">
-                                        <strong>{{ $overallTotals['governor_ver'] }}</strong></td>
-                                    <td class="text-center bg-success-light">
-                                        <strong>{{ $overallTotals['sp_committee_ver'] }}</strong></td>
-                                    <td class="text-center bg-success-light">
-                                        <strong>{{ $overallTotals['ppdo_ver'] }}</strong></td>
-                                    <td class="text-center bg-success-light">
-                                        <strong>{{ $overallTotals['agriculturist_ver'] }}</strong></td>
-                                    <td class="text-center bg-success-light">
-                                        <strong>{{ $overallTotals['veterenarian_ver'] }}</strong></td>
-                                    <td class="text-center bg-success-light">
-                                        <strong>{{ $overallTotals['ppmiu_ver'] }}</strong></td>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                @foreach ($regions as $region)
-                                    @php
-                                        $regionProvinces = $region->provinces;
-                                        $provinceCount = $regionProvinces->count();
-
-                                        // Calculate region totals
-                                        $regionTotals = [
-                                            'governor_reg' => $regionProvinces->sum(
+                                {{-- Overall Total Row (Sticky) --}}
+                                @php
+                                    $overallTotals = [
+                                        'governor_reg' => $regions->sum(
+                                            fn($r) => $r->provinces->sum(
                                                 fn($p) => $p->paxCount('Provincial Local Government Units', 'Governor'),
                                             ),
-                                            'sp_committee_reg' => $regionProvinces->sum(
+                                        ),
+                                        'sp_committee_reg' => $regions->sum(
+                                            fn($r) => $r->provinces->sum(
                                                 fn($p) => $p->paxCount(
                                                     'Provincial Local Government Units',
                                                     'SP Committee on Agriculture',
                                                 ),
                                             ),
-                                            'ppdo_reg' => $regionProvinces->sum(
+                                        ),
+                                        'ppdo_reg' => $regions->sum(
+                                            fn($r) => $r->provinces->sum(
                                                 fn($p) => $p->paxCount('Provincial Local Government Units', 'PPDO'),
                                             ),
-                                            'agriculturist_reg' => $regionProvinces->sum(
+                                        ),
+                                        'agriculturist_reg' => $regions->sum(
+                                            fn($r) => $r->provinces->sum(
                                                 fn($p) => $p->paxCount(
                                                     'Provincial Local Government Units',
                                                     'Provincial Agriculturist',
                                                 ),
                                             ),
-                                            'veterenarian_reg' => $regionProvinces->sum(
+                                        ),
+                                        'veterenarian_reg' => $regions->sum(
+                                            fn($r) => $r->provinces->sum(
                                                 fn($p) => $p->paxCount(
                                                     'Provincial Local Government Units',
                                                     'Provincial Veterenarian',
                                                 ),
                                             ),
-                                            'ppmiu_reg' => $regionProvinces->sum(
+                                        ),
+                                        'ppmiu_reg' => $regions->sum(
+                                            fn($r) => $r->provinces->sum(
                                                 fn($p) => $p->paxCount(
                                                     'Provincial Local Government Units',
                                                     'PPMIU Head',
                                                 ),
                                             ),
-                                            'governor_ver' => $regionProvinces->sum(
+                                        ),
+                                        'governor_ver' => $regions->sum(
+                                            fn($r) => $r->provinces->sum(
                                                 fn($p) => $p->paxCount(
                                                     'Provincial Local Government Units',
                                                     'Governor',
                                                     true,
                                                 ),
                                             ),
-                                            'sp_committee_ver' => $regionProvinces->sum(
+                                        ),
+                                        'sp_committee_ver' => $regions->sum(
+                                            fn($r) => $r->provinces->sum(
                                                 fn($p) => $p->paxCount(
                                                     'Provincial Local Government Units',
                                                     'SP Committee on Agriculture',
                                                     true,
                                                 ),
                                             ),
-                                            'ppdo_ver' => $regionProvinces->sum(
+                                        ),
+                                        'ppdo_ver' => $regions->sum(
+                                            fn($r) => $r->provinces->sum(
                                                 fn($p) => $p->paxCount(
                                                     'Provincial Local Government Units',
                                                     'PPDO',
                                                     true,
                                                 ),
                                             ),
-                                            'agriculturist_ver' => $regionProvinces->sum(
+                                        ),
+                                        'agriculturist_ver' => $regions->sum(
+                                            fn($r) => $r->provinces->sum(
                                                 fn($p) => $p->paxCount(
                                                     'Provincial Local Government Units',
                                                     'Provincial Agriculturist',
                                                     true,
                                                 ),
                                             ),
-                                            'veterenarian_ver' => $regionProvinces->sum(
+                                        ),
+                                        'veterenarian_ver' => $regions->sum(
+                                            fn($r) => $r->provinces->sum(
                                                 fn($p) => $p->paxCount(
                                                     'Provincial Local Government Units',
                                                     'Provincial Veterenarian',
                                                     true,
                                                 ),
                                             ),
-                                            'ppmiu_ver' => $regionProvinces->sum(
+                                        ),
+                                        'ppmiu_ver' => $regions->sum(
+                                            fn($r) => $r->provinces->sum(
                                                 fn($p) => $p->paxCount(
                                                     'Provincial Local Government Units',
                                                     'PPMIU Head',
                                                     true,
                                                 ),
                                             ),
-                                        ];
-                                    @endphp
+                                        ),
+                                    ];
+                                @endphp
 
-                                    @forelse($regionProvinces as $index => $province)
-                                        <tr>
-                                            @if ($index === 0)
-                                                <td rowspan="{{ $provinceCount + 1 }}"
-                                                    class="align-middle fw-bold bg-light">
-                                                    {{ $region->name }}
+                                <thead class="sticky-total">
+                                    <tr class="table-info fw-bold">
+                                        <td class="text-center"><strong>OVERALL TOTAL</strong></td>
+                                        <td class="text-center"><strong>ALL PROVINCES</strong></td>
+                                        <td class="text-center bg-primary-light">
+                                            <strong>{{ $overallTotals['governor_reg'] }}</strong>
+                                        </td>
+                                        <td class="text-center bg-primary-light">
+                                            <strong>{{ $overallTotals['sp_committee_reg'] }}</strong>
+                                        </td>
+                                        <td class="text-center bg-primary-light">
+                                            <strong>{{ $overallTotals['ppdo_reg'] }}</strong>
+                                        </td>
+                                        <td class="text-center bg-primary-light">
+                                            <strong>{{ $overallTotals['agriculturist_reg'] }}</strong>
+                                        </td>
+                                        <td class="text-center bg-primary-light">
+                                            <strong>{{ $overallTotals['veterenarian_reg'] }}</strong>
+                                        </td>
+                                        <td class="text-center bg-primary-light">
+                                            <strong>{{ $overallTotals['ppmiu_reg'] }}</strong>
+                                        </td>
+                                        <td class="text-center bg-success-light">
+                                            <strong>{{ $overallTotals['governor_ver'] }}</strong>
+                                        </td>
+                                        <td class="text-center bg-success-light">
+                                            <strong>{{ $overallTotals['sp_committee_ver'] }}</strong>
+                                        </td>
+                                        <td class="text-center bg-success-light">
+                                            <strong>{{ $overallTotals['ppdo_ver'] }}</strong>
+                                        </td>
+                                        <td class="text-center bg-success-light">
+                                            <strong>{{ $overallTotals['agriculturist_ver'] }}</strong>
+                                        </td>
+                                        <td class="text-center bg-success-light">
+                                            <strong>{{ $overallTotals['veterenarian_ver'] }}</strong>
+                                        </td>
+                                        <td class="text-center bg-success-light">
+                                            <strong>{{ $overallTotals['ppmiu_ver'] }}</strong>
+                                        </td>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @foreach ($regions as $region)
+                                        @php
+                                            $regionProvinces = $region->provinces;
+                                            $provinceCount = $regionProvinces->count();
+
+                                            // Calculate region totals
+                                            $regionTotals = [
+                                                'governor_reg' => $regionProvinces->sum(
+                                                    fn($p) => $p->paxCount(
+                                                        'Provincial Local Government Units',
+                                                        'Governor',
+                                                    ),
+                                                ),
+                                                'sp_committee_reg' => $regionProvinces->sum(
+                                                    fn($p) => $p->paxCount(
+                                                        'Provincial Local Government Units',
+                                                        'SP Committee on Agriculture',
+                                                    ),
+                                                ),
+                                                'ppdo_reg' => $regionProvinces->sum(
+                                                    fn($p) => $p->paxCount('Provincial Local Government Units', 'PPDO'),
+                                                ),
+                                                'agriculturist_reg' => $regionProvinces->sum(
+                                                    fn($p) => $p->paxCount(
+                                                        'Provincial Local Government Units',
+                                                        'Provincial Agriculturist',
+                                                    ),
+                                                ),
+                                                'veterenarian_reg' => $regionProvinces->sum(
+                                                    fn($p) => $p->paxCount(
+                                                        'Provincial Local Government Units',
+                                                        'Provincial Veterenarian',
+                                                    ),
+                                                ),
+                                                'ppmiu_reg' => $regionProvinces->sum(
+                                                    fn($p) => $p->paxCount(
+                                                        'Provincial Local Government Units',
+                                                        'PPMIU Head',
+                                                    ),
+                                                ),
+                                                'governor_ver' => $regionProvinces->sum(
+                                                    fn($p) => $p->paxCount(
+                                                        'Provincial Local Government Units',
+                                                        'Governor',
+                                                        true,
+                                                    ),
+                                                ),
+                                                'sp_committee_ver' => $regionProvinces->sum(
+                                                    fn($p) => $p->paxCount(
+                                                        'Provincial Local Government Units',
+                                                        'SP Committee on Agriculture',
+                                                        true,
+                                                    ),
+                                                ),
+                                                'ppdo_ver' => $regionProvinces->sum(
+                                                    fn($p) => $p->paxCount(
+                                                        'Provincial Local Government Units',
+                                                        'PPDO',
+                                                        true,
+                                                    ),
+                                                ),
+                                                'agriculturist_ver' => $regionProvinces->sum(
+                                                    fn($p) => $p->paxCount(
+                                                        'Provincial Local Government Units',
+                                                        'Provincial Agriculturist',
+                                                        true,
+                                                    ),
+                                                ),
+                                                'veterenarian_ver' => $regionProvinces->sum(
+                                                    fn($p) => $p->paxCount(
+                                                        'Provincial Local Government Units',
+                                                        'Provincial Veterenarian',
+                                                        true,
+                                                    ),
+                                                ),
+                                                'ppmiu_ver' => $regionProvinces->sum(
+                                                    fn($p) => $p->paxCount(
+                                                        'Provincial Local Government Units',
+                                                        'PPMIU Head',
+                                                        true,
+                                                    ),
+                                                ),
+                                            ];
+                                        @endphp
+
+                                        @forelse($regionProvinces as $index => $province)
+                                            <tr>
+                                                @if ($index === 0)
+                                                    <td rowspan="{{ $provinceCount + 1 }}"
+                                                        class="align-middle fw-bold bg-light">
+                                                        {{ $region->name }}
+                                                    </td>
+                                                @endif
+                                                <td>{{ $province->name }}</td>
+                                                <td class="bg-primary-light">
+                                                    {{ $province->paxCount('Provincial Local Government Units', 'Governor') }}
                                                 </td>
-                                            @endif
-                                            <td>{{ $province->name }}</td>
-                                            <td class="bg-primary-light">
-                                                {{ $province->paxCount('Provincial Local Government Units', 'Governor') }}
-                                            </td>
-                                            <td class="bg-primary-light">
-                                                {{ $province->paxCount('Provincial Local Government Units', 'SP Committee on Agriculture') }}
-                                            </td>
-                                            <td class="bg-primary-light">
-                                                {{ $province->paxCount('Provincial Local Government Units', 'PPDO') }}
-                                            </td>
-                                            <td class="bg-primary-light">
-                                                {{ $province->paxCount('Provincial Local Government Units', 'Provincial Agriculturist') }}
-                                            </td>
-                                            <td class="bg-primary-light">
-                                                {{ $province->paxCount('Provincial Local Government Units', 'Provincial Veterenarian') }}
-                                            </td>
-                                            <td class="bg-primary-light">
-                                                {{ $province->paxCount('Provincial Local Government Units', 'PPMIU Head') }}
-                                            </td>
-                                            <td class="bg-success-light">
-                                                {{ $province->paxCount('Provincial Local Government Units', 'Governor', true) }}
-                                            </td>
-                                            <td class="bg-success-light">
-                                                {{ $province->paxCount('Provincial Local Government Units', 'SP Committee on Agriculture', true) }}
-                                            </td>
-                                            <td class="bg-success-light">
-                                                {{ $province->paxCount('Provincial Local Government Units', 'PPDO', true) }}
-                                            </td>
-                                            <td class="bg-success-light">
-                                                {{ $province->paxCount('Provincial Local Government Units', 'Provincial Agriculturist', true) }}
-                                            </td>
-                                            <td class="bg-success-light">
-                                                {{ $province->paxCount('Provincial Local Government Units', 'Provincial Veterenarian', true) }}
-                                            </td>
-                                            <td class="bg-success-light">
-                                                {{ $province->paxCount('Provincial Local Government Units', 'PPMIU Head', true) }}
-                                            </td>
-                                        </tr>
-                                    @empty
-                                    @endforelse
+                                                <td class="bg-primary-light">
+                                                    {{ $province->paxCount('Provincial Local Government Units', 'SP Committee on Agriculture') }}
+                                                </td>
+                                                <td class="bg-primary-light">
+                                                    {{ $province->paxCount('Provincial Local Government Units', 'PPDO') }}
+                                                </td>
+                                                <td class="bg-primary-light">
+                                                    {{ $province->paxCount('Provincial Local Government Units', 'Provincial Agriculturist') }}
+                                                </td>
+                                                <td class="bg-primary-light">
+                                                    {{ $province->paxCount('Provincial Local Government Units', 'Provincial Veterenarian') }}
+                                                </td>
+                                                <td class="bg-primary-light">
+                                                    {{ $province->paxCount('Provincial Local Government Units', 'PPMIU Head') }}
+                                                </td>
+                                                <td class="bg-success-light">
+                                                    {{ $province->paxCount('Provincial Local Government Units', 'Governor', true) }}
+                                                </td>
+                                                <td class="bg-success-light">
+                                                    {{ $province->paxCount('Provincial Local Government Units', 'SP Committee on Agriculture', true) }}
+                                                </td>
+                                                <td class="bg-success-light">
+                                                    {{ $province->paxCount('Provincial Local Government Units', 'PPDO', true) }}
+                                                </td>
+                                                <td class="bg-success-light">
+                                                    {{ $province->paxCount('Provincial Local Government Units', 'Provincial Agriculturist', true) }}
+                                                </td>
+                                                <td class="bg-success-light">
+                                                    {{ $province->paxCount('Provincial Local Government Units', 'Provincial Veterenarian', true) }}
+                                                </td>
+                                                <td class="bg-success-light">
+                                                    {{ $province->paxCount('Provincial Local Government Units', 'PPMIU Head', true) }}
+                                                </td>
+                                            </tr>
+                                        @empty
+                                        @endforelse
 
-                                    {{-- Region Total Row --}}
-                                    @if ($regionProvinces->count() > 0)
-                                        <tr class="table-warning fw-bold">
-                                            <td class="text-end"><strong>{{ $region->name }} TOTAL:</strong></td>
-                                            <td class="text-center bg-primary-light">
-                                                <strong>{{ $regionTotals['governor_reg'] }}</strong></td>
-                                            <td class="text-center bg-primary-light">
-                                                <strong>{{ $regionTotals['sp_committee_reg'] }}</strong></td>
-                                            <td class="text-center bg-primary-light">
-                                                <strong>{{ $regionTotals['ppdo_reg'] }}</strong></td>
-                                            <td class="text-center bg-primary-light">
-                                                <strong>{{ $regionTotals['agriculturist_reg'] }}</strong></td>
-                                            <td class="text-center bg-primary-light">
-                                                <strong>{{ $regionTotals['veterenarian_reg'] }}</strong></td>
-                                            <td class="text-center bg-primary-light">
-                                                <strong>{{ $regionTotals['ppmiu_reg'] }}</strong></td>
-                                            <td class="text-center bg-success-light">
-                                                <strong>{{ $regionTotals['governor_ver'] }}</strong></td>
-                                            <td class="text-center bg-success-light">
-                                                <strong>{{ $regionTotals['sp_committee_ver'] }}</strong></td>
-                                            <td class="text-center bg-success-light">
-                                                <strong>{{ $regionTotals['ppdo_ver'] }}</strong></td>
-                                            <td class="text-center bg-success-light">
-                                                <strong>{{ $regionTotals['agriculturist_ver'] }}</strong></td>
-                                            <td class="text-center bg-success-light">
-                                                <strong>{{ $regionTotals['veterenarian_ver'] }}</strong></td>
-                                            <td class="text-center bg-success-light">
-                                                <strong>{{ $regionTotals['ppmiu_ver'] }}</strong></td>
-                                        </tr>
-                                    @endif
-                                @endforeach
-                            </tbody>
-                        </table>
+                                        {{-- Region Total Row --}}
+                                        @if ($regionProvinces->count() > 0)
+                                            <tr class="table-warning fw-bold">
+                                                <td class="text-end"><strong>{{ $region->name }} TOTAL:</strong></td>
+                                                <td class="text-center bg-primary-light">
+                                                    <strong>{{ $regionTotals['governor_reg'] }}</strong>
+                                                </td>
+                                                <td class="text-center bg-primary-light">
+                                                    <strong>{{ $regionTotals['sp_committee_reg'] }}</strong>
+                                                </td>
+                                                <td class="text-center bg-primary-light">
+                                                    <strong>{{ $regionTotals['ppdo_reg'] }}</strong>
+                                                </td>
+                                                <td class="text-center bg-primary-light">
+                                                    <strong>{{ $regionTotals['agriculturist_reg'] }}</strong>
+                                                </td>
+                                                <td class="text-center bg-primary-light">
+                                                    <strong>{{ $regionTotals['veterenarian_reg'] }}</strong>
+                                                </td>
+                                                <td class="text-center bg-primary-light">
+                                                    <strong>{{ $regionTotals['ppmiu_reg'] }}</strong>
+                                                </td>
+                                                <td class="text-center bg-success-light">
+                                                    <strong>{{ $regionTotals['governor_ver'] }}</strong>
+                                                </td>
+                                                <td class="text-center bg-success-light">
+                                                    <strong>{{ $regionTotals['sp_committee_ver'] }}</strong>
+                                                </td>
+                                                <td class="text-center bg-success-light">
+                                                    <strong>{{ $regionTotals['ppdo_ver'] }}</strong>
+                                                </td>
+                                                <td class="text-center bg-success-light">
+                                                    <strong>{{ $regionTotals['agriculturist_ver'] }}</strong>
+                                                </td>
+                                                <td class="text-center bg-success-light">
+                                                    <strong>{{ $regionTotals['veterenarian_ver'] }}</strong>
+                                                </td>
+                                                <td class="text-center bg-success-light">
+                                                    <strong>{{ $regionTotals['ppmiu_ver'] }}</strong>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    @endforeach
+                                </tbody>
+                            </table>
 
-                    </div>
+                        </div>
                 </div>
             </div>
 
         </div>
-    </section>
+    </div>
 
     @push('modals')
     @endpush
@@ -349,7 +382,6 @@
         <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
         <!-- Buttons CSS -->
         <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css" />
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="{{ asset('assets/datatables/datatables.bundle.css') }}" rel="stylesheet" type="text/css" />
         <style>
             /* Table styling with borders */
@@ -482,18 +514,9 @@
 
         <!-- SheetJS for Excel export -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous">
-        </script>
-
         {{-- DataTable scripts --}}
 
         <script>
-            Livewire.on('reloadDataTable', () => {
-                $('#model-table').DataTable().ajax.reload();
-            })
-
-            // Excel Export with merged cells and formatting
             document.getElementById('exportExcel').addEventListener('click', function() {
                 const table = document.getElementById('model-table');
                 const wb = XLSX.utils.book_new();
@@ -683,4 +706,4 @@
             });
         </script>
     @endpush
-</x-layouts.investmentForum2025.app>
+</x-layouts.geomapping.iplan.app>

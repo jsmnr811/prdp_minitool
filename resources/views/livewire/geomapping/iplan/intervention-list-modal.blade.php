@@ -90,7 +90,7 @@ new class extends Component {
     @if ($interventionModal)
         <div class="modal fade show d-block" id="{{ $editMode ? 'editInterventionModal' : 'addInterventionModal' }}"
             tabindex="-1" role="dialog" aria-labelledby="editUserModalLabel" aria-modal="true">
-            <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-dialog modal-md" role="document">
                 <div class="modal-content rounded-2xl shadow-lg">
 
                     <div class="modal-header border-b d-flex justify-content-between align-items-center">
@@ -111,20 +111,17 @@ new class extends Component {
                                     </ul>
                                 </div>
                             @endif --}}
-                            <div>
-                                <h6 class="text-gray-700 font-semibold mb-2">Intervention Info</h6>
-                                <div class="grid grid-cols-3 gap-4">
-                                    <div>
-                                        <label class="text-sm font-medium">Name<span
+                                <div class="grid grid-cols-3 gap-4 px-4">
+                                    <div class="row mb-2">
+                                        <label class="text-sm font-medium form-label">Name<span
                                                 class="text-red-500">*</span></label>
                                         <input type="text" wire:model="name" placeholder="Enter Name"
-                                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                            class="form-control">
                                         @error('name')
                                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                         @enderror
                                     </div>
                                 </div>
-                            </div>
                         </div>
                         <div class="modal-footer border-t mt-6">
                             <button type="button" class="btn btn-secondary"

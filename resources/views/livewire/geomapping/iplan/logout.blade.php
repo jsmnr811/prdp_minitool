@@ -21,6 +21,8 @@ new class extends Component {
 ?>
 
 <div>
-    <button wire:click="logout" class="btn btn-outline-danger ms-auto">Logout</button>
-
+    <button wire:click="logout" class="btn btn-outline-danger d-flex align-items-center gap-2 px-3 py-2 border-2 transition-all duration-300 hover:shadow-md">
+        <i class="bi bi-box-arrow-right fs-6"></i>
+        <span class="fw-medium">Logout</span>
+    </button>
 </div>
