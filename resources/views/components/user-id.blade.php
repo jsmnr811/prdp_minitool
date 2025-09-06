@@ -44,7 +44,7 @@
     .profile-pic {
         width: 150px;
         height: 180px;
-        object-fit: contain;
+        object-fit: cover;
         border: 1px solid #ccc;
         margin: 10px auto 10px auto;
     }
