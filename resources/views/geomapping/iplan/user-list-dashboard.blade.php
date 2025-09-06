@@ -30,13 +30,13 @@
                                         <th class="bg-primary">SP Committee on Agriculture</th>
                                         <th class="bg-primary">PPDO</th>
                                         <th class="bg-primary">Provincial Agriculturist</th>
-                                        <th class="bg-primary">Provincial Veterenarian</th>
+                                        <th class="bg-primary">Provincial Veterinarian</th>
                                         <th class="bg-primary">PPMIU Head</th>
                                         <th class="bg-success">Provincial Governor</th>
                                         <th class="bg-success">SP Committee on Agriculture</th>
                                         <th class="bg-success">PPDO</th>
                                         <th class="bg-success">Provincial Agriculturist</th>
-                                        <th class="bg-success">Provincial Veterenarian</th>
+                                        <th class="bg-success">Provincial Veterinarian</th>
                                         <th class="bg-success">PPMIU Head</th>
                                     </tr>
                                 </thead>
@@ -74,7 +74,7 @@
                                             fn($r) => $r->provinces->sum(
                                                 fn($p) => $p->paxCount(
                                                     'Provincial Local Government Units',
-                                                    'Provincial Veterenarian',
+                                                    'Provincial Veterinarian',
                                                 ),
                                             ),
                                         ),
@@ -126,7 +126,7 @@
                                             fn($r) => $r->provinces->sum(
                                                 fn($p) => $p->paxCount(
                                                     'Provincial Local Government Units',
-                                                    'Provincial Veterenarian',
+                                                    'Provincial Veterinarian',
                                                     true,
                                                 ),
                                             ),
@@ -218,7 +218,7 @@
                                                 'veterenarian_reg' => $regionProvinces->sum(
                                                     fn($p) => $p->paxCount(
                                                         'Provincial Local Government Units',
-                                                        'Provincial Veterenarian',
+                                                        'Provincial Veterinarian',
                                                     ),
                                                 ),
                                                 'ppmiu_reg' => $regionProvinces->sum(
@@ -258,7 +258,7 @@
                                                 'veterenarian_ver' => $regionProvinces->sum(
                                                     fn($p) => $p->paxCount(
                                                         'Provincial Local Government Units',
-                                                        'Provincial Veterenarian',
+                                                        'Provincial Veterinarian',
                                                         true,
                                                     ),
                                                 ),
@@ -294,7 +294,7 @@
                                                     {{ $province->paxCount('Provincial Local Government Units', 'Provincial Agriculturist') }}
                                                 </td>
                                                 <td class="bg-primary-light">
-                                                    {{ $province->paxCount('Provincial Local Government Units', 'Provincial Veterenarian') }}
+                                                    {{ $province->paxCount('Provincial Local Government Units', 'Provincial Veterinarian') }}
                                                 </td>
                                                 <td class="bg-primary-light">
                                                     {{ $province->paxCount('Provincial Local Government Units', 'PPMIU Head') }}
@@ -312,7 +312,7 @@
                                                     {{ $province->paxCount('Provincial Local Government Units', 'Provincial Agriculturist', true) }}
                                                 </td>
                                                 <td class="bg-success-light">
-                                                    {{ $province->paxCount('Provincial Local Government Units', 'Provincial Veterenarian', true) }}
+                                                    {{ $province->paxCount('Provincial Local Government Units', 'Provincial Veterinarian', true) }}
                                                 </td>
                                                 <td class="bg-success-light">
                                                     {{ $province->paxCount('Provincial Local Government Units', 'PPMIU Head', true) }}

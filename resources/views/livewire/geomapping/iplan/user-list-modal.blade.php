@@ -238,6 +238,8 @@ new class extends Component {
 
 ?>
 <div>
+    @vite(['resources/css/app.css'])
+
     @if ($editModal)
         <!-- Bootstrap Modal (container only) -->
         <div class="modal fade show d-block" id="editUserModal" tabindex="-1" role="dialog"

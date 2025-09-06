@@ -336,7 +336,7 @@
                 </ol>
             </nav>
             @auth('geomapping')
-                @if (Auth::guard('geomapping')->check() && Auth::guard('geomapping')->user()->role == '1')
+                @if (Auth::guard('geomapping')->check() && Auth::guard('geomapping')->user()->role === '1')
                     <div class="dropdown order-1 order-md-2">
                         <button class="btn btn-primary dropdown-toggle d-flex align-items-center w-100 w-md-auto" type="button"
                             id="menuDropdown" data-bs-toggle="dropdown" aria-expanded="false">

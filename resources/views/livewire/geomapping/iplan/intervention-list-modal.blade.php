@@ -82,7 +82,6 @@ new class extends Component {
 ?>
 
 <div>
-
     <button wire:click="openInterventionModal" type="button" class="btn btn-primary">
         + Add Intervention
     </button>

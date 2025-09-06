@@ -29,7 +29,6 @@
 
     @push('modals')
         <livewire:geomapping.iplan.user-list-modal />
-        <livewire:geomapping.iplan.user-list-modal />
     @endpush
 
     @push('styles')
@@ -125,11 +124,6 @@
         {{-- DataTable scripts --}}
         {{ $dataTable->scripts(attributes: ['type' => 'module']) }}
 
-        <script>
-            Livewire.on('reloadDataTable', () => {
-                $('#model-table').DataTable().ajax.reload();
-            })
-        </script>
         <script>
             Livewire.on('reloadDataTable', () => {
                 $('#model-table').DataTable().ajax.reload();

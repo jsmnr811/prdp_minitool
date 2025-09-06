@@ -7,10 +7,7 @@ use Illuminate\Database\Eloquent\Builder as QueryBuilder;
 use Illuminate\Support\HtmlString;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
-use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
-use Yajra\DataTables\Html\Editor\Editor;
-use Yajra\DataTables\Html\Editor\Fields;
 use Yajra\DataTables\Services\DataTable;
 
 class GeomappingUsersDataTable extends DataTable
@@ -75,7 +72,7 @@ class GeomappingUsersDataTable extends DataTable
                             <div><span>Room #:</span><span class="badge ms-2 badge-sm bg-light text-dark">{$geomappingUser->room_assignment}</span></div>
                         HTML;
 
-                return new \Illuminate\Support\HtmlString($html);
+                return new HtmlString($html);
             })
             ->filterColumn('gropup_info', function ($query, $keyword) {
                 $query->where('group_number', 'like', "%$keyword%")
