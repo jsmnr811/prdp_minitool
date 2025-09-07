@@ -3,7 +3,7 @@
         <div class="card shadow-sm p-4 h-100">
             <!-- Search Box -->
             @include('geomapping.iplan.mini-comp.search-box')
-            <div wire:ignore id="map" class="rounded shadow-sm" style="height: 600px;"></div>
+            <div wire:ignore id="map" class="rounded shadow-sm" style="height: 900px;"></div>
             <!-- Map Helper -->
             @include('geomapping.iplan.mini-comp.map-helper')
         </div>
@@ -16,7 +16,7 @@
 <!-- Scripts -->
 @script
 <script>
-    
+
     window.mapSearch = function(provinceGeo, temporaryGeo) {
         return {
             // Reactive state

@@ -45,7 +45,7 @@ new class extends Component {
             $this->dispatch('temporaryGeoUpdated', $this->temporaryGeo);
         } else {
             array_push($this->temporaryForDeletion, $id);
-            $this->provinceGeo = GeoCommodity::where('province_id', 1)->whereNotIn('id', $this->temporaryForDeletion)->with('commodity')->get()->toArray();
+            $this->provinceGeo = GeoCommodity::where('province_id', $user->province_id)->whereNotIn('id', $this->temporaryForDeletion)->with('commodity')->get()->toArray();
             $this->dispatch('provinceGeoUpdated', $this->provinceGeo);
         }
     }

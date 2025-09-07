@@ -14,6 +14,7 @@ use App\Livewire\Geomapping\Iplan\InvestmentRegistration;
 use App\Http\Controllers\GeomappingUsersDashboardController;
 
 use App\Http\Controllers\GeomappingCommoditiesTableController;
+use App\Http\Controllers\GeomappingAnalyticsDashboardController;
 use App\Http\Controllers\GeomappingInterventionsTableController;
 
 Route::get('/code-login', CodeLogin::class)->name('investment-forum');
@@ -36,6 +37,7 @@ Route::name('geomapping.')->prefix('geomapping')->group(function () {
         Route::get('/investment-forum-registration', InvestmentRegistration::class)->name('investment.registration')->middleware('guest-geo:geomapping');
         Route::get('/investment-forum-commodity-list', [GeomappingCommoditiesTableController::class, 'index'])->name('investment.commodity-list')->middleware('auth-geo:geomapping');
         Route::get('/investment-forum-intervention-list', [GeomappingInterventionsTableController::class, 'index'])->name('investment.intervention-list')->middleware('auth-geo:geomapping');
+        Route::get('/analytics-dashboard', [GeomappingAnalyticsDashboardController::class, 'index'])->name('investment.analytics-dashboard')->middleware('auth-geo:geomapping');
 
         Route::view('login', 'geomapping.iplan.login')
             ->name('login')

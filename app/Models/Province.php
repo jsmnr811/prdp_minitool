@@ -27,4 +27,15 @@ class Province extends Authenticatable
         }
         return $query->count();
     }
+
+        public function pcipMatrices()
+    {
+        return $this->hasMany(PcipMatrix::class, 'province_id', 'code');
+    }
+
+    public function geoCommodities()
+{
+    return $this->hasMany(GeoCommodity::class, 'province_id', 'code');
+}
+
 }

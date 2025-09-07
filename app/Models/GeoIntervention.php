@@ -22,4 +22,5 @@ class GeoIntervention extends Model
     {
         return $this->belongsTo(Intervention::class);
     }
+
 }

@@ -31,8 +31,25 @@ class GeoCommodity extends Model
     }
 
     public function user()
-{
-    return $this->belongsTo(User::class);
-}
+    {
+        return $this->belongsTo(User::class);
+    }
 
+    public function interventions()
+    {
+        return $this->hasMany(GeoIntervention::class, 'geo_commodity_id', 'id');
+    }
+    public function province()
+    {
+        return $this->belongsTo(Province::class, 'province_id', 'code');
+    }
+    public function intervention()
+    {
+        return $this->belongsTo(Intervention::class, 'intervention_id', 'id');
+    }
+
+    public function geoCommodity()
+    {
+        return $this->belongsTo(GeoCommodity::class, 'geo_commodity_id', 'id');
+    }
 }

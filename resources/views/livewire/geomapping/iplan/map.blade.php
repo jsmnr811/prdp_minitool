@@ -25,7 +25,7 @@ new class extends Component {
     {
         $this->commodities = Commodity::orderBy('name', 'asc')->get();
         $this->interventions = Intervention::orderBy('name', 'asc')->get();
-        $this->provinceGeo = GeoCommodity::where('province_id', 1)->with('commodity', 'geoInterventions.intervention')->get()->toArray();
+        $this->provinceGeo = GeoCommodity::where('province_id', $user->province_id)->with('commodity', 'geoInterventions.intervention')->get()->toArray();
     }
 
     public function search(): void
@@ -123,7 +123,7 @@ new class extends Component {
             $this->dispatch('temporaryGeoUpdated', $this->temporaryGeo);
         } else {
             array_push($this->temporaryForDeletion, $id);
-            $this->provinceGeo = GeoCommodity::where('province_id', 1)->whereNotIn('id', $this->temporaryForDeletion)->with('commodity')->get()->toArray();
+            $this->provinceGeo = GeoCommodity::where('province_id', $user->province_id)->whereNotIn('id', $this->temporaryForDeletion)->with('commodity')->get()->toArray();
             $this->dispatch('provinceGeoUpdated', $this->provinceGeo);
         }
     }

@@ -19,4 +19,8 @@ class Region extends Authenticatable
     {
         return $this->hasMany(Province::class, 'region_code', 'code');
     }
+    public function pcip_matrices()
+    {
+        return $this->hasMany(PcipMatrix::class, 'region_id', 'code');
+    }
 }

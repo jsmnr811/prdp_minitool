@@ -43,12 +43,12 @@ class MainMap extends Component
             return Intervention::orderBy('name', 'asc')->get();
         });
          $this->commodities = Cache::rememberForever('commodities_all', function () {
-                return Commodity::orderBy('name', 'asc')->get();
+                return Commodity::where('is_blocked', 0)->orderBy('name', 'asc')->get();
             });
         if (intval($this->userRole) === 1) {
-            $this->provinceGeo = GeoCommodity::where('province_id', 1)->with('commodity', 'geoInterventions.intervention')->get()->toArray();
+            $this->provinceGeo = GeoCommodity::where('province_id', $user->province_id)->with('commodity', 'geoInterventions.intervention')->get()->toArray();
         } else {
-            $this->provinceGeo = GeoCommodity::where('province_id', 1)
+            $this->provinceGeo = GeoCommodity::where('province_id', $user->province_id)
                 ->where('user_id', $user->id)
                 ->whereNotIn('id', $this->temporaryForDeletion)
                 ->with('commodity')
@@ -100,6 +100,7 @@ class MainMap extends Component
     #[On('deleteTempCommodity')]
     public function deleteTempCommodity($payload)
     {
+        $user = Auth::guard('geomapping')->user();
         $id = $payload['id'] ?? null;
         if (!$id) {
             return;
@@ -114,7 +115,7 @@ class MainMap extends Component
             $this->dispatch('temporaryGeoUpdated', $this->temporaryGeo);
         } else {
             array_push($this->temporaryForDeletion, $id);
-            $this->provinceGeo = GeoCommodity::where('province_id', 1)->whereNotIn('id', $this->temporaryForDeletion)->with('commodity')->get()->toArray();
+            $this->provinceGeo = GeoCommodity::where('province_id', $user->province_id)->whereNotIn('id', $this->temporaryForDeletion)->with('commodity')->get()->toArray();
             $this->dispatch('provinceGeoUpdated', $this->provinceGeo);
         }
     }
@@ -190,7 +191,7 @@ class MainMap extends Component
                 'commodity_id' => $geo['commodity_id'],
                 'latitude' => $geo['latitude'],
                 'longitude' => $geo['longitude'],
-                'province_id' => 1,
+                'province_id' => $user->province_id,
                 'user_id' => $user->id,
             ]);
 
@@ -213,7 +214,7 @@ class MainMap extends Component
         $this->lon = 0;
 
         LivewireAlert::title('Updated!')->text('The commodities entries have been updated.')->success()->toast()->position('top-end')->show();
-        
+
     }
 
     public function render()

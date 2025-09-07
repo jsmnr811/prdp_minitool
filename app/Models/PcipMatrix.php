@@ -24,6 +24,24 @@ class PcipMatrix extends Model
         'unfunded',
     ];
 
-    // If you want to disable timestamps (optional)
-    // public $timestamps = false;
+   public function region()
+    {
+        return $this->belongsTo(Region::class, 'region_id', 'code');
+    }
+
+    public function province()
+    {
+        return $this->belongsTo(Province::class, 'province_id', 'code');
+    }
+
+    public function commodity()
+    {
+        return $this->belongsTo(Commodity::class, 'commodity_id', 'id');
+    }
+
+    public function intervention()
+    {
+        return $this->belongsTo(Intervention::class, 'intervention_id', 'id');
+    }
+
 }
