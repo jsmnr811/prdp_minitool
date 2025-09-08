@@ -11,7 +11,6 @@ class GeomappingAnalyticsDashboardController extends Controller
     {
         // ---------------- FILTERED PROVINCES ----------------
         $query = Province::with([
-            'region', // ✅ eager load region
             'pcipMatrices.commodity',
             'pcipMatrices.intervention',
             'geoCommodities.interventions',
@@ -19,11 +18,6 @@ class GeomappingAnalyticsDashboardController extends Controller
         ])
             ->where('region_code', '!=', 16)
             ->whereHas('geoCommodities');
-
-        // Region filter
-        if ($request->filled('region_select') && strtolower($request->region_select) !== 'all') {
-            $query->where('region_code', $request->region_select);
-        }
 
         // Province filter
         if ($request->filled('province_select') && strtolower($request->province_select) !== 'all') {
@@ -52,6 +46,7 @@ class GeomappingAnalyticsDashboardController extends Controller
 
             foreach ($province->geoCommodities as $geoCommodity) {
                 foreach ($geoCommodity->interventions as $geoIntervention) {
+
                     // Get all PCIP matrices for this commodity & intervention
                     $matches = $province->pcipMatrices
                         ->where('commodity_id', $geoCommodity->commodity_id)
@@ -116,7 +111,6 @@ class GeomappingAnalyticsDashboardController extends Controller
 
                         $item = [
                             'province' => $province->name,
-                            'region' => $province->region->abbr ?? '',
                             'commodity' => $matrix->commodity->name ?? $geoCommodity->commodity->name ?? '',
                             'intervention' => $matrix->intervention->name
                                 ?? $geoIntervention->intervention->name

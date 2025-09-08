@@ -309,7 +309,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm border-bottom py-2 py-md-3">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center text-decoration-none" href="#">
-                <img src="{{ asset('media/prdp-logo.png') }}" class="me-2 me-md-3 rounded" style="height: 35px;" alt="PRDP Logo" />
+                <img src="{{ asset('media/NAFIF.svg') }}" class="me-2 me-md-3 rounded" style="height: 35px;" alt="NAFIF" />
                 <span class="fw-bold text-primary d-none d-sm-inline">National Agri-Fishery Investment Forum</span>
                 <span class="fw-bold text-primary d-sm-none">NAFIF</span>
             </a>

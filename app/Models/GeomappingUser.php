@@ -59,6 +59,11 @@ class GeomappingUser extends Authenticatable
         return $this->belongsTo(Province::class, 'province_id', 'code');
     }
 
+     public function provinceAttribute()
+    {
+        return $this->belongsTo(Province::class, 'province_id', 'code');
+    }
+
 
 
 }

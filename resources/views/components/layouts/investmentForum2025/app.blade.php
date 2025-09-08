@@ -27,7 +27,7 @@
                 <div class="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
                     <!-- Logo -->
                     <a href="#" class="flex items-center">
-                        <img src="{{ asset('media/prdp-logo.png') }}" class="h-10 sm:h-12 mr-3" alt="PRDP Logo" />
+                        <img src="{{ asset('media/NAFIF.svg') }}" class="h-10 sm:h-12 mr-3" alt="NAFIF" />
                         <span class="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">
                             National Agri-Fishery Investment Forum
                         </span>
