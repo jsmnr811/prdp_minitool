@@ -63,9 +63,9 @@ class MailUserId extends Notification implements ShouldQueue
         }
         // Generate a PNG snapshot of the HTML
         Browsershot::html($html)
-            ->windowSize(330, 520)        // match your ID card width & height
+            // ->windowSize(330, 520)        // match your ID card width & height
+            ->windowSize(165, 260)        // match your ID card width & height
             ->waitUntilNetworkIdle()
-            ->waitUntilImagesLoaded()
             ->noSandbox()      // ensures images/fonts are loaded
             ->save($storagePath);
 
