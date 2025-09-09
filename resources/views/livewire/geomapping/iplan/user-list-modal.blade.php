@@ -241,33 +241,13 @@ new class extends Component {
         if (file_exists($storagePath)) {
             unlink($storagePath);
         }
-        // // Generate a PNG snapshot of the HTML
-        // Browsershot::html($html)
-        //     ->setChromePath('/usr/bin/chromium')
-        //     ->windowSize(330, 520)
-        //     ->save($storagePath);
+        // Generate a PNG snapshot of the HTML
+        Browsershot::html($html)
+            ->setChromePath('/usr/bin/google-chrome')
+            ->windowSize(330, 520)
+            ->save($storagePath);
 
 
-          Browsershot::url('https://example.com')
-    ->setChromePath('/usr/bin/chromium')
-    ->addChromiumArguments([
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-extensions',
-        '--disable-gpu',
-        '--disable-software-rasterizer',
-        '--disable-breakpad',
-        '--disable-crash-reporter',
-        '--no-crashpad',
-        '--no-zygote',
-        '--single-process',
-        '--disable-features=VizDisplayCompositor'
-    ])
-    ->windowSize(800, 600)
-    ->timeout(120) // seconds
-    ->waitUntilNetworkIdle()
-    ->save(storage_path('app/public/user-id-xxx.png'));
 
 
         $this->user->notify(new MailUserId($this->user));
