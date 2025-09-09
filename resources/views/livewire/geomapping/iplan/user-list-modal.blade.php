@@ -242,7 +242,6 @@ new class extends Component {
             unlink($storagePath);
         }
         // Generate a PNG snapshot of the HTML
-use Spatie\Browsershot\Browsershot;
 
 // In your controller or notification class...
 
