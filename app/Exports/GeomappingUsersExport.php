@@ -65,6 +65,7 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
             'Table Number',
             'Room Assignment',
             'Is Live In?',
+            'Is Verified?',
             'Created At',
             'Updated At',
         ];
@@ -112,7 +113,8 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
             $user->group_number,
             $user->table_number,
             $user->room_assignment,
-            $user->is_livein,
+            $user->is_livein ? 'Yes' : 'No',
+            $user->is_verified ? 'Yes' : 'No',
             $user->created_at?->format('Y-m-d H:i'),
             $user->updated_at?->format('Y-m-d H:i'),
         ];
