@@ -1,120 +1,127 @@
+@props(['user', 'logoSrc' => null, 'userImageSrc' => null])
+@php
+$bgPath = public_path('icons/NAFIF-ID-Template.png');
+$bgData = base64_encode(file_get_contents($bgPath));
+$bgSrc = 'data:image/png;base64,' . $bgData;
+@endphp
+
 <style>
-    html,
-    body {
-        margin: 0;
-        padding: 0;
-        background: #fff;
+    @font-face {
+        font-family: 'NeulisBlack';
+        src: url("{{ asset('fonts/fonts.com-Neulis_Sans_Black.otf') }}") format('opentype');
+        font-weight: 900;
+        font-style: normal;
     }
 
-    .id-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    @font-face {
+        font-family: 'NeulisMediumItalic';
+        src: url("{{ asset('fonts/fonnts.com-Neulis_Sans_Medium_Italic.otf') }}") format('opentype');
+        font-weight: 500;
+        font-style: italic;
     }
 
-    .id-card {
-        width: 350px;
-        height: 525px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        padding: 20px;
-        text-align: center;
-        font-family: Arial, sans-serif;
-        position: relative;
-        overflow: visible;
+    @font-face {
+        font-family: 'NeulisItalic';
+        src: url("{{ asset('fonts/fonnts.com-Neulis_Sans_Italic.otf') }}") format('opentype');
+        font-weight: normal;
+        font-style: italic;
     }
 
-    .header-logos {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin-bottom: 8px;
-    }
-
-    .header-logos img {
-        height: 40px;
-    }
-
-    .event-title {
-        font-size: 14px;
+    @font-face {
+        font-family: 'NeulisSansBold';
+        src: url("{{ asset('fonts/fonnts.com-Neulis_Sans_Bold.otf') }}") format('opentype');
         font-weight: bold;
-        margin: 12px auto 12px auto;
+        font-style: normal;
     }
 
-    .profile-pic {
-        width: 150px;
-        height: 180px;
-        object-fit: cover;
-        border: 1px solid #ccc;
-        margin: 10px auto 10px auto;
-    }
-
-    .user-info .name {
-        font-size: 24px;
-        font-weight: bold;
-    }
-
-    .user-info .role {
-        font-size: 10px;
-        font-weight: bold;
-        margin-top: 2px;
-    }
-
-    .user-info .department {
-        font-size: 12px;
-        margin-top: 1px;
-    }
-
-    .footer {
-        margin-top: 18px;
-        font-size: 12px;
-        text-align: left;
-        display: block;
-    }
-
-
-    .qr-code {
-        margin: 6px auto 0;
-        width: 80px;
-        height: 80px;
-        border: 3px solid #000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .powered {
-        position: absolute;
-        bottom: 6px;
-        left: 0;
-        right: 0;
-        font-size: 10px;
-        color: #555;
+    @font-face {
+        font-family: 'NeulisNeueRegular';
+        src: url("{{ asset('fonts/fonnts.com-Neulis_Neue_Regular.otf') }}") format('opentype');
+        font-weight: normal;
+        font-style: normal;
     }
 </style>
 
-<div class="id-container">
-    <div class="id-card">
-        <div class="header-logos">
-            <img src="{{ $logoSrc }}" alt="Logo1">
+<div style="width:314px; height:500px; margin:0; padding:0; position:relative; overflow:hidden;">
+    {{-- Background Image --}}
+    <img src="{{ $bgSrc }}"
+        alt="ID Background"
+        style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:0;">
+
+    {{-- Content Wrapper --}}
+    <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:20px;">
+
+        {{-- Profile Picture --}}
+        <img src="{{ $userImageSrc }}"
+            alt="Profile Picture"
+            style="width:160px; height:160px; object-fit:cover; border:2px solid rgba(255,255,255,0.8); border-radius:50%; margin-top:37px;">
+
+        {{-- User Info --}}
+        <div style="display:flex; flex-direction:column; align-items:center; margin-top:5px;">
+            @php
+            $firstNameWords = explode(' ', strtoupper($user->firstname));
+            $firstName = count($firstNameWords) > 1
+                ? $firstNameWords[0] . ' ' . $firstNameWords[1]
+                : $firstNameWords[0];
+            $lastName = strtoupper($user->lastname);
+
+            $firstFontSize = 32; // default font size for first name
+            $lastFontSize = 18; // default font size for last name
+            $maxWidth = 250 - 8; // subtract 4px margin left and right
+
+            // Only shrink first name if longer than 8 characters
+            if (strlen($firstName) > 8) {
+                $approxCharWidth = 12;
+                $nameWidth = strlen($firstName) * $approxCharWidth;
+                while ($nameWidth > $maxWidth && $firstFontSize > 10) {
+                    $firstFontSize--;
+                    $approxCharWidth = 0.5 * $firstFontSize;
+                    $nameWidth = strlen($firstName) * $approxCharWidth;
+                }
+            }
+
+            // Shrink last name to fit single line
+            $approxCharWidth = 9;
+            $nameWidth = strlen($lastName) * $approxCharWidth;
+            while ($nameWidth > $maxWidth && $lastFontSize > 8) {
+                $lastFontSize--;
+                $approxCharWidth = 0.5 * $lastFontSize;
+                $nameWidth = strlen($lastName) * $approxCharWidth;
+            }
+            @endphp
+
+            <div class="name" style="text-align:center; margin-top:0px; white-space:nowrap; overflow:hidden; padding-left:4px; padding-right:4px;">
+                <div style="font-family:'NeulisBlack', Arial, sans-serif; font-size: {{ $firstFontSize }}px; font-weight:900; color:#2f4482; line-height:1.1;">
+                    {{ $firstName }}
+                </div>
+                <div style="font-family:'NeulisMediumItalic', Arial, sans-serif; font-size: {{ $lastFontSize }}px; font-style:italic; color:#2f4482; line-height:1.1;">
+                    {{ $lastName }}
+                </div>
+            </div>
+            <div style="font-family:'NeulisSansBold', Arial, sans-serif; font-size:1rem; color:#d3e6e9; margin-top:5px;">
+                {{ strtoupper($user->designation) }}
+            </div>
         </div>
 
-        <div class="event-title">National Agri-Fishery Investment Forum</div>
-        <img class="profile-pic" src="{{ $userImageSrc }}" alt="Profile Picture">
+        {{-- QR + ID beside it --}}
+        <div style="position: relative; margin-top: 15px; height: 130px;">
 
-        <div class="user-info">
-            <div class="name">{{ strtoupper($user->name) }}</div>
-            <div class="role" style="font-size:1rem;">{{ strtoupper($user->designation) }}</div>
+            {{-- QR centered --}}
+            <div style="position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+                width: 120px; height: 120px; display:flex; justify-content:center; align-items:center;">
+                {!! SimpleSoftwareIO\QrCode\Facades\QrCode::size(110)->margin(2)->generate(route('investment.user-verification', ['id' => $user->id])) !!}
+            </div>
+
+            {{-- ID beside QR --}}
+            <div style="position: absolute; left: calc(50% + 70px); bottom: 15px;
+                font-family:'NeulisNeueRegular', Arial, sans-serif;
+                color:#2f4482; font-weight:bold; text-align:left; line-height:1.2;">
+
+                <div style="font-size:0.8rem;">ID No:</div>
+                <div style="font-family:'NeulisSansBold', Arial, sans-serif; font-size:1em;">
+                    {{ $user->id_number ?? '5INA4TCN' }}
+                </div>
+            </div>
         </div>
-
-        <div class="qr-code" style="font-size:0.7rem; margin-top:15px">
-            {!! SimpleSoftwareIO\QrCode\Facades\QrCode::size(72)->margin(2)->generate(route('investment.user-verification', ['id' => $user->id])) !!}
-        </div>
-
-        <div class="text-center text-muted" style="font-size:0.7rem; margin-top:15px">
-            ID #: {{ $user->login_code }}
-        </div>
-
-        <div class="powered">Powered by: DA-PRDP</div>
     </div>
 </div>

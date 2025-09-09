@@ -11,7 +11,7 @@ class GeomappingAnalyticsDashboardController extends Controller
     {
         // ---------------- FILTERED PROVINCES ----------------
         $query = Province::with([
-            'region', // ✅ eager load region
+            'region',
             'pcipMatrices.commodity',
             'pcipMatrices.intervention',
             'geoCommodities.interventions',
@@ -51,7 +51,21 @@ class GeomappingAnalyticsDashboardController extends Controller
             $finalMatrices = collect();
 
             foreach ($province->geoCommodities as $geoCommodity) {
+                // Commodity filter at loop level
+                if ($request->filled('commodity_select') && strtolower($request->commodity_select) !== 'all') {
+                    if ($geoCommodity->commodity_id != $request->commodity_select) {
+                        continue;
+                    }
+                }
+
                 foreach ($geoCommodity->interventions as $geoIntervention) {
+                    // Intervention filter at loop level
+                    if ($request->filled('intervention_select') && strtolower($request->intervention_select) !== 'all') {
+                        if ($geoIntervention->intervention_id != $request->intervention_select) {
+                            continue;
+                        }
+                    }
+
                     // Get all PCIP matrices for this commodity & intervention
                     $matches = $province->pcipMatrices
                         ->where('commodity_id', $geoCommodity->commodity_id)
@@ -121,8 +135,8 @@ class GeomappingAnalyticsDashboardController extends Controller
                             'intervention' => $matrix->intervention->name
                                 ?? $geoIntervention->intervention->name
                                 ?? '',
-                            'latitude' => $geoCommodity->latitude,
-                            'longitude' => $geoCommodity->longitude,
+                            'latitude' => $province->latitude,
+                            'longitude' => $province->longitude,
                             'icon' => $geoCommodity->commodity->icon,
                             'funded' => $matrix->funded,
                             'unfunded' => $matrix->unfunded,

@@ -106,7 +106,7 @@ new class extends Component {
     {
         $this->validatedUserData = $this->validate([
             'firstname' => 'required|string|max:255',
-            'middlename' => 'required|string|max:255',
+            'middlename' => 'nullable|string|max:255',
             'lastname' => 'required|string|max:255',
             'ext_name' => 'nullable|string|max:255',
             'sex' => 'required|in:Male,Female',

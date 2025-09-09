@@ -174,76 +174,128 @@
 
     </div>
 
-    @push('styles')
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    @endpush
+   @push('styles')
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+<style>
+/* Smaller zoom buttons */
+.leaflet-control-zoom a {
+    width: 20px !important;
+    height: 20px !important;
+    line-height: 20px !important;
+    font-size: 14px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 3px !important;
+}
+</style>
+@endpush
 
-    @php
-    $geoCommoditiesFundedJson = isset($geoCommoditiesFunded) ? json_encode($geoCommoditiesFunded) : '[]';
-    $geoCommoditiesUnfundedJson = isset($geoCommoditiesUnfunded) ? json_encode($geoCommoditiesUnfunded) : '[]';
-    @endphp
+@php
+$geoCommoditiesFundedJson = isset($geoCommoditiesFunded) ? json_encode($geoCommoditiesFunded) : '[]';
+$geoCommoditiesUnfundedJson = isset($geoCommoditiesUnfunded) ? json_encode($geoCommoditiesUnfunded) : '[]';
+@endphp
 
-    @push('scripts')
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script>
-        const mapOptions = {
-            minZoom: 5,
-            maxZoom: 10,
-            maxBounds: [
-                [4.5, 116.0],
-                [21.0, 127.0]
-            ],
-            maxBoundsViscosity: 1.0,
-            attributionControl: false
-        };
+@push('scripts')
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+<script>
+const mapOptions = {
+    minZoom: 5,
+    maxZoom: 10,
+    maxBounds: [
+        [4.5, 116.0],
+        [21.0, 127.0]
+    ],
+    maxBoundsViscosity: 1.0,
+    attributionControl: false
+};
 
-        function addMarkersAndFitBounds(mapId, geoData, type) {
-            const map = L.map(mapId, mapOptions);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-                subdomains: 'abcd',
-                maxZoom: 19
-            }).addTo(map);
+function getIconSize(value, minValue, maxValue) {
+    const minSize = 16;
+    const maxSize = 64;
+    if (maxValue === minValue) return [minSize, minSize];
+    const scale = (value - minValue) / (maxValue - minValue);
+    const size = minSize + scale * (maxSize - minSize);
+    return [size, size];
+}
 
-            const markers = [];
-            geoData.forEach(item => {
-                const iconUrl = "{{ asset('icons') }}/" + item.icon;
-                const commodityIcon = L.icon({
-                    iconUrl,
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 32],
-                    popupAnchor: [0, -32]
-                });
-                const marker = L.marker(
-                        [parseFloat(item.latitude), parseFloat(item.longitude)], {
-                            icon: commodityIcon
-                        }
-                    )
-                    .addTo(map)
-                    .bindPopup(
-                        `<b>${item.commodity}</b> (${item.province})<br>
-                 Intervention: ${item.intervention}<br>
-                 ${type}: ${type === 'Funded' ? item.funded : item.unfunded}`
-                    );
-                markers.push(marker);
+function addMarkersAndFitBounds(mapId, geoData, type) {
+    const map = L.map(mapId, mapOptions);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(map);
+
+    const values = geoData.map(item => type === 'Funded' ? item.funded : item.unfunded).filter(v => v > 0);
+    const minValue = values.length ? Math.min(...values) : 0;
+    const maxValue = values.length ? Math.max(...values) : 1;
+
+    const markers = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        spiderfyOnMaxZoom: true,
+        disableClusteringAtZoom: 12
+    });
+
+    geoData.forEach(item => {
+        const value = type === 'Funded' ? item.funded : item.unfunded;
+        if (value <= 0) return;
+
+        const iconSize = getIconSize(value, minValue, maxValue);
+        const iconUrl = "{{ asset('icons') }}/" + item.icon;
+
+        const commodityIcon = L.icon({
+            iconUrl,
+            iconSize: iconSize,
+            iconAnchor: [iconSize[0] / 2, iconSize[1]],
+            popupAnchor: [0, -iconSize[1]]
+        });
+
+        const marker = L.marker([parseFloat(item.latitude), parseFloat(item.longitude)], { icon: commodityIcon })
+            .bindPopup(
+                `<div style="max-width:200px; word-wrap:break-word;">
+                    <b>${item.commodity}</b> (${item.province})<br>
+                    Intervention: ${item.intervention}<br>
+                    ${type}: ${value.toLocaleString()}
+                </div>`,
+                { maxWidth: 200 }
+            );
+
+        markers.addLayer(marker);
+    });
+
+    map.addLayer(markers);
+
+    if (markers.getLayers().length > 0) {
+        map.fitBounds(markers.getBounds().pad(0.2));
+
+        // Auto spiderfy after fitBounds animation
+        map.on('animationend', () => {
+            markers.eachLayer(layer => {
+                if (layer instanceof L.MarkerCluster && layer.getChildCount() > 1) {
+                    layer.spiderfy();
+                }
             });
+        });
+    } else {
+        map.setView([12.8797, 121.7740], 5);
+    }
 
-            if (markers.length > 0) {
-                const group = L.featureGroup(markers);
-                map.fitBounds(group.getBounds().pad(0.2));
-            } else {
-                map.setView([12.8797, 121.7740], 5);
-            }
+    return map;
+}
 
-            return map;
-        }
+const fundedData = {!! $geoCommoditiesFundedJson !!};
+const unfundedData = {!! $geoCommoditiesUnfundedJson !!};
 
-        const fundedData = {!!$geoCommoditiesFundedJson!!};
-        const unfundedData = {!!$geoCommoditiesUnfundedJson!!};
+addMarkersAndFitBounds('map-funded', fundedData, 'Funded');
+addMarkersAndFitBounds('map-unfunded', unfundedData, 'Unfunded');
+</script>
+@endpush
 
-        addMarkersAndFitBounds('map-funded', fundedData, 'Funded');
-        addMarkersAndFitBounds('map-unfunded', unfundedData, 'Unfunded');
-    </script>
-    @endpush
+
+
 
 </x-layouts.geomapping.iplan.app>

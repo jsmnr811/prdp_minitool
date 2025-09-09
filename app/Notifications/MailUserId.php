@@ -63,9 +63,11 @@ class MailUserId extends Notification implements ShouldQueue
         }
         // Generate a PNG snapshot of the HTML
         Browsershot::html($html)
-            ->windowSize(350, 566)
-            ->waitUntilNetworkIdle() // ensures images/fonts are loaded
+            ->windowSize(330, 520)        // match your ID card width & height
+            ->deviceScaleFactor(2)        // optional: double resolution for sharpness
+            ->waitUntilNetworkIdle()      // ensures images/fonts are loaded
             ->save($storagePath);
+
 
         if ($this->user->is_blocked) {
             $salutation = ($this->user->sex === 'Male') ? 'Mr.' : 'Ms.';
@@ -98,15 +100,15 @@ class MailUserId extends Notification implements ShouldQueue
                 ->salutation('National Agri-Fishery Investment Forum Secretariat');
         } else {
             return (new MailMessage)
-            ->subject('Welcome to National Agri-Fishery Investment Forum')
-            ->view('emails.investment-forum-registration', [
-                'user' => $this->user,
-                'logoSrc' => $logoSrc
-            ])
-            ->attach($storagePath, [
-                'as' => 'welcome-image.png',
-                'mime' => 'image/png',
-            ]);
+                ->subject('Welcome to National Agri-Fishery Investment Forum')
+                ->view('emails.investment-forum-registration', [
+                    'user' => $this->user,
+                    'logoSrc' => $logoSrc
+                ])
+                ->attach($storagePath, [
+                    'as' => 'NAFIF-ID.png',
+                    'mime' => 'image/png',
+                ]);
         }
     }
 
