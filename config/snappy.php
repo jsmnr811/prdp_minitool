@@ -35,17 +35,20 @@ return [
 
     'pdf' => [
         'enabled' => true,
-        'binary'  => env('SNAPPY_IMAGE_BINARY', '/usr/local/bin/wkhtmltoimage-custom'),
+        'binary'  => env('WKHTMLTOPDF_PATH', '/usr/local/bin/wkhtmltopdf'),
         'timeout' => false,
         'options' => [],
         'env'     => [],
     ],
-
     'image' => [
         'enabled' => true,
-        'binary'  => env('SNAPPY_PDF_BINARY', '/usr/local/bin/wkhtmltopdf-custom'),
+        'binary'  => env('WKHTMLTOIMAGE_PATH', '/usr/local/bin/wkhtmltoimage'),  // Key for CentOS Stream 9
         'timeout' => false,
-        'options' => [],
+        'options' => [
+            'format' => 'png',  // Or 'jpg'
+            'width'  => 1024,
+            'quality' => 80,  // For JPEG
+        ],
         'env'     => [],
     ],
 

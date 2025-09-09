@@ -10,6 +10,7 @@ use App\Models\GeomappingUser;
 use App\Notifications\MailUserId;
 use Spatie\Browsershot\Browsershot;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\Snappy\Facades\SnappyImage;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
 new class extends Component {
@@ -242,22 +243,20 @@ new class extends Component {
             unlink($storagePath);
         }
         // Generate a PNG snapshot of the HTML
+        // Browsershot::html($html)
+        //     ->setChromePath('/usr/bin/google-chrome')
+        //     ->windowSize(330, 520)
+        //     ->addChromiumArguments(['--user-data-dir=/tmp/chrome-user-data','--disable-crash-reporter', '--no-crashpad', '--no-sandbox', '--disable-setuid-sandbox', '--single-process', '--no-zygote', '--disable-extensions', '--disable-gpu', '--disable-software-rasterizer', '--disable-features=VizDisplayCompositor', '--disable-dev-shm-usage'])
+        //     ->save($storagePath);
 
-// In your controller or notification class...
 
-Browsershot::url('https://example.com')
-    ->setChromeExecutablePath('/usr/bin/chromium') // You already have this, which is good
+        $image = SnappyImage::loadHTML($html)
+            ->setOption('format', 'png')
+            ->setOption('width', 330)
+            ->output();
+        file_put_contents(storage_path('app/public/' . $fileName), $image);
 
-    // 👇 ADD THIS PART
-    ->addChromiumArguments([
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-    ])
 
-    // Your other options
-    ->windowSize(800, 600)
-    ->timeout(120000)
-    ->save('/var/www/html/bidding/storage/app/public/user-dasdas-5.png');
 
         $this->user->notify(new MailUserId($this->user));
         LivewireAlert::title('Success')->text('Geomapping User ID has been sent successfully')->success()->toast()->position('top-end')->show();
