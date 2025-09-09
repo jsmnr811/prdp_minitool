@@ -241,10 +241,16 @@ new class extends Component {
         if (file_exists($storagePath)) {
             unlink($storagePath);
         }
-        // Generate a PNG snapshot of the HTML
-        Browsershot::html('dasdasd')
-            ->windowSize(330, 520)
-            ->save($storagePath);
+        // // Generate a PNG snapshot of the HTML
+        // Browsershot::html($html)
+        //     ->setChromePath('/usr/bin/chromium')
+        //     ->windowSize(330, 520)
+        //     ->save($storagePath);
+
+
+            Browsershot::url('https://example.com')
+    ->timeout(120)
+    ->save($storagePath);
 
         $this->user->notify(new MailUserId($this->user));
         LivewireAlert::title('Success')->text('Geomapping User ID has been sent successfully')->success()->toast()->position('top-end')->show();
