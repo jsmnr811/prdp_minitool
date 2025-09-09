@@ -250,7 +250,8 @@ new class extends Component {
      $image =   SnappyImage::loadHTML($html)
     ->setOption('format', 'jpg')
     ->setOption('quality', 85)
-    ->setOption('width', 1200)
+    ->setOption('width', 330)
+    ->setOption('height', 520)
     ->output();
     file_put_contents(storage_path('app/public/' . $fileName), $image);
 
