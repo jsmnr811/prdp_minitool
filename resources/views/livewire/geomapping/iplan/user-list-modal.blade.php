@@ -243,10 +243,27 @@ new class extends Component {
         }
         // Generate a PNG snapshot of the HTML
         Browsershot::html($html)
-            ->setChromePath('/usr/bin/google-chrome')
-            ->windowSize(330, 520)
-            ->addChromiumArguments(['--user-data-dir=/tmp/chrome-user-data','--disable-crash-reporter', '--no-crashpad', '--no-sandbox', '--disable-setuid-sandbox', '--single-process', '--no-zygote', '--disable-extensions', '--disable-gpu', '--disable-software-rasterizer', '--disable-features=VizDisplayCompositor', '--disable-dev-shm-usage'])
-            ->save($storagePath);
+    ->setChromePath('/usr/bin/google-chrome')
+    ->addChromiumArguments([
+        '--headless',
+        '--disable-gpu',
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-extensions',
+        '--disable-software-rasterizer',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-crash-reporter',
+        '--no-crashpad',
+        '--single-process',
+        '--no-zygote',
+        '--user-data-dir=/var/www/tmp/chrome-user-data',
+    ])
+    ->windowSize(330, 520)
+    ->waitUntilNetworkIdle()
+    ->timeout(120)
+    ->save($storagePath);
+
 
         $this->user->notify(new MailUserId($this->user));
         LivewireAlert::title('Success')->text('Geomapping User ID has been sent successfully')->success()->toast()->position('top-end')->show();
