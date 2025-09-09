@@ -1,9 +1,38 @@
+<style>
+    @font-face {
+        font-family: 'NeulisMediumItalic';
+        src: url("{{ asset('fonts/fonnts.com-Neulis_Sans_Medium_Italic.otf') }}") format('opentype');
+        font-weight: 500;
+        font-style: italic;
+    }
+
+    @font-face {
+        font-family: 'NeulisItalic';
+        src: url("{{ asset('fonts/fonnts.com-Neulis_Sans_Italic.otf') }}") format('opentype');
+        font-weight: normal;
+        font-style: italic;
+    }
+
+    @font-face {
+        font-family: 'NeulisSansBold';
+        src: url("{{ asset('fonts/fonnts.com-Neulis_Sans_Bold.otf') }}") format('opentype');
+        font-weight: bold;
+        font-style: normal;
+    }
+
+    @font-face {
+        font-family: 'NeulisNeueRegular';
+        src: url("{{ asset('fonts/fonnts.com-Neulis_Neue_Regular.otf') }}") format('opentype');
+        font-weight: normal;
+        font-style: normal;
+    }
+</style>
+
 <div style="width:314px; height:500px; margin:0; padding:0; position:relative; overflow:hidden;">
     {{-- Background Image --}}
     {{-- <img src="{{ $bgSrc }}"
         alt="ID Background"
         style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:0;"> --}}
-
     {{-- Content Wrapper --}}
     <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:20px;">
 
