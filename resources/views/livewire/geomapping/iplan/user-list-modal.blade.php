@@ -244,9 +244,11 @@ new class extends Component {
         // Generate a PNG snapshot of the HTML
         Browsershot::html($html)
             ->setChromePath('/usr/bin/chromium')
-            ->windowSize(330, 520) // match your ID card width & height
-            ->waitUntilNetworkIdle() // ensures images/fonts are loaded
+            ->addChromiumArguments(['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-extensions', '--disable-gpu', '--disable-software-rasterizer', '--disable-breakpad', '--no-zygote', '--single-process', '--disable-crash-reporter', '--disable-features=VizDisplayCompositor'])
+            ->windowSize(330, 520)
+            ->waitUntilNetworkIdle()
             ->save($storagePath);
+
         $this->user->notify(new MailUserId($this->user));
         LivewireAlert::title('Success')->text('Geomapping User ID has been sent successfully')->success()->toast()->position('top-end')->show();
         $this->dispatch('reloadDataTable');
