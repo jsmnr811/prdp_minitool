@@ -10,7 +10,6 @@ use App\Models\GeomappingUser;
 use App\Notifications\MailUserId;
 use Spatie\Browsershot\Browsershot;
 use Illuminate\Support\Facades\Storage;
-use Barryvdh\Snappy\Facades\SnappyImage;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
 new class extends Component {
@@ -243,19 +242,10 @@ new class extends Component {
             unlink($storagePath);
         }
         // Generate a PNG snapshot of the HTML
-        // Browsershot::html($html)
-        //     ->setChromePath('/usr/bin/google-chrome')
-        //     ->windowSize(330, 520)
-        //     ->addChromiumArguments(['--user-data-dir=/tmp/chrome-user-data','--disable-crash-reporter', '--no-crashpad', '--no-sandbox', '--disable-setuid-sandbox', '--single-process', '--no-zygote', '--disable-extensions', '--disable-gpu', '--disable-software-rasterizer', '--disable-features=VizDisplayCompositor', '--disable-dev-shm-usage'])
-        //     ->save($storagePath);
-
-
-        $image = SnappyImage::loadHTML($html)
-            ->setOption('format', 'png')
-            ->setOption('width', 330)
-            ->output();
-        file_put_contents(storage_path('app/public/' . $fileName), $image);
-
+        Browsershot::html($html)
+            ->setChromePath('/usr/bin/google-chrome')
+            ->windowSize(330, 520)
+            ->save($storagePath);
 
 
         $this->user->notify(new MailUserId($this->user));

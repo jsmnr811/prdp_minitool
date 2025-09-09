@@ -1,8 +1,8 @@
 @props(['user', 'logoSrc' => null, 'userImageSrc' => null])
 @php
-$bgPath = public_path('icons/NAFIF-ID-Template.png');
-$bgData = base64_encode(file_get_contents($bgPath));
-$bgSrc = 'data:image/png;base64,' . $bgData;
+// $bgPath = public_path('icons/NAFIF-ID-Template.png');
+// $bgData = base64_encode(file_get_contents($bgPath));
+// $bgSrc = 'data:image/png;base64,' . $bgData;
 @endphp
 
 <style>
