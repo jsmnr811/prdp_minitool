@@ -245,7 +245,7 @@ new class extends Component {
         Browsershot::html($html)
             ->setChromePath('/usr/bin/google-chrome')
             ->windowSize(330, 520)
-            ->addChromiumArguments(['--disable-crash-reporter', '--no-crashpad', '--no-sandbox', '--disable-setuid-sandbox', '--single-process', '--no-zygote', '--disable-extensions', '--disable-gpu', '--disable-software-rasterizer', '--disable-features=VizDisplayCompositor', '--disable-dev-shm-usage'])
+            ->addChromiumArguments(['--user-data-dir=/tmp/chrome-user-data','--disable-crash-reporter', '--no-crashpad', '--no-sandbox', '--disable-setuid-sandbox', '--single-process', '--no-zygote', '--disable-extensions', '--disable-gpu', '--disable-software-rasterizer', '--disable-features=VizDisplayCompositor', '--disable-dev-shm-usage'])
             ->save($storagePath);
 
         $this->user->notify(new MailUserId($this->user));
