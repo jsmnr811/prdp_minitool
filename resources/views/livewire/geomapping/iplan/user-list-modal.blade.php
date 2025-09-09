@@ -250,13 +250,12 @@ new class extends Component {
         //     ->save($storagePath);
 
 
-        $image = SnappyImage::loadHTML(
-            'Hello wire:'
-        )
+        $image = SnappyImage::loadHTML($html)
             ->setOption('format', 'png')
             ->setOption('width', 330)
             ->output();
-        // file_put_contents(storage_path('app/public/' . $fileName), $image);
+        file_put_contents(storage_path('app/public/' . $fileName), $image);
+
 
 
         $this->user->notify(new MailUserId($this->user));
