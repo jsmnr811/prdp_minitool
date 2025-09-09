@@ -242,31 +242,23 @@ new class extends Component {
             unlink($storagePath);
         }
         // Generate a PNG snapshot of the HTML
-Browsershot::html($html)
-    ->setChromePath('/usr/bin/google-chrome')
+use Spatie\Browsershot\Browsershot;
+
+// In your controller or notification class...
+
+Browsershot::url('https://example.com')
+    ->setChromeExecutablePath('/usr/bin/chromium') // You already have this, which is good
+
+    // 👇 ADD THIS PART
     ->addChromiumArguments([
-        '--headless',
-        '--disable-gpu',
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-extensions',
-        '--disable-software-rasterizer',
-        '--disable-features=VizDisplayCompositor',
-        '--disable-crash-reporter',
-        '--no-crashpad',
-        '--single-process',
-        '--no-zygote',
-        '--user-data-dir=/var/www/tmp/chrome-user-data',
     ])
-    ->windowSize(330, 520)
-    ->waitUntilNetworkIdle()
-    ->timeout(120)
-    ->setOption('env', [
-        'XDG_DATA_HOME' => '/var/www/tmp/chrome-user-data',
-        'XDG_CONFIG_HOME' => '/var/www/tmp/chrome-user-data',
-    ])
-    ->save($storagePath);
+
+    // Your other options
+    ->windowSize(800, 600)
+    ->timeout(120000)
+    ->save('/var/www/html/bidding/storage/app/public/user-dasdas-5.png');
 
         $this->user->notify(new MailUserId($this->user));
         LivewireAlert::title('Success')->text('Geomapping User ID has been sent successfully')->success()->toast()->position('top-end')->show();
