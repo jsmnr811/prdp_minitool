@@ -250,11 +250,11 @@ new class extends Component {
         //     ->save($storagePath);
 
 
-        $image = SnappyImage::loadHTML($html)
-            ->setOption('format', 'png')
-            ->setOption('width', 330)
-            ->output();
-        file_put_contents(storage_path('app/public/' . $fileName), $image);
+        // $image = SnappyImage::loadHTML($html)
+        //     ->setOption('format', 'png')
+        //     ->setOption('width', 330)
+        //     ->output();
+        // file_put_contents(storage_path('app/public/' . $fileName), $image);
 
 
 
