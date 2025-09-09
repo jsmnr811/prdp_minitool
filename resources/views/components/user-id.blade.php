@@ -1,8 +1,8 @@
 <div style="width:314px; height:500px; margin:0; padding:0; position:relative; overflow:hidden;">
     {{-- Background Image --}}
-    <img src="{{ $bgSrc }}"
+    {{-- <img src="{{ $bgSrc }}"
         alt="ID Background"
-        style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:0;">
+        style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:0;"> --}}
 
     {{-- Content Wrapper --}}
     <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:20px;">
