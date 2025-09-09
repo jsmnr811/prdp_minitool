@@ -248,10 +248,27 @@ new class extends Component {
         //     ->save($storagePath);
 
 
-            Browsershot::url('https://example.com')
-            ->setChromePath('/usr/bin/chromium')
-    ->timeout(120)
-    ->save($storagePath);
+          Browsershot::url('https://example.com')
+    ->setChromePath('/usr/bin/chromium')
+    ->addChromiumArguments([
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-extensions',
+        '--disable-gpu',
+        '--disable-software-rasterizer',
+        '--disable-breakpad',
+        '--disable-crash-reporter',
+        '--no-crashpad',
+        '--no-zygote',
+        '--single-process',
+        '--disable-features=VizDisplayCompositor'
+    ])
+    ->windowSize(800, 600)
+    ->timeout(120) // seconds
+    ->waitUntilNetworkIdle()
+    ->save(storage_path('app/public/user-id-xxx.png'));
+
 
         $this->user->notify(new MailUserId($this->user));
         LivewireAlert::title('Success')->text('Geomapping User ID has been sent successfully')->success()->toast()->position('top-end')->show();
