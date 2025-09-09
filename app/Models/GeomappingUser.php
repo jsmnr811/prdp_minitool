@@ -13,6 +13,12 @@ class GeomappingUser extends Authenticatable
 
     use Notifiable;
     protected $table = 'geomapping_users';
+    protected $casts = [
+        'is_livein' => 'boolean',
+        'is_verified' => 'boolean',
+        'is_iplan' => 'boolean',
+        'is_blocked' => 'boolean',
+    ];
 
     protected $fillable = [
         'image',
@@ -59,11 +65,8 @@ class GeomappingUser extends Authenticatable
         return $this->belongsTo(Province::class, 'province_id', 'code');
     }
 
-     public function provinceAttribute()
+    public function provinceAttribute()
     {
         return $this->belongsTo(Province::class, 'province_id', 'code');
     }
-
-
-
 }

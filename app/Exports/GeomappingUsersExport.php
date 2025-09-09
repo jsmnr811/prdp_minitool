@@ -34,6 +34,7 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
                 'table_number',
                 'room_assignment',
                 'is_livein',
+                'is_verified', 
                 'created_at',
                 'updated_at',
             ])
