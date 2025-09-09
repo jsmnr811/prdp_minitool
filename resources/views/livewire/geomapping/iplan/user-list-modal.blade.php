@@ -8,8 +8,9 @@ use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 use App\Models\GeomappingUser;
 use App\Notifications\MailUserId;
-use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
+use Spatie\Browsershot\Browsershot;
 use Illuminate\Support\Facades\Storage;
+use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
 new class extends Component {
     use WithFileUploads;
@@ -222,6 +223,30 @@ new class extends Component {
 
     public function sendGeomappingUserId()
     {
+        $fileName = 'user-id-' . $this->user->id . '.png';
+        $storagePath = storage_path('app/public/' . $fileName);
+        // Load logo image and convert to base64
+        $logoPath = public_path('media/Scale-Up.png');
+        $logoData = base64_encode(file_get_contents($logoPath));
+        $logoSrc = 'data:image/png;base64,' . $logoData;
+
+        // Load user image and convert to base64 (check if exists, otherwise use default)
+        $userImagePath = $this->user->image && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image)) && file_exists(public_path($this->user->image)) ? public_path($this->user->image) : storage_path('app/public/investmentforum2025/default.png');
+
+        $userImageData = base64_encode(file_get_contents($userImagePath));
+        $userImageSrc = 'data:image/png;base64,' . $userImageData;
+
+        $html = view('components.user-id', ['user' => $this->user, 'logoSrc' => $logoSrc, 'userImageSrc' => $userImageSrc])->render();
+
+        if (file_exists($storagePath)) {
+            unlink($storagePath);
+        }
+        // Generate a PNG snapshot of the HTML
+        Browsershot::html($html)
+            ->windowSize(330, 520) // match your ID card width & height
+            ->waitUntilNetworkIdle() // ensures images/fonts are loaded
+            ->save($storagePath);
+
         $this->user->notify(new MailUserId($this->user));
         LivewireAlert::title('Success')->text('Geomapping User ID has been sent successfully')->success()->toast()->position('top-end')->show();
         $this->dispatch('reloadDataTable');
