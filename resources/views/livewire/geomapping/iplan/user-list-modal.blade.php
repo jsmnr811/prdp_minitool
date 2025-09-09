@@ -242,7 +242,7 @@ new class extends Component {
             unlink($storagePath);
         }
         // Generate a PNG snapshot of the HTML
-        Browsershot::html($html)
+Browsershot::html($html)
     ->setChromePath('/usr/bin/google-chrome')
     ->addChromiumArguments([
         '--headless',
@@ -262,8 +262,11 @@ new class extends Component {
     ->windowSize(330, 520)
     ->waitUntilNetworkIdle()
     ->timeout(120)
+    ->setOption('env', [
+        'XDG_DATA_HOME' => '/var/www/tmp/chrome-user-data',
+        'XDG_CONFIG_HOME' => '/var/www/tmp/chrome-user-data',
+    ])
     ->save($storagePath);
-
 
         $this->user->notify(new MailUserId($this->user));
         LivewireAlert::title('Success')->text('Geomapping User ID has been sent successfully')->success()->toast()->position('top-end')->show();
