@@ -249,6 +249,7 @@ new class extends Component {
 
 
             Browsershot::url('https://example.com')
+            ->setChromePath('/usr/bin/chromium')
     ->timeout(120)
     ->save($storagePath);
 
