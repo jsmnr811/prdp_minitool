@@ -242,8 +242,7 @@ new class extends Component {
             unlink($storagePath);
         }
         // Generate a PNG snapshot of the HTML
-        Browsershot::html($html)
-            ->setChromePath('/usr/bin/chromium')
+        Browsershot::html('dasdasd')
             ->windowSize(330, 520)
             ->save($storagePath);
 
