@@ -64,7 +64,6 @@ class MailUserId extends Notification implements ShouldQueue
         // Generate a PNG snapshot of the HTML
         Browsershot::html($html)
             ->windowSize(330, 520)        // match your ID card width & height
-            ->deviceScaleFactor(2)        // optional: double resolution for sharpness
             ->waitUntilNetworkIdle()      // ensures images/fonts are loaded
             ->save($storagePath);
 
@@ -104,11 +103,12 @@ class MailUserId extends Notification implements ShouldQueue
                 ->view('emails.investment-forum-registration', [
                     'user' => $this->user,
                     'logoSrc' => $logoSrc
-                ])
-                ->attach($storagePath, [
-                    'as' => 'NAFIF-ID.png',
-                    'mime' => 'image/png',
                 ]);
+
+                // ->attach($storagePath, [
+                //     'as' => 'NAFIF-ID.png',
+                //     'mime' => 'image/png',
+                // ]);
         }
     }
 
