@@ -62,10 +62,12 @@ class MailUserId extends Notification implements ShouldQueue
             unlink($storagePath);
         }
         // Generate a PNG snapshot of the HTML
-        // Browsershot::html($html)
-        //     ->windowSize(330, 520)        // match your ID card width & height
-        //     ->waitUntilNetworkIdle()      // ensures images/fonts are loaded
-        //     ->save($storagePath);
+        Browsershot::html($html)
+            ->windowSize(330, 520)        // match your ID card width & height
+            ->waitUntilNetworkIdle()
+            ->waitUntilImagesLoaded()
+            ->noSandbox()      // ensures images/fonts are loaded
+            ->save($storagePath);
 
 
         if ($this->user->is_blocked) {
