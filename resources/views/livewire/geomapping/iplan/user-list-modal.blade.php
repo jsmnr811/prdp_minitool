@@ -10,6 +10,7 @@ use App\Models\GeomappingUser;
 use App\Notifications\MailUserId;
 use Spatie\Browsershot\Browsershot;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\Snappy\Facades\SnappyImage;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
 new class extends Component {
@@ -242,10 +243,17 @@ new class extends Component {
             unlink($storagePath);
         }
         // Generate a PNG snapshot of the HTML
-        Browsershot::html($html)
-            ->setChromePath('/usr/bin/chromium')
-            ->windowSize(330, 520)
-            ->save($storagePath);
+        // Browsershot::html($html)
+        //     ->setChromePath('/usr/bin/chromium')
+        //     ->windowSize(330, 520)
+        //     ->save($storagePath);
+     $image =   SnappyImage::loadHTML($html)
+    ->setOption('format', 'jpg')
+    ->setOption('quality', 85)
+    ->setOption('width', 1200)
+    ->output();
+    file_put_contents(storage_path('app/public/' . $fileName), $image);
+
 
 
         $this->user->notify(new MailUserId($this->user));

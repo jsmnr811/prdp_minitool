@@ -6,12 +6,6 @@
 @endphp
 
 <style>
-    @font-face {
-        font-family: 'NeulisBlack';
-        src: url("{{ asset('fonts/fonts.com-Neulis_Sans_Black.otf') }}") format('opentype');
-        font-weight: 900;
-        font-style: normal;
-    }
 
     @font-face {
         font-family: 'NeulisMediumItalic';
