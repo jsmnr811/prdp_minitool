@@ -256,7 +256,8 @@ new class extends Component {
         //     ->output();
         // file_put_contents(storage_path('app/public/' . $fileName), $image);
 
-
+$image = SnappyImage::loadFile('https://example.com')->output();
+file_put_contents(storage_path('app/public/' . $fileName), $image);
 
         $this->user->notify(new MailUserId($this->user));
         LivewireAlert::title('Success')->text('Geomapping User ID has been sent successfully')->success()->toast()->position('top-end')->show();
