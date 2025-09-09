@@ -33,21 +33,39 @@ return [
     |
     */
 
-    'pdf' => [
+    // 'pdf' => [
+    //     'enabled' => true,
+    //     'binary'  => env('SNAPPY_IMAGE_BINARY', '/usr/local/bin/wkhtmltoimage-custom'),
+    //     'timeout' => false,
+    //     'options' => [],
+    //     'env'     => [],
+    // ],
+
+    // 'image' => [
+    //     'enabled' => true,
+    //     'binary'  => env('SNAPPY_PDF_BINARY', '/usr/local/bin/wkhtmltopdf-custom'),
+    //     'timeout' => false,
+    //     'options' => [],
+    //     'env'     => [],
+    // ],
+     'pdf' => [
         'enabled' => true,
-        'binary'  => env('WKHTMLTOPDF_PATH', '/usr/local/bin/wkhtmltopdf'),
+        // Use ENV variable if set, otherwise fallback to Windows path
+        'binary'  => env('WKHTMLTOPDF_PATH', '"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"'),
         'timeout' => false,
         'options' => [],
         'env'     => [],
     ],
+
     'image' => [
         'enabled' => true,
-        'binary'  => env('WKHTMLTOIMAGE_PATH', '/usr/local/bin/wkhtmltoimage'),  // Key for CentOS Stream 9
+        'binary'  => env('WKHTMLTOIMAGE_PATH', '"C:\Program Files\wkhtmltopdf\bin\wkhtmltoimage.exe"'),
         'timeout' => false,
         'options' => [
-            'format' => 'png',  // Or 'jpg'
-            'width'  => 1024,
-            'quality' => 80,  // For JPEG
+            'format'  => 'jpg',   // Default format
+            'width'   => 330,     // Your case needed 330
+            'height'  => 520,     // Your case needed 520
+            'quality' => 85,      // Quality for JPG
         ],
         'env'     => [],
     ],

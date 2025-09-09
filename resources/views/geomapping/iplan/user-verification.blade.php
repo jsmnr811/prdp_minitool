@@ -12,7 +12,7 @@
             </p>
 
             <div class="my-6 flex justify-center">
-                <x-user-id :user="$user" :logo-src="$logoSrc" :user-image-src="$userImageSrc" />
+                <x-user-id :user="$user" :logo-src="$logoSrc" :user-image-src="$userImageSrc" :bgSrc="$bgSrc" />
             </div>
 
             <div class="flex justify-center">

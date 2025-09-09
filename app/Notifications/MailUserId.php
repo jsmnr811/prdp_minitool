@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use App\Models\GeomappingUser;
 use Spatie\Browsershot\Browsershot;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\Snappy\Facades\SnappyImage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -40,12 +41,35 @@ class MailUserId extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
+
+        $bgPath = public_path('icons/NAFIF-ID-Template.png');
+        $bgData = base64_encode(file_get_contents($bgPath));
+        $bgSrc = 'data:image/png;base64,' . $bgData;
         $fileName = 'user-id-' . $this->user->id . '.png';
         $storagePath = storage_path('app/public/' . $fileName);
+        // Load logo image and convert to base64
         $logoPath = public_path('media/Scale-Up.png');
         $logoData = base64_encode(file_get_contents($logoPath));
         $logoSrc = 'data:image/png;base64,' . $logoData;
 
+        // Load user image and convert to base64 (check if exists, otherwise use default)
+        $userImagePath = $this->user->image && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image)) && file_exists(public_path($this->user->image)) ? public_path($this->user->image) : storage_path('app/public/investmentforum2025/default.png');
+
+        $userImageData = base64_encode(file_get_contents($userImagePath));
+        $userImageSrc = 'data:image/png;base64,' . $userImageData;
+
+        $html = view('components.user-id', ['user' => $this->user, 'logoSrc' => $logoSrc, 'userImageSrc' => $userImageSrc, 'bgSrc' => $bgSrc])->render();
+
+        if (file_exists($storagePath)) {
+            unlink($storagePath);
+        }
+        // Generate a PNG snapshot of the HTML
+        // Browsershot::html($html)
+        //     ->setChromePath('/usr/bin/chromium')
+        //     ->windowSize(330, 520)
+        //     ->save($storagePath);
+        $image = SnappyImage::loadHTML($html)->setOption('format', 'jpg')->setOption('quality', 85)->setOption('width', 330)->setOption('height', 520)->output();
+        file_put_contents(storage_path('app/public/' . $fileName), $image);
 
         if ($this->user->is_blocked) {
             $salutation = ($this->user->sex === 'Male') ? 'Mr.' : 'Ms.';

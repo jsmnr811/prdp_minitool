@@ -29,6 +29,9 @@ class GeomappingUsersTableController extends Controller
 
     public function verifyUser($id)
     {
+         $bgPath = public_path('icons/NAFIF-ID-Template.png');
+        $bgData = base64_encode(file_get_contents($bgPath));
+        $bgSrc = 'data:image/png;base64,' . $bgData;
         $user = GeomappingUser::findOrFail($id);
         $logoPath = public_path('media/Scale-Up.png');
         $logoData = base64_encode(file_get_contents($logoPath));
@@ -40,6 +43,6 @@ class GeomappingUsersTableController extends Controller
 
         $userImageData = base64_encode(file_get_contents($userImagePath));
         $userImageSrc = 'data:image/png;base64,' . $userImageData;
-        return view('geomapping.iplan.user-verification', compact('user', 'logoSrc', 'userImageSrc'));
+        return view('geomapping.iplan.user-verification', compact('user', 'logoSrc', 'userImageSrc','bgSrc'));
     }
 }
