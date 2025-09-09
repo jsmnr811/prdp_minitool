@@ -244,10 +244,7 @@ new class extends Component {
         // Generate a PNG snapshot of the HTML
         Browsershot::html($html)
             ->setChromePath('/usr/bin/chromium')
-            ->setNodeBinary('~/.nvm/versions/node/v24.6.0/bin/node')
-    ->setNpmBinary('~/.nvm/versions/node/v24.6.0/bin/npm')
             ->windowSize(330, 520)
-            ->waitUntilNetworkIdle()
             ->save($storagePath);
 
         $this->user->notify(new MailUserId($this->user));
