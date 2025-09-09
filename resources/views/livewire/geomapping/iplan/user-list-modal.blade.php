@@ -243,6 +243,7 @@ new class extends Component {
         }
         // Generate a PNG snapshot of the HTML
         Browsershot::html($html)
+            ->setChromePath('/usr/bin/chromium')
             ->windowSize(330, 520) // match your ID card width & height
             ->waitUntilNetworkIdle() // ensures images/fonts are loaded
             ->save($storagePath);
