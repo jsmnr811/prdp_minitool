@@ -224,6 +224,9 @@ new class extends Component {
 
     public function sendGeomappingUserId()
     {
+        $bgPath = public_path('icons/NAFIF-ID-Template.png');
+        $bgData = base64_encode(file_get_contents($bgPath));
+        $bgSrc = 'data:image/png;base64,' . $bgData;
         $fileName = 'user-id-' . $this->user->id . '.png';
         $storagePath = storage_path('app/public/' . $fileName);
         // Load logo image and convert to base64
@@ -237,7 +240,7 @@ new class extends Component {
         $userImageData = base64_encode(file_get_contents($userImagePath));
         $userImageSrc = 'data:image/png;base64,' . $userImageData;
 
-        $html = view('components.user-id', ['user' => $this->user, 'logoSrc' => $logoSrc, 'userImageSrc' => $userImageSrc])->render();
+        $html = view('components.user-id', ['user' => $this->user, 'logoSrc' => $logoSrc, 'userImageSrc' => $userImageSrc, 'bgSrc' => $bgSrc])->render();
 
         if (file_exists($storagePath)) {
             unlink($storagePath);
@@ -247,15 +250,8 @@ new class extends Component {
         //     ->setChromePath('/usr/bin/chromium')
         //     ->windowSize(330, 520)
         //     ->save($storagePath);
-     $image =   SnappyImage::loadHTML($html)
-    ->setOption('format', 'jpg')
-    ->setOption('quality', 85)
-    ->setOption('width', 330)
-    ->setOption('height', 520)
-    ->output();
-    file_put_contents(storage_path('app/public/' . $fileName), $image);
-
-
+        $image = SnappyImage::loadHTML($html)->setOption('format', 'jpg')->setOption('quality', 85)->setOption('width', 330)->setOption('height', 520)->output();
+        file_put_contents(storage_path('app/public/' . $fileName), $image);
 
         $this->user->notify(new MailUserId($this->user));
         LivewireAlert::title('Success')->text('Geomapping User ID has been sent successfully')->success()->toast()->position('top-end')->show();
