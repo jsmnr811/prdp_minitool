@@ -244,7 +244,8 @@ new class extends Component {
         // Generate a PNG snapshot of the HTML
         Browsershot::html($html)
             ->setChromePath('/usr/bin/chromium')
-            ->addChromiumArguments(['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-extensions', '--disable-gpu', '--disable-software-rasterizer', '--disable-breakpad', '--no-zygote', '--single-process', '--disable-crash-reporter', '--disable-features=VizDisplayCompositor'])
+            ->setNodeBinary('~/.nvm/versions/node/v24.6.0/bin/node')
+    ->setNpmBinary('~/.nvm/versions/node/v24.6.0/bin/npm')
             ->windowSize(330, 520)
             ->waitUntilNetworkIdle()
             ->save($storagePath);
