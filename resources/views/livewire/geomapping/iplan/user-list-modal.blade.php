@@ -259,7 +259,11 @@ new class extends Component {
         // Generate image with Browsershot
 Browsershot::html($html)
     ->setChromePath('/usr/bin/chromium')
-    ->setOption('env', ['HOME' => '/tmp/apache-home'])
+    ->env([
+        'HOME' => '/tmp/apache-home',
+        'XDG_CONFIG_HOME' => '/tmp/apache-home/.config',
+        'XDG_CACHE_HOME' => '/tmp/apache-home/.cache',
+    ])
     ->noSandbox()
     ->addChromiumArguments([
         '--disable-dev-shm-usage',
@@ -267,12 +271,13 @@ Browsershot::html($html)
         '--disable-gpu',
         '--disable-crash-reporter',
         '--disable-features=Crashpad',
-        '--user-data-dir=/tmp/apache-home/chrome-profile' // 👈 put profile inside HOME
+        '--user-data-dir=/tmp/apache-home/chrome-profile',
     ])
     ->windowSize(660, 1040)
     ->deviceScaleFactor(2)
     ->waitUntilNetworkIdle()
     ->save($storagePath);
+
 
 
 
