@@ -258,20 +258,12 @@ new class extends Component {
 
         // Generate image with Browsershot
 Browsershot::html($html)
-    ->setChromePath('/usr/bin/chromium')
-    ->env(['HOME' => '/tmp/apache-home']) // critical
-    ->noSandbox()
-    ->addChromiumArguments([
-        '--disable-dev-shm-usage',
-        '--disable-setuid-sandbox',
-        '--disable-gpu',
-        '--disable-crash-reporter',
-        '--user-data-dir=/tmp/chrome-apache'
-    ])
     ->windowSize(660, 1040)
     ->deviceScaleFactor(2)
-    ->waitUntilNetworkIdle()
+    ->userDataDir('/tmp/chrome-apache')
+    ->noSandbox()
     ->save($storagePath);
+
 
 
 
