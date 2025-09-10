@@ -33,25 +33,9 @@ return [
     |
     */
 
-    // 'pdf' => [
-    //     'enabled' => true,
-    //     'binary'  => env('SNAPPY_IMAGE_BINARY', '/usr/local/bin/wkhtmltoimage-custom'),
-    //     'timeout' => false,
-    //     'options' => [],
-    //     'env'     => [],
-    // ],
-
-    // 'image' => [
-    //     'enabled' => true,
-    //     'binary'  => env('SNAPPY_PDF_BINARY', '/usr/local/bin/wkhtmltopdf-custom'),
-    //     'timeout' => false,
-    //     'options' => [],
-    //     'env'     => [],
-    // ],
-     'pdf' => [
+    'pdf' => [
         'enabled' => true,
-        // Use ENV variable if set, otherwise fallback to Windows path
-        'binary'  => env('WKHTMLTOPDF_PATH', '"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"'),
+        'binary'  => env('SNAPPY_IMAGE_BINARY', '/usr/local/bin/wkhtmltoimage-custom'),
         'timeout' => false,
         'options' => [],
         'env'     => [],
@@ -59,15 +43,31 @@ return [
 
     'image' => [
         'enabled' => true,
-        'binary'  => env('WKHTMLTOIMAGE_PATH', '"C:\Program Files\wkhtmltopdf\bin\wkhtmltoimage.exe"'),
+        'binary'  => env('SNAPPY_PDF_BINARY', '/usr/local/bin/wkhtmltopdf-custom'),
         'timeout' => false,
-        'options' => [
-            'format'  => 'jpg',   // Default format
-            'width'   => 330,     // Your case needed 330
-            'height'  => 520,     // Your case needed 520
-            'quality' => 85,      // Quality for JPG
-        ],
+        'options' => [],
         'env'     => [],
     ],
+    //  'pdf' => [
+    //     'enabled' => true,
+    //     // Use ENV variable if set, otherwise fallback to Windows path
+    //     'binary'  => env('WKHTMLTOPDF_PATH', '"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"'),
+    //     'timeout' => false,
+    //     'options' => [],
+    //     'env'     => [],
+    // ],
+
+    // 'image' => [
+    //     'enabled' => true,
+    //     'binary'  => env('WKHTMLTOIMAGE_PATH', '"C:\Program Files\wkhtmltopdf\bin\wkhtmltoimage.exe"'),
+    //     'timeout' => false,
+    //     'options' => [
+    //         'format'  => 'jpg',   // Default format
+    //         'width'   => 330,     // Your case needed 330
+    //         'height'  => 520,     // Your case needed 520
+    //         'quality' => 85,      // Quality for JPG
+    //     ],
+    //     'env'     => [],
+    // ],
 
 ];
