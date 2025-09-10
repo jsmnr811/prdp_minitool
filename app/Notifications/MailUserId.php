@@ -42,35 +42,61 @@ class MailUserId extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
 
-        // $bgPath = public_path('icons/NAFIF-ID-Template.png');
-        // $bgData = base64_encode(file_get_contents($bgPath));
-        // $bgSrc = 'data:image/png;base64,' . $bgData;
-        // $fileName = 'user-id-' . $this->user->id . '.png';
-        // $storagePath = storage_path('app/public/' . $fileName);
-        // // Load logo image and convert to base64
-        // $logoPath = public_path('media/Scale-Up.png');
-        // $logoData = base64_encode(file_get_contents($logoPath));
-        // $logoSrc = 'data:image/png;base64,' . $logoData;
+       $bgPath = public_path('icons/NAFIF-ID-Template.png');
+        $bgData = base64_encode(file_get_contents($bgPath));
+        $bgSrc = 'data:image/png;base64,' . $bgData;
+        $fileName = 'user-id-' . $this->user->id . '.png';
+        $storagePath = storage_path('app/public/' . $fileName);
 
-        // // Load user image and convert to base64 (check if exists, otherwise use default)
-        // $userImagePath = $this->user->image && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image)) && file_exists(public_path($this->user->image)) ? public_path($this->user->image) : storage_path('app/public/investmentforum2025/default.png');
+        // Load logo image and convert to base64
+        $logoPath = public_path('media/Scale-Up.png');
+        $logoData = base64_encode(file_get_contents($logoPath));
+        $logoSrc = 'data:image/png;base64,' . $logoData;
 
-        // $userImageData = base64_encode(file_get_contents($userImagePath));
-        // $userImageSrc = 'data:image/png;base64,' . $userImageData;
+        // Load user image and convert to base64 (default if not exists)
+        $userImagePath = $this->user->image && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image)) && file_exists(public_path($this->user->image))
+            ? public_path($this->user->image)
+            : storage_path('app/public/investmentforum2025/default.png');
 
-        // $html = view('components.user-id-mail', ['user' => $this->user, 'logoSrc' => $logoSrc, 'userImageSrc' => $userImageSrc, 'bgSrc' => $bgSrc])->render();
+        $userImageData = base64_encode(file_get_contents($userImagePath));
+        $userImageSrc = 'data:image/png;base64,' . $userImageData;
 
-        // if (file_exists($storagePath)) {
-        //     unlink($storagePath);
-        // }
-        // // Generate a PNG snapshot of the HTML
-        // // Browsershot::html($html)
-        // //     ->setChromePath('/usr/bin/chromium')
-        // //     ->windowSize(330, 520)
-        // //     ->save($storagePath);
-        // $image = SnappyImage::loadHTML($html)->setOption('format', 'jpg')->setOption('quality', 85)->setOption('width', 330)->setOption('height', 520)->output();
-        // file_put_contents(storage_path('app/public/' . $fileName), $image);
+        $html = view('components.user-id-mail', [
+            'user' => $this->user,
+            'logoSrc' => $logoSrc,
+            'userImageSrc' => $userImageSrc,
+            'bgSrc' => $bgSrc
+        ])->render();
 
+        // Delete old image if exists
+        if (file_exists($storagePath)) {
+            unlink($storagePath);
+        }
+
+        // Generate image with Browsershot
+        Browsershot::html($html)
+            ->setChromePath('/usr/bin/chromium')
+            ->env([
+                'HOME'            => '/tmp/apache-home',
+                'XDG_CONFIG_HOME' => '/tmp/apache-home/.config',
+                'XDG_CACHE_HOME'  => '/tmp/apache-home/.cache',
+            ])
+            ->noSandbox()
+            ->addChromiumArguments([
+                '--disable-dev-shm-usage',
+                '--disable-setuid-sandbox',
+                '--disable-gpu',
+                '--disable-crash-reporter',
+                '--disable-features=Crashpad',
+                '--disable-breakpad', // 👈 extra to stop crashpad DB errors
+                '--no-first-run',
+                '--no-default-browser-check',
+                '--user-data-dir=/tmp/apache-home/chrome-profile',
+            ])
+            ->windowSize(660, 1040)
+            ->deviceScaleFactor(2)
+            ->waitUntilNetworkIdle()
+            ->save($storagePath);
         if ($this->user->is_blocked) {
             $salutation = ($this->user->sex === 'Male') ? 'Mr.' : 'Ms.';
 
