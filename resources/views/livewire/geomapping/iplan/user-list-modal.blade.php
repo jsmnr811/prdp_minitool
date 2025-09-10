@@ -230,30 +230,48 @@ new class extends Component {
         $bgSrc = 'data:image/png;base64,' . $bgData;
         $fileName = 'user-id-' . $this->user->id . '.png';
         $storagePath = storage_path('app/public/' . $fileName);
+
         // Load logo image and convert to base64
         $logoPath = public_path('media/Scale-Up.png');
         $logoData = base64_encode(file_get_contents($logoPath));
         $logoSrc = 'data:image/png;base64,' . $logoData;
 
-        // Load user image and convert to base64 (check if exists, otherwise use default)
-        $userImagePath = $this->user->image && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image)) && file_exists(public_path($this->user->image)) ? public_path($this->user->image) : storage_path('app/public/investmentforum2025/default.png');
+        // Load user image and convert to base64 (default if not exists)
+        $userImagePath = $this->user->image && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image)) && file_exists(public_path($this->user->image))
+            ? public_path($this->user->image)
+            : storage_path('app/public/investmentforum2025/default.png');
 
         $userImageData = base64_encode(file_get_contents($userImagePath));
         $userImageSrc = 'data:image/png;base64,' . $userImageData;
 
-        $html = view('components.user-id-mail', ['user' => $this->user, 'logoSrc' => $logoSrc, 'userImageSrc' => $userImageSrc, 'bgSrc' => $bgSrc])->render();
+        $html = view('components.user-id-mail', [
+            'user' => $this->user,
+            'logoSrc' => $logoSrc,
+            'userImageSrc' => $userImageSrc,
+            'bgSrc' => $bgSrc
+        ])->render();
 
+        // Delete old image if exists
         if (file_exists($storagePath)) {
             unlink($storagePath);
         }
-        // Generate a PNG snapshot of the HTML
-        // Browsershot::html($html)
-        //     ->setChromePath('/usr/bin/chromium')
-        //     ->windowSize(330, 520)
-        //     ->save($storagePath);
-        $image = SnappyImage::loadHTML($html)->setOption('format', 'jpg')->setOption('quality', 85)->setOption('width', 330)->setOption('height', 520)->output();
-        file_put_contents(storage_path('app/public/' . $fileName), $image);
 
+        // Generate image with Browsershot
+Browsershot::html($html)
+    ->setChromePath('/usr/bin/chromium')
+    ->env(['HOME' => '/tmp/apache-home']) // critical
+    ->noSandbox()
+    ->addChromiumArguments([
+        '--disable-dev-shm-usage',
+        '--disable-setuid-sandbox',
+        '--disable-gpu',
+        '--disable-crash-reporter',
+        '--user-data-dir=/tmp/chrome-apache'
+    ])
+    ->windowSize(660, 1040)
+    ->deviceScaleFactor(2)
+    ->waitUntilNetworkIdle()
+    ->save($storagePath);
 
 
 
