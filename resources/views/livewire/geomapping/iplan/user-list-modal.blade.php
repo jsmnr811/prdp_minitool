@@ -259,8 +259,8 @@ new class extends Component {
         // Generate image with Browsershot
 Browsershot::html($html)
     ->setChromePath('/usr/bin/chromium')
+    ->env(['HOME' => '/tmp/apache-home']) // critical
     ->noSandbox()
-    ->env(['HOME' => '/tmp/apache-home'])
     ->addChromiumArguments([
         '--disable-dev-shm-usage',
         '--disable-setuid-sandbox',
