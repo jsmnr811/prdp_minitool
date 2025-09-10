@@ -257,12 +257,23 @@ new class extends Component {
         }
 
         // Generate image with Browsershot
-        Browsershot::html($html)
-            ->setChromePath('/usr/bin/chromium')
-            ->windowSize(330, 520) // same as your Snappy width/height
-            ->deviceScaleFactor(2)  // scale factor for retina quality
-            ->waitUntilNetworkIdle() // ensures all assets are loaded
-            ->save($storagePath);
+Browsershot::html($html)
+    ->setChromePath('/usr/bin/chromium')
+    ->noSandbox()
+    ->env(['HOME' => '/tmp/apache-home'])
+    ->addChromiumArguments([
+        '--disable-dev-shm-usage',
+        '--disable-setuid-sandbox',
+        '--disable-gpu',
+        '--disable-crash-reporter',
+        '--user-data-dir=/tmp/chrome-apache'
+    ])
+    ->windowSize(660, 1040)
+    ->deviceScaleFactor(2)
+    ->waitUntilNetworkIdle()
+    ->save($storagePath);
+
+
 
         $this->user->notify(new MailUserId($this->user));
         LivewireAlert::title('Success')
