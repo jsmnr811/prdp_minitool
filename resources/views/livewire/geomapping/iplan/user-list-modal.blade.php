@@ -260,9 +260,9 @@ new class extends Component {
 Browsershot::html($html)
     ->setChromePath('/usr/bin/chromium')
     ->env([
-        'HOME' => '/tmp/apache-home',
+        'HOME'            => '/tmp/apache-home',
         'XDG_CONFIG_HOME' => '/tmp/apache-home/.config',
-        'XDG_CACHE_HOME' => '/tmp/apache-home/.cache',
+        'XDG_CACHE_HOME'  => '/tmp/apache-home/.cache',
     ])
     ->noSandbox()
     ->addChromiumArguments([
@@ -271,12 +271,16 @@ Browsershot::html($html)
         '--disable-gpu',
         '--disable-crash-reporter',
         '--disable-features=Crashpad',
+        '--disable-breakpad', // 👈 extra to stop crashpad DB errors
+        '--no-first-run',
+        '--no-default-browser-check',
         '--user-data-dir=/tmp/apache-home/chrome-profile',
     ])
     ->windowSize(660, 1040)
     ->deviceScaleFactor(2)
     ->waitUntilNetworkIdle()
     ->save($storagePath);
+
 
 
 
