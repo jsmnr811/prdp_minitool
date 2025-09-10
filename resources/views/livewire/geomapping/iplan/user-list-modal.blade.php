@@ -222,41 +222,58 @@ new class extends Component {
         LivewireAlert::title('Are you sure?')->question()->text('Are you sure you want to mail the geomapping user id? ')->timer(0)->withConfirmButton('Send')->withCancelButton('Cancel')->onConfirm('sendGeomappingUserId')->show();
     }
 
-    public function sendGeomappingUserId()
-    {
-        $bgPath = public_path('icons/NAFIF-ID-Template.png');
-        $bgData = base64_encode(file_get_contents($bgPath));
-        $bgSrc = 'data:image/png;base64,' . $bgData;
-        $fileName = 'user-id-' . $this->user->id . '.png';
-        $storagePath = storage_path('app/public/' . $fileName);
-        // Load logo image and convert to base64
-        $logoPath = public_path('media/Scale-Up.png');
-        $logoData = base64_encode(file_get_contents($logoPath));
-        $logoSrc = 'data:image/png;base64,' . $logoData;
 
-        // Load user image and convert to base64 (check if exists, otherwise use default)
-        $userImagePath = $this->user->image && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image)) && file_exists(public_path($this->user->image)) ? public_path($this->user->image) : storage_path('app/public/investmentforum2025/default.png');
+public function sendGeomappingUserId()
+{
+    $bgPath = public_path('icons/NAFIF-ID-Template.png');
+    $bgData = base64_encode(file_get_contents($bgPath));
+    $bgSrc = 'data:image/png;base64,' . $bgData;
+    $fileName = 'user-id-' . $this->user->id . '.png';
+    $storagePath = storage_path('app/public/' . $fileName);
 
-        $userImageData = base64_encode(file_get_contents($userImagePath));
-        $userImageSrc = 'data:image/png;base64,' . $userImageData;
+    // Load logo image and convert to base64
+    $logoPath = public_path('media/Scale-Up.png');
+    $logoData = base64_encode(file_get_contents($logoPath));
+    $logoSrc = 'data:image/png;base64,' . $logoData;
 
-        $html = view('components.user-id', ['user' => $this->user, 'logoSrc' => $logoSrc, 'userImageSrc' => $userImageSrc, 'bgSrc' => $bgSrc])->render();
+    // Load user image and convert to base64 (default if not exists)
+    $userImagePath = $this->user->image && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image)) && file_exists(public_path($this->user->image)) 
+        ? public_path($this->user->image) 
+        : storage_path('app/public/investmentforum2025/default.png');
 
-        if (file_exists($storagePath)) {
-            unlink($storagePath);
-        }
-        // Generate a PNG snapshot of the HTML
-        // Browsershot::html($html)
-        //     ->setChromePath('/usr/bin/chromium')
-        //     ->windowSize(330, 520)
-        //     ->save($storagePath);
-        $image = SnappyImage::loadHTML($html)->setOption('format', 'jpg')->setOption('quality', 85)->setOption('width', 330)->setOption('height', 520)->output();
-        file_put_contents(storage_path('app/public/' . $fileName), $image);
+    $userImageData = base64_encode(file_get_contents($userImagePath));
+    $userImageSrc = 'data:image/png;base64,' . $userImageData;
 
-        $this->user->notify(new MailUserId($this->user));
-        LivewireAlert::title('Success')->text('Geomapping User ID has been sent successfully')->success()->toast()->position('top-end')->show();
-        $this->dispatch('reloadDataTable');
+    $html = view('components.user-id-mail', [
+        'user' => $this->user,
+        'logoSrc' => $logoSrc,
+        'userImageSrc' => $userImageSrc,
+        'bgSrc' => $bgSrc
+    ])->render();
+
+    // Delete old image if exists
+    if (file_exists($storagePath)) {
+        unlink($storagePath);
     }
+
+    // Generate image with Browsershot
+    Browsershot::html($html)
+        ->windowSize(330, 520) // same as your Snappy width/height
+    ->deviceScaleFactor(2)  // scale factor for retina quality
+        ->waitUntilNetworkIdle() // ensures all assets are loaded
+        ->save($storagePath);
+
+    $this->user->notify(new MailUserId($this->user));
+    LivewireAlert::title('Success')
+        ->text('Geomapping User ID has been sent successfully')
+        ->success()
+        ->toast()
+        ->position('top-end')
+        ->show();
+
+    $this->dispatch('reloadDataTable');
+}
+
 
     #[On('updateVerified')]
     public function updateVerified(GeomappingUser $user)
