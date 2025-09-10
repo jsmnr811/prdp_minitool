@@ -49,9 +49,22 @@ class GeomappingUsersTableController extends Controller
 
 public function generateAllIds()
 {
-    $users = GeomappingUser::where('is_verified', 1)->get();
+    // Temporarily increase memory limit for 4K generation
+    ini_set('memory_limit', '4096M');
+
+    // $users = GeomappingUser::where('is_verified', 1)->get();
+    $users = GeomappingUser::where('id', '=', 264)->get();
+
 
     foreach ($users as $user) {
+        $fileName = 'user-id-' . $user->id . '.png';
+        $storagePath = storage_path('app/public/nafif/by-office/' . $fileName);
+
+        // Skip if file already exists
+        if (file_exists($storagePath)) {
+            continue;
+        }
+
         // Prepare background image
         $bgPath = public_path('icons/NAFIF-ID-Template.png');
         $bgData = base64_encode(file_get_contents($bgPath));
@@ -63,8 +76,8 @@ public function generateAllIds()
         $logoSrc = 'data:image/png;base64,' . $logoData;
 
         // Prepare user image (fallback to default)
-        $userImagePath = $user->image 
-            && Storage::disk('public')->exists(str_replace('storage/', '', $user->image)) 
+        $userImagePath = $user->image
+            && Storage::disk('public')->exists(str_replace('storage/', '', $user->image))
             && file_exists(public_path($user->image))
                 ? public_path($user->image)
                 : storage_path('app/public/investmentforum2025/default.png');
@@ -72,32 +85,30 @@ public function generateAllIds()
         $userImageData = base64_encode(file_get_contents($userImagePath));
         $userImageSrc = 'data:image/png;base64,' . $userImageData;
 
-        // Generate filename and storage path
-        $fileName = 'user-id-' . $user->id . '.png';
-        $storagePath = storage_path('app/public/' . $fileName);
-
         // Render Blade template to HTML
-        $html = view('components.user-id', [
+        $html = view('components.user-id-mail', [
             'user' => $user,
             'logoSrc' => $logoSrc,
             'userImageSrc' => $userImageSrc,
             'bgSrc' => $bgSrc,
         ])->render();
 
-        // Delete old file if exists
-        if (file_exists($storagePath)) {
-            unlink($storagePath);
-        }
-
-        // Generate PNG with Browsershot
+        // Generate PNG with Browsershot in 4K resolution
         Browsershot::html($html)
-            ->windowSize(330, 515)
-            ->quality(85)
+            ->windowSize(3300, 5150)
+            ->deviceScaleFactor(2)
+            ->quality(100)
             ->setScreenshotType('png')
             ->waitUntilNetworkIdle()
             ->save($storagePath);
+
+        // Free memory for next iteration
+        unset($html, $bgData, $logoData, $userImageData);
+        gc_collect_cycles();
     }
 
-    return redirect()->back()->with('success', 'All verified user IDs generated successfully.');
+    return redirect()->back()->with('success', 'All verified user IDs generated successfully in 4K.');
 }
+
+
 }

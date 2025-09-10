@@ -51,8 +51,8 @@
                 </div>
             </div>
 
-            <div style="text-align:center; font-family: Arial, sans-serif; font-size:1rem; color:#d3e6e9; margin-top:5px; font-weight:800;">
-                {{ strtoupper($user->designation) }}
+            <div style="text-align:center; font-family: Arial, sans-serif; font-size:1rem; color:#d3e6e9; margin-top:2px; font-weight:800;">
+                {{ strtoupper($user->office) }}
             </div>
         </div>
 

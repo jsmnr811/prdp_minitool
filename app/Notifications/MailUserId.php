@@ -39,7 +39,7 @@ class MailUserId extends Notification implements ShouldQueue
     /**
      * Get the mail representation of the notification.
      */
- 
+
 
 public function toMail(object $notifiable): MailMessage
 {
@@ -56,8 +56,8 @@ public function toMail(object $notifiable): MailMessage
     $logoSrc = 'data:image/png;base64,' . $logoData;
 
     // Load user image (fallback to default if not uploaded)
-    $userImagePath = $this->user->image 
-        && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image)) 
+    $userImagePath = $this->user->image
+        && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image))
         && file_exists(public_path($this->user->image))
             ? public_path($this->user->image)
             : storage_path('app/public/investmentforum2025/default.png');
