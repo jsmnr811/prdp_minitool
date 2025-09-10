@@ -6,17 +6,11 @@ use App\Models\GeomappingUser;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithDrawings;
-use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
-class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping, WithDrawings
+class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
 {
-    protected $users;
-
     public function query()
     {
-        // Cache the users so we can also use them for drawings()
         return GeomappingUser::query()
             ->select([
                 'id',
@@ -40,9 +34,7 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping, Wit
                 'table_number',
                 'room_assignment',
                 'is_livein',
-                'login_code',
-                'image',
-                'is_verified',
+                'is_verified', 
                 'created_at',
                 'updated_at',
             ])
@@ -75,9 +67,6 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping, Wit
             'Room Assignment',
             'Is Live In?',
             'Is Verified?',
-            'QR',
-            'ID Number',
-            'Image File Name',
             'Created At',
             'Updated At',
         ];
@@ -85,33 +74,24 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping, Wit
 
     public function map($user): array
     {
-        $role = match ($user->role) {
-            1 => $user->is_iplan ? 'I-PLAN Administrator' : 'Administrator',
-            2 => 'Participant',
-            default => 'Unknown',
-        };
+        if ($user->role == 1) {
+            $role = $user->is_iplan ? 'I-PLAN Administrator' : 'Administrator';
+        } elseif ($user->role == 2) {
+            $role = 'Participant';
+        } else {
+            $role = 'Unknown';
+        }
 
-        $days = $user->attendance_days ? array_map('trim', explode(',', $user->attendance_days)) : [];
+        // Convert attendance string ("Day 1, Day 2, Day 3") into array
+        $days = $user->attendance_days
+            ? array_map('trim', explode(',', $user->attendance_days))
+            : [];
 
+        // Create columns for Day 1, Day 2, Day 3
         $day1 = in_array('Day 1', $days) ? 'Yes' : 'No';
         $day2 = in_array('Day 2', $days) ? 'Yes' : 'No';
         $day3 = in_array('Day 3', $days) ? 'Yes' : 'No';
 
-        // Generate QR and save to file
-        $qrContent = route('investment.user-verification', ['id' => $user->id]);
-        $fileName  = "qr-{$user->id}.png";
-        $filePath  = storage_path("app/public/qrs/{$fileName}");
-
-        if (!file_exists(dirname($filePath))) {
-            mkdir(dirname($filePath), 0777, true);
-        }
-
-        \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-            ->size(120)
-            ->margin(2)
-            ->generate($qrContent, $filePath);
-
-        // Just return the file name in the column
         return [
             $user->id,
             $user->firstname,
@@ -136,47 +116,8 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping, Wit
             $user->room_assignment,
             $user->is_livein ? 'Yes' : 'No',
             $user->is_verified ? 'Yes' : 'No',
-            $fileName,
-            $user->login_code,
-            basename($user->image ?? ''),
             $user->created_at?->format('Y-m-d H:i'),
             $user->updated_at?->format('Y-m-d H:i'),
         ];
-    }
-
-
-    public function drawings()
-    {
-        $drawings = [];
-
-        $users = GeomappingUser::all();
-
-        foreach ($users as $index => $user) {
-            $qrContent = route('investment.user-verification', ['id' => $user->id]);
-
-            // Generate a temporary PNG QR file
-            $filePath = storage_path("app/public/qrs/qr-{$user->id}.png");
-            if (!file_exists(dirname($filePath))) {
-                mkdir(dirname($filePath), 0777, true);
-            }
-
-            QrCode::format('png')
-                ->size(120)
-                ->margin(2)
-                ->generate($qrContent, $filePath);
-
-            $drawing = new Drawing();
-            $drawing->setName("QR {$user->id}");
-            $drawing->setDescription("QR for user {$user->id}");
-            $drawing->setPath($filePath);
-            $drawing->setHeight(80);
-
-            // Column W = 23rd column (QR column in your export)
-            $drawing->setCoordinates('W' . ($index + 2)); // +2 = skip heading row
-
-            $drawings[] = $drawing;
-        }
-
-        return $drawings;
     }
 }
