@@ -259,15 +259,15 @@ new class extends Component {
         // Generate image with Browsershot
 Browsershot::html($html)
     ->setChromePath('/usr/bin/chromium')
-    ->setOption('env', [ 'HOME' => '/tmp/apache-home' ]) // force through Puppeteer
+    ->setOption('env', ['HOME' => '/tmp/apache-home'])
     ->noSandbox()
     ->addChromiumArguments([
         '--disable-dev-shm-usage',
         '--disable-setuid-sandbox',
         '--disable-gpu',
         '--disable-crash-reporter',
-        '--disable-features=Crashpad',   // extra crashpad disable
-        '--user-data-dir=/tmp/chrome-apache'
+        '--disable-features=Crashpad',
+        '--user-data-dir=/tmp/apache-home/chrome-profile' // 👈 put profile inside HOME
     ])
     ->windowSize(660, 1040)
     ->deviceScaleFactor(2)
