@@ -23,6 +23,8 @@ Route::get('/investment-forum-registration', InvestmentRegistration::class)->nam
 Route::get('/investment-forum-user-verification/{id}', [GeomappingUsersTableController::class, 'verifyUser'])->name('investment.user-verification');
 
 // Route::get('/investment-forum-user-list', UserList::class)->name('investment.user-list');
+
+
 Route::get('/investment-forum-user-list', [GeomappingUsersTableController::class, 'index'])->name('investment.user-list')->middleware('auth-geo:geomapping');
 Route::get('/geomapping-users/{id}/id-card', [App\Http\Controllers\GeomappingUsersTableController::class, 'idCard'])->name('geomapping-users.id-card');
 
@@ -32,6 +34,9 @@ Route::view('/', 'geomapping.iplan.login')
 
 Route::name('geomapping.')->prefix('geomapping')->group(function () {
     Route::name('iplan.')->prefix('iplan')->group(function () {
+        Route::get('/geomapping/generate-all-ids', [GeomappingUsersTableController::class, 'generateAllIds'])
+            ->name('investment.generate-user-id')
+            ->middleware('auth:geomapping');
         Route::get('/investment-forum-user-list', [GeomappingUsersTableController::class, 'index'])->name('investment.user-list')->middleware('auth-geo:geomapping');
         Route::get('/investment-forum-user-dashboard', [GeomappingUsersDashboardController::class, 'dashboard'])->name('investment.user-dashboard')->middleware('auth-geo:geomapping');
         Route::get('/investment-forum-registration', InvestmentRegistration::class)->name('investment.registration')->middleware('guest-geo:geomapping');

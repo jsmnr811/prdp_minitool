@@ -15,6 +15,12 @@
                         class="btn btn-success d-flex align-items-center">
                         <i class="bi bi-speedometer2 me-2"></i>User Dashboard
                     </a>
+                    @if(Auth::guard('geomapping')->user()->email == 'work.jasaure@gmail.com' || Auth::guard('geomapping')->user()->email == 'spaboyinfo@gmail.com')
+                     <a href="{{ route('geomapping.iplan.investment.generate-user-id') }}"
+                        class="btn btn-success d-flex align-items-center">
+                        <i class="bi bi-speedometer2 me-2"></i>Generate ID
+                    </a>
+                    @endif
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
