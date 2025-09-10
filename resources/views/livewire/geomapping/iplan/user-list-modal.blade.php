@@ -223,60 +223,56 @@ new class extends Component {
     }
 
 
-    public function sendGeomappingUserId()
-    {
-        $bgPath = public_path('icons/NAFIF-ID-Template.png');
-        $bgData = base64_encode(file_get_contents($bgPath));
-        $bgSrc = 'data:image/png;base64,' . $bgData;
-        $fileName = 'user-id-' . $this->user->id . '.png';
-        $storagePath = storage_path('app/public/' . $fileName);
+public function sendGeomappingUserId()
+{
+    $bgPath = public_path('icons/NAFIF-ID-Template.png');
+    $bgData = base64_encode(file_get_contents($bgPath));
+    $bgSrc = 'data:image/png;base64,' . $bgData;
+    $fileName = 'user-id-' . $this->user->id . '.png';
+    $storagePath = storage_path('app/public/' . $fileName);
 
-        // Load logo image and convert to base64
-        $logoPath = public_path('media/Scale-Up.png');
-        $logoData = base64_encode(file_get_contents($logoPath));
-        $logoSrc = 'data:image/png;base64,' . $logoData;
+    // Load logo image and convert to base64
+    $logoPath = public_path('media/Scale-Up.png');
+    $logoData = base64_encode(file_get_contents($logoPath));
+    $logoSrc = 'data:image/png;base64,' . $logoData;
 
-        // Load user image and convert to base64 (default if not exists)
-        $userImagePath = $this->user->image && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image)) && file_exists(public_path($this->user->image))
-            ? public_path($this->user->image)
-            : storage_path('app/public/investmentforum2025/default.png');
+    // Load user image and convert to base64 (default if not exists)
+    $userImagePath = $this->user->image && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image)) && file_exists(public_path($this->user->image))
+        ? public_path($this->user->image)
+        : storage_path('app/public/investmentforum2025/default.png');
 
-        $userImageData = base64_encode(file_get_contents($userImagePath));
-        $userImageSrc = 'data:image/png;base64,' . $userImageData;
+    $userImageData = base64_encode(file_get_contents($userImagePath));
+    $userImageSrc = 'data:image/png;base64,' . $userImageData;
 
-        $html = view('components.user-id-mail', [
-            'user' => $this->user,
-            'logoSrc' => $logoSrc,
-            'userImageSrc' => $userImageSrc,
-            'bgSrc' => $bgSrc
-        ])->render();
+    $html = view('components.user-id-mail', [
+        'user' => $this->user,
+        'logoSrc' => $logoSrc,
+        'userImageSrc' => $userImageSrc,
+        'bgSrc' => $bgSrc
+    ])->render();
 
-        // Delete old image if exists
-        if (file_exists($storagePath)) {
-            unlink($storagePath);
-        }
-
-        // Generate image with Browsershot
-Browsershot::html($html)
-    ->windowSize(660, 1040)
-    ->deviceScaleFactor(2)
-    ->userDataDir('/tmp/chrome-apache')
-    ->noSandbox()
-    ->save($storagePath);
-
-
-
-
-        $this->user->notify(new MailUserId($this->user));
-        LivewireAlert::title('Success')
-            ->text('Geomapping User ID has been sent successfully')
-            ->success()
-            ->toast()
-            ->position('top-end')
-            ->show();
-
-        $this->dispatch('reloadDataTable');
+    // Delete old image if exists
+    if (file_exists($storagePath)) {
+        unlink($storagePath);
     }
+
+    // Generate image with Snappy
+    SnappyImage::loadHTML($html)
+        ->setOption('width', 660)
+        ->setOption('height', 1040)
+        ->save($storagePath);
+
+    // Notify user
+    $this->user->notify(new MailUserId($this->user));
+    LivewireAlert::title('Success')
+        ->text('Geomapping User ID has been sent successfully')
+        ->success()
+        ->toast()
+        ->position('top-end')
+        ->show();
+
+    $this->dispatch('reloadDataTable');
+}
 
 
     #[On('updateVerified')]
