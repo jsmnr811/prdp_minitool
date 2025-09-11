@@ -30,7 +30,7 @@ class GeomappingUsersTableController extends Controller
 
     public function verifyUser($id)
     {
-         $bgPath = public_path('icons/NAFIF-ID-Template.png');
+        $bgPath = public_path('icons/NAFIF-ID-Template.png');
         $bgData = base64_encode(file_get_contents($bgPath));
         $bgSrc = 'data:image/png;base64,' . $bgData;
         $user = GeomappingUser::findOrFail($id);
@@ -44,71 +44,75 @@ class GeomappingUsersTableController extends Controller
 
         $userImageData = base64_encode(file_get_contents($userImagePath));
         $userImageSrc = 'data:image/png;base64,' . $userImageData;
-        return view('geomapping.iplan.user-verification', compact('user', 'logoSrc', 'userImageSrc','bgSrc'));
+        return view('geomapping.iplan.user-verification', compact('user', 'logoSrc', 'userImageSrc', 'bgSrc'));
     }
 
-public function generateAllIds()
-{
-    // Temporarily increase memory limit for 4K generation
-    ini_set('memory_limit', '4096M');
+    public function generateAllIds()
+    {
+        // Temporarily increase memory limit for 4K generation
+        ini_set('memory_limit', '4096M');
 
-    // $users = GeomappingUser::where('is_verified', 1)->get();
-    $users = GeomappingUser::where('id', '=', 264)->get();
+        $users = GeomappingUser::where('is_verified', 1)->get();
+        // $users = GeomappingUser::whereIn('id', [392])->get();
 
 
-    foreach ($users as $user) {
-        $fileName = 'user-id-' . $user->id . '.png';
-        $storagePath = storage_path('app/public/nafif/by-office/' . $fileName);
+        foreach ($users as $user) {
+            $fileName = 'user-id-' . $user->id . '.png';
+            $directory = storage_path('app/public/nafif/by-office/');
 
-        // Skip if file already exists
-        if (file_exists($storagePath)) {
-            continue;
-        }
+            if (!is_dir($directory)) {
+                mkdir($directory, 0755, true);
+            }
 
-        // Prepare background image
-        $bgPath = public_path('icons/NAFIF-ID-Template.png');
-        $bgData = base64_encode(file_get_contents($bgPath));
-        $bgSrc = 'data:image/png;base64,' . $bgData;
+            $storagePath = $directory . $fileName;
 
-        // Prepare logo image
-        $logoPath = public_path('media/Scale-Up.png');
-        $logoData = base64_encode(file_get_contents($logoPath));
-        $logoSrc = 'data:image/png;base64,' . $logoData;
+            // Skip if file already exists
+            if (file_exists($storagePath)) {
+                continue;
+            }
 
-        // Prepare user image (fallback to default)
-        $userImagePath = $user->image
-            && Storage::disk('public')->exists(str_replace('storage/', '', $user->image))
-            && file_exists(public_path($user->image))
+            // Prepare background image
+            $bgPath = public_path('icons/NAFIF-ID-Template.png');
+            $bgData = base64_encode(file_get_contents($bgPath));
+            $bgSrc = 'data:image/png;base64,' . $bgData;
+
+            // Prepare logo image
+            $logoPath = public_path('media/Scale-Up.png');
+            $logoData = base64_encode(file_get_contents($logoPath));
+            $logoSrc = 'data:image/png;base64,' . $logoData;
+
+            // Prepare user image (fallback to default)
+            $userImagePath = $user->image
+                && Storage::disk('public')->exists(str_replace('storage/', '', $user->image))
+                && file_exists(public_path($user->image))
                 ? public_path($user->image)
                 : storage_path('app/public/investmentforum2025/default.png');
 
-        $userImageData = base64_encode(file_get_contents($userImagePath));
-        $userImageSrc = 'data:image/png;base64,' . $userImageData;
+            $userImageData = base64_encode(file_get_contents($userImagePath));
+            $userImageSrc = 'data:image/png;base64,' . $userImageData;
 
-        // Render Blade template to HTML
-        $html = view('components.user-id-mail', [
-            'user' => $user,
-            'logoSrc' => $logoSrc,
-            'userImageSrc' => $userImageSrc,
-            'bgSrc' => $bgSrc,
-        ])->render();
+            // Render Blade template to HTML
+            $html = view('components.user-id-mail', [
+                'user' => $user,
+                'logoSrc' => $logoSrc,
+                'userImageSrc' => $userImageSrc,
+                'bgSrc' => $bgSrc,
+            ])->render();
 
-        // Generate PNG with Browsershot in 4K resolution
-        Browsershot::html($html)
-            ->windowSize(3300, 5150)
-            ->deviceScaleFactor(2)
-            ->quality(100)
-            ->setScreenshotType('png')
-            ->waitUntilNetworkIdle()
-            ->save($storagePath);
+            // Generate PNG with Browsershot in 4K resolution
+            Browsershot::html($html)
+                ->windowSize(3300, 5150)
+                ->deviceScaleFactor(2)
+                ->quality(100)
+                ->setScreenshotType('png')
+                ->waitUntilNetworkIdle()
+                ->save($storagePath);
 
-        // Free memory for next iteration
-        unset($html, $bgData, $logoData, $userImageData);
-        gc_collect_cycles();
+            // Free memory for next iteration
+            unset($html, $bgData, $logoData, $userImageData);
+            gc_collect_cycles();
+        }
+
+        return redirect()->back()->with('success', 'All verified user IDs generated successfully in 4K.');
     }
-
-    return redirect()->back()->with('success', 'All verified user IDs generated successfully in 4K.');
-}
-
-
 }

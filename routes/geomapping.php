@@ -48,6 +48,8 @@ Route::name('geomapping.')->prefix('geomapping')->group(function () {
             ->name('login')
             ->middleware('guest-geo:geomapping');
         Route::get('/export-users', [GeomappingUserExportController::class, 'exportCsv'])->name('export.users');
+        Route::get('/export-nafif-registration', [GeomappingUserExportController::class, 'exportRegistration'])->name('export.nafif.registration');
+
 
         Route::middleware('auth-geo:geomapping')->group(function () {
             Route::view('dashboard', 'geomapping.iplan.dashboard')->name('dashboard');

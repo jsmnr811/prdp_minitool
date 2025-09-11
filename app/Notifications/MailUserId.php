@@ -41,92 +41,92 @@ class MailUserId extends Notification implements ShouldQueue
      */
 
 
-public function toMail(object $notifiable): MailMessage
-{
-    $bgPath = public_path('icons/NAFIF-ID-Template.png');
-    $bgData = base64_encode(file_get_contents($bgPath));
-    $bgSrc = 'data:image/png;base64,' . $bgData;
+    public function toMail(object $notifiable): MailMessage
+    {
+        $bgPath = public_path('icons/NAFIF-ID-Template.png');
+        $bgData = base64_encode(file_get_contents($bgPath));
+        $bgSrc = 'data:image/png;base64,' . $bgData;
 
-    $fileName = 'user-id-' . $this->user->id . '.png';
-    $storagePath = storage_path('app/public/' . $fileName);
+        $fileName = 'user-id-' . $this->user->id . '.png';
+        $storagePath = storage_path('app/public/' . $fileName);
 
-    // Load logo image
-    $logoPath = public_path('media/Scale-Up.png');
-    $logoData = base64_encode(file_get_contents($logoPath));
-    $logoSrc = 'data:image/png;base64,' . $logoData;
+        // Load logo image
+        $logoPath = public_path('media/Scale-Up.png');
+        $logoData = base64_encode(file_get_contents($logoPath));
+        $logoSrc = 'data:image/png;base64,' . $logoData;
 
-    // Load user image (fallback to default if not uploaded)
-    $userImagePath = $this->user->image
-        && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image))
-        && file_exists(public_path($this->user->image))
+        // Load user image (fallback to default if not uploaded)
+        $userImagePath = $this->user->image
+            && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image))
+            && file_exists(public_path($this->user->image))
             ? public_path($this->user->image)
             : storage_path('app/public/investmentforum2025/default.png');
 
-    $userImageData = base64_encode(file_get_contents($userImagePath));
-    $userImageSrc = 'data:image/png;base64,' . $userImageData;
+        $userImageData = base64_encode(file_get_contents($userImagePath));
+        $userImageSrc = 'data:image/png;base64,' . $userImageData;
 
-    // Render blade to HTML
-    $html = view('components.user-id', [
-        'user' => $this->user,
-        'logoSrc' => $logoSrc,
-        'userImageSrc' => $userImageSrc,
-        'bgSrc' => $bgSrc
-    ])->render();
+        // Render blade to HTML
+        $html = view('components.user-id', [
+            'user' => $this->user,
+            'logoSrc' => $logoSrc,
+            'userImageSrc' => $userImageSrc,
+            'bgSrc' => $bgSrc
+        ])->render();
 
-    // Delete old file if exists
-    if (file_exists($storagePath)) {
-        unlink($storagePath);
+        // Delete old file if exists
+        if (file_exists($storagePath)) {
+            unlink($storagePath);
+        }
+
+        // ✅ Use Browsershot to generate PNG
+        Browsershot::html($html)
+            ->windowSize(330, 515)
+            ->quality(85) // works for jpeg/webp, ignored for png
+            ->setScreenshotType('png') // or 'jpeg'
+            ->waitUntilNetworkIdle()
+            ->save($storagePath);
+
+        if ($this->user->is_blocked) {
+            $salutation = ($this->user->sex === 'Male') ? 'Mr.' : 'Ms.';
+
+            return (new MailMessage)
+                ->subject('National Agri-Fishery Investment Forum')
+                ->greeting('Dear ' . $salutation . ' ' . ucwords($this->user->firstname) . ' ' . ucwords($this->user->lastname) . ',')
+                ->line('Thank you for your interest in the National Agri-Fishery Investment Forum to be held on September 16–18, 2025 at Palacio de Maynila, Malate, Manila.')
+                ->line('We highly appreciate your willingness to participate and contribute to this important event.')
+                ->line('')
+                ->line('However, we regret to inform you that your registration cannot be confirmed at this time. The Forum has limited slots, and as part of the event guidelines:')
+                ->line('')
+                ->line('Only one official participant per office is allowed to ensure equitable representation across all provinces, or')
+                ->line('')
+                ->line('Priority is given to the following key officials as invited participants of the activity:')
+                ->line('1. Office of the Governor – Governor')
+                ->line('2. Sangguniang Panlalawigan Committee on Agriculture – Chairperson')
+                ->line('3. Provincial Planning and Development Office – Provincial Planning and Development Coordinator (Head)')
+                ->line('4. Provincial Agriculture Office – Provincial Agriculturist (Head)')
+                ->line('5. Provincial Veterinary Office – Provincial Veterinarian (Head)')
+                ->line('')
+                ->line('We sincerely apologize for any inconvenience this may cause and kindly request your understanding.')
+                ->line('Should there be changes in the allocation of slots or if additional participation becomes possible, we will immediately reach out to you.')
+                ->line('')
+                ->line('Thank you once again for your interest and support. We look forward to future opportunities where we can work together in advancing agri-fishery investments.')
+                ->line('')
+                ->line('')
+                ->line('')
+                ->salutation('National Agri-Fishery Investment Forum Secretariat');
+        } else {
+            return (new MailMessage)
+                ->subject('Welcome to National Agri-Fishery Investment Forum')
+                ->view('emails.investment-forum-registration', [
+                    'user' => $this->user,
+                    'logoSrc' => $logoSrc
+                ])
+                ->attach($storagePath, [
+                    'as' => 'NAFIF-ID.png',
+                    'mime' => 'image/png',
+                ]);
+        }
     }
-
-    // ✅ Use Browsershot to generate PNG
-    Browsershot::html($html)
-        ->windowSize(330, 515)
-        ->quality(85) // works for jpeg/webp, ignored for png
-        ->setScreenshotType('png') // or 'jpeg'
-        ->waitUntilNetworkIdle()
-        ->save($storagePath);
-
-    if ($this->user->is_blocked) {
-        $salutation = ($this->user->sex === 'Male') ? 'Mr.' : 'Ms.';
-
-        return (new MailMessage)
-            ->subject('National Agri-Fishery Investment Forum')
-            ->greeting('Dear ' . $salutation . ' ' . ucwords($this->user->firstname) . ' ' . ucwords($this->user->lastname) . ',')
-            ->line('Thank you for your interest in the National Agri-Fishery Investment Forum to be held on September 16–18, 2025 at Palacio de Maynila, Malate, Manila.')
-            ->line('We highly appreciate your willingness to participate and contribute to this important event.')
-            ->line('')
-            ->line('However, we regret to inform you that your registration cannot be confirmed at this time. The Forum has limited slots, and as part of the event guidelines:')
-            ->line('')
-            ->line('Only one official participant per office is allowed to ensure equitable representation across all provinces, or')
-            ->line('')
-            ->line('Priority is given to the following key officials as invited participants of the activity:')
-            ->line('1. Office of the Governor – Governor')
-            ->line('2. Sangguniang Panlalawigan Committee on Agriculture – Chairperson')
-            ->line('3. Provincial Planning and Development Office – Provincial Planning and Development Coordinator (Head)')
-            ->line('4. Provincial Agriculture Office – Provincial Agriculturist (Head)')
-            ->line('5. Provincial Veterinary Office – Provincial Veterinarian (Head)')
-            ->line('')
-            ->line('We sincerely apologize for any inconvenience this may cause and kindly request your understanding.')
-            ->line('Should there be changes in the allocation of slots or if additional participation becomes possible, we will immediately reach out to you.')
-            ->line('')
-            ->line('Thank you once again for your interest and support. We look forward to future opportunities where we can work together in advancing agri-fishery investments.')
-            ->line('')
-            ->line('')
-            ->line('')
-            ->salutation('National Agri-Fishery Investment Forum Secretariat');
-    } else {
-        return (new MailMessage)
-            ->subject('Welcome to National Agri-Fishery Investment Forum')
-            ->view('emails.investment-forum-registration', [
-                'user' => $this->user,
-                'logoSrc' => $logoSrc
-            ])
-            ->attach($storagePath, [
-                'as' => 'NAFIF-ID.png',
-                'mime' => 'image/png',
-            ]);
-    }
-}
 
 
     /**
