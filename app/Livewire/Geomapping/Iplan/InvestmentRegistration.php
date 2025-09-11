@@ -75,7 +75,8 @@ class InvestmentRegistration extends Component
         }
         $this->regions = Region::all();
         $this->provinces = collect();
-        $this->institutions = GeoOffice::distinct('institution')
+        $this->institutions = GeoOffice::where('status', 1)
+            ->distinct()
             ->pluck('institution')
             ->toArray();
     }

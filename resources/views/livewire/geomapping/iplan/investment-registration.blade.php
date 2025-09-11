@@ -157,7 +157,7 @@
                             {{-- Fallback text input --}}
                             <input type="text" wire:model="office"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
-                                placeholder="Enter your office">
+                                placeholder="Enter your office" disabled>
                         @endif
 
                         @error('office')
