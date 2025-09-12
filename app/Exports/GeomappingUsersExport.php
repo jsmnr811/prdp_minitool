@@ -34,7 +34,8 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
                 'table_number',
                 'room_assignment',
                 'is_livein',
-                'is_verified', 
+                'is_verified',
+                'image',
                 'created_at',
                 'updated_at',
             ])
@@ -67,6 +68,7 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
             'Room Assignment',
             'Is Live In?',
             'Is Verified?',
+            'Image',
             'Created At',
             'Updated At',
         ];
@@ -116,6 +118,7 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
             $user->room_assignment,
             $user->is_livein ? 'Yes' : 'No',
             $user->is_verified ? 'Yes' : 'No',
+            str_replace('storage/investmentforum2025/', '', $user->image),
             $user->created_at?->format('Y-m-d H:i'),
             $user->updated_at?->format('Y-m-d H:i'),
         ];
