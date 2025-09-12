@@ -97,7 +97,7 @@ class GeomappingUsersExport implements FromQuery, WithHeadings, WithMapping
             $user->firstname,
             $user->middlename,
             $user->lastname,
-            $user->name_extension,
+            $user->ext_name,
             $user->sex,
             $user->institution,
             $user->office,
