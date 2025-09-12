@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         ]);
         $this->call(RegionsTableSeeder::class);
         $this->call(ProvincesTableSeeder::class);
+        $this->call(ProvincesBoundariesSeeder::class);
         $this->call(InterventionsTableSeeder::class);
         $this->call(GeoOfficeSeeder::class);
         $this->call(CommoditiesTableSeeder::class);
