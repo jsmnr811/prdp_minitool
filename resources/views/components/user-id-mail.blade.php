@@ -114,22 +114,24 @@ $idFontSize = 12 * $scale;
             <!-- Office: fixed 100px -->
 
             <div style="font-style: italic; color: #666; font-family: Arial, sans-serif; font-size: 100px; font-weight: 800; text-align: center; line-height:1;">
-                {{
-                        strtoupper($user->institution) === 'PROVINCIAL LOCAL GOVERNMENT UNITS' 
-                            ? 'PROVINCIAL LGU - ' . strtoupper($user->province->abbr) . ', ' . strtoupper($user->region->abbr)
-                            : (strtoupper($user->institution) === 'DA REGIONAL FIELD OFFICE' 
-                                ? 'DA RFO' 
-                                : (strtoupper($user->institution) === 'DA CENTRAL OFFICE' 
-                                    ? 'DA CO' 
-                                    : (strtoupper($user->institution) === 'OTHER INSTITUTIONS' 
-                                        ? (strtoupper($user->office) === 'COMMODITY EXPERTS (RESOURCE PERSONS)' 
-                                            ? 'COMMODITY EXPERTS' 
-                                            : 'TANGGOL KALIKASAN') 
-                                        : strtoupper($user->institution)
-                                    )
-                                )
-                            )
-                    }}
+                @if (strtoupper($user->institution) === 'PROVINCIAL LOCAL GOVERNMENT UNITS')
+                PROVINCIAL LGU - {{ strtoupper($user->province->abbr) }}, {{ strtoupper($user->region->abbr) }}
+                @elseif (strtoupper($user->institution) === 'DA REGIONAL FIELD OFFICE')
+                DA RFO
+                @elseif (strtoupper($user->institution) === 'DA CENTRAL OFFICE')
+                DA CO
+                @elseif (strtoupper($user->institution) === 'OTHER INSTITUTIONS')
+                @if (strtoupper($user->office) === 'COMMODITY EXPERTS (RESOURCE PERSONS)')
+                COMMODITY EXPERTS
+                @elseif (strtoupper($user->office) === 'TANGGOL KALIKASAN (FACILITATORS)')
+                TANGGOL KALIKASAN
+                @else
+                {{ strtoupper($user->office) }}
+                @endif
+                @else
+                {{ strtoupper($user->institution) }}
+                @endif
+
             </div>
 
         </div>
