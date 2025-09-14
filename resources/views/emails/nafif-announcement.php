@@ -96,10 +96,10 @@
         </div>
 
         <div class="footer">
-            <!-- <p>&copy; 2025 National Agri-Fishery Investment Forum. All rights reserved.</p> -->
-            <img src="{{ $bannerScr }}"
+            <p>&copy; 2025 National Agri-Fishery Investment Forum. All rights reserved.</p>
+            <!-- <img src="{{ $bannerScr }}"
                 alt="NAFIF Banner"
-                style="max-width:100%; height:auto; margin-top:10px;" />
+                style="max-width:100%; height:auto; margin-top:10px;" /> -->
         </div>
 
     </div>
