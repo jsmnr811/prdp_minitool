@@ -75,16 +75,16 @@
 
             <p>The National Agri-Fishery Investment Forum (NAFIF) 2025 will officially open on <span class="highlight">Tuesday, September 16, 2025</span>. To ensure a smooth flow of activities, please take note of the following:</p>
 
-            <h3>Registration</h3>
+            <h4>Registration</h4>
             <p>Registration will open as early as <span class="highlight">6:30 AM</span> on September 16 at the <span class="highlight">Amethyst Ballroom, 2nd Floor, Diamond Hotel</span>. Delegates will complete the necessary forms, and luggage will be securely received and tagged by the hotel concierge. Delegates may proceed directly to the day’s activities after registration and check into their rooms after the program concludes.</p>
 
-            <h3>Assembly and Shuttle Services</h3>
+            <h4>Assembly and Shuttle Services</h4>
             <p>Shuttle transfers to the <span class="highlight">Palacio de Maynila</span>, the official activity venue, will be available from <span class="highlight">6:30 AM to 8:30 AM</span> from the Diamond Hotel lobby.</p>
 
-            <h3>Accommodation and Meals</h3>
+            <h4>Accommodation and Meals</h4>
             <p>Delegates staying at the Diamond Hotel may check in after the event program on September 16, with check-out scheduled for <span class="highlight">1:00 PM on September 18</span>. Breakfast will be served daily from <span class="highlight">5:00 AM to 7:00 AM</span> at the Corniche Restaurant (Ground Floor).</p>
 
-            <h3>Identification Passes</h3>
+            <h4>Identification Passes</h4>
             <p>A color-coded ID system will distinguish delegates, the Secretariat, and support staff. ID passes must be worn and displayed at all times for security. Access will be denied without a valid ID pass.</p>
 
             <p>We look forward to welcoming you and your active participation in this important forum.</p>
@@ -96,9 +96,11 @@
         </div>
 
         <div class="footer">
-            &copy; 2025 National Agri-Fishery Investment Forum. All rights reserved.
-            <img src="{{ $message->embed(asset('icons/NAFIF-Email-Banner.png')) }}" />
-        </div>
+            <!-- <p>&copy; 2025 National Agri-Fishery Investment Forum. All rights reserved.</p> -->
+ <img src="{{ $message->embed($bannerPath) }}"
+         alt="NAFIF Banner"
+         style="max-width:100%; height:auto; margin-top:10px;" />        </div>
+
     </div>
 </body>
 

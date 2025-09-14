@@ -264,7 +264,8 @@ new class extends Component {
 
         $users = GeomappingUser::query()
         // ->where('is_verified', 1)
-        ->where('email', 'spaboyinfo@gmail.com')->skip($this->progress)->take($chunkSize)->get();
+        ->where('email', 'work.jasaure@gmail.com')
+        ->skip($this->progress)->take($chunkSize)->get();
 
         if ($users->isEmpty()) {
             $this->isProcessing = false;
