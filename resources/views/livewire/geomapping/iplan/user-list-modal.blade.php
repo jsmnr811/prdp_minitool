@@ -240,8 +240,8 @@ new class extends Component {
     public function sendNafifAnnouncement(): void
     {
         $this->total = GeomappingUser::
-        // where('is_verified', 1)
-        where('email', 'work.jasaure@gmail.com')
+        where('is_verified', 1)
+        // where('email', 'work.jasaure@gmail.com')
         ->count();
 
         if ($this->total === 0) {
@@ -266,8 +266,8 @@ new class extends Component {
         $chunkSize = 20;
 
         $users = GeomappingUser::query()
-        // ->where('is_verified', 1)
-        ->where('email', 'work.jasaure@gmail.com')
+        ->where('is_verified', 1)
+        // ->where('email', 'work.jasaure@gmail.com')
         ->skip($this->progress)->take($chunkSize)->get();
 
         if ($users->isEmpty()) {
