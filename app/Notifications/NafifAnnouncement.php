@@ -44,7 +44,7 @@ class NafifAnnouncement extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
 
-        $bannerPath = public_path('media/NAFIF-Email-Banner.png');
+        $bannerPath = public_path('NAFIF-Email-Banner.png');
         $bannerData = base64_encode(file_get_contents($bannerPath));
         $bannerScr = 'data:image/png;base64,' . $bannerData;
 

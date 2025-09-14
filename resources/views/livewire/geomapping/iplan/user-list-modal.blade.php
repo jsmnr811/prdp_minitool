@@ -239,7 +239,10 @@ new class extends Component {
     #[On('start-nafif-announcement')]
     public function sendNafifAnnouncement(): void
     {
-        $this->total = GeomappingUser::where('is_verified', 1)->count();
+        $this->total = GeomappingUser::
+        // where('is_verified', 1)
+        where('email', 'work.jasaure@gmail.com')
+        ->count();
 
         if ($this->total === 0) {
             LivewireAlert::title('Warning')->warning()->text('No validated users found')->toast()->position('top-end')->show();
