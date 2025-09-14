@@ -1,8 +1,9 @@
-<div class="row g-4" wire:ignore.self x-data="window.mapSearch(@js($provinceGeo), @js($temporaryGeo), @js($provinceBoundaries), @js($selectedProvinceId), @js($regionBoundaries), @js($selectedRegionId), @js($commodities), @js($interventions))" x-init="initMap()">
+<div class="row g-4" wire:ignore.self x-data="window.mapSearch(@js($provinceGeo), @js($temporaryGeo), @js($provinceBoundaries), @js($selectedProvinceId), @js($regionBoundaries), @js($selectedRegionId))" x-init="initMap()">
     <!-- Mobile: Stack vertically, Desktop: Side by side -->
     <div class="col-12 col-lg-9 order-2 order-lg-1">
         <div class="card shadow-sm p-2 p-sm-3 p-md-4">
 
+            {{-- <button wire:click='test'>dasdadsa</button> --}}
             <!-- Province Dropdown for Role 1 -->
             @if ($userRole == 1)
                 <div class="d-flex flex-column flex-sm-row gap-2 gap-sm-3 mb-3">
@@ -37,6 +38,28 @@
             <!-- Map Container with Loading Indicator - Responsive height -->
             <div class="position-relative">
                 <div wire:loading wire:target='selectedRegionId'>
+                    <div class="d-flex justify-content-center align-items-center position-absolute top-0 start-0 w-100 bg-light bg-opacity-75 rounded shadow-sm"
+                        style="z-index: 1000; height: 80vh; min-height: 400px;">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Zooming to region...</span>
+                            </div>
+                            <div class="text-muted">Zooming to region...</div>
+                        </div>
+                    </div>
+                </div>
+                <div wire:loading wire:target='selectedProvinceId'>
+                    <div class="d-flex justify-content-center align-items-center position-absolute top-0 start-0 w-100 bg-light bg-opacity-75 rounded shadow-sm"
+                        style="z-index: 1000; height: 80vh; min-height: 400px;">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Zooming to province...</span>
+                            </div>
+                            <div class="text-muted">Zooming to province...</div>
+                        </div>
+                    </div>
+                </div>
+ <div wire:loading wire:target='selectedRegionId'>
                     <div class="d-flex justify-content-center align-items-center position-absolute top-0 start-0 w-100 bg-light bg-opacity-75 rounded shadow-sm"
                         style="z-index: 1000; height: 80vh; min-height: 400px;">
                         <div class="text-center">
@@ -105,6 +128,15 @@
         <!-- Commodity Toggles -->
         @include('geomapping.iplan.mini-comp.commodity-toggles')
 
+        <!-- Save Button - Mobile optimized -->
+        <div class="card shadow-sm p-2 p-sm-3 mt-3 d-xl-none d-lg-none  d-md-none d-sm-block">
+            <button id="save-updates-btn" wire:click="saveUpdates" wire:loading.attr="disabled"
+                class="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2 py-2 py-sm-1 btn-sm">
+                    <i class="bi bi-check-circle"></i>
+                    <span class="d-none d-sm-inline">Save Changes</span>
+                    <span class="d-sm-none">Save</span>
+            </button>
+        </div>
     </div>
 </div>
 <!-- Scripts -->
@@ -113,7 +145,7 @@
 @script
     <script>
         window.mapSearch = function(provinceGeo, temporaryGeo, provinceBoundaries, selectedProvinceId, regionBoundaries,
-            selectedRegionId, commodities, interventions) {
+            selectedRegionId) {
             return {
 
 
@@ -125,7 +157,6 @@
                 lat: 12.8797,
                 lon: 121.7740,
                 hasMarker: false,
-                hasChanges: false,
 
                 // Map and markers
                 map: null,
@@ -151,20 +182,6 @@
                 selectedProvinceId,
                 regionBoundaries,
                 selectedRegionId,
-                commodities,
-                interventions,
-
-                // Local temporary geo for frontend handling
-                localTemporaryGeo: temporaryGeo.slice(),
-
-                // Local deleted province geo for frontend handling
-                localDeletedProvinceGeo: [],
-
-                // Original temporary geo to track changes
-                originalTemporaryGeo: temporaryGeo.slice(),
-
-                // Track changes for reactivity
-                changesCounter: 0,
 
                 /** Show error alert using SweetAlert2 */
                 showErrorAlert(message, timer = 3000) {
@@ -182,13 +199,6 @@
                     } else {
                         alert(message);
                     }
-                },
-
-                /** Check if there are unsaved changes in temporaryGeo or deleted province geo */
-                get hasUnsavedChanges() {
-                    return JSON.stringify(this.localTemporaryGeo) !== JSON.stringify(this.originalTemporaryGeo) ||
-                           this.changesCounter > 0 ||
-                           this.localDeletedProvinceGeo.length > 0;
                 },
 
                 /** Validate latitude and longitude coordinates */
@@ -296,10 +306,7 @@
                         this.map.options.fadeAnimation = false;
                         this.map.options.zoomAnimation = false;
                         this.addMarkers(this.provinceGeo, false);
-                        this.addMarkers(this.localTemporaryGeo, true);
-
-                        // Set original state after initialization
-                        this.originalTemporaryGeo = temporaryGeo.slice();
+                        this.addMarkers(this.temporaryGeo, true);
 
                         // Defer polygon and mask loading to improve initial loading performance
                         setTimeout(() => {
@@ -342,7 +349,7 @@
                         this.initTooltips();
 
                     } catch (error) {
-
+                        console.error('Error initializing map:', error);
                         this.showErrorAlert('Failed to initialize map. Please refresh the page.');
                     } finally {
                         // Map rendering completed
@@ -380,7 +387,7 @@
                                         initialZoom = 10;
                                     }
                                 } catch (error) {
-                                    // Error setting province bounds
+                                    console.warn('Error setting province bounds:', error);
                                 }
                             }
                         }
@@ -402,6 +409,7 @@
 
                         // Map setup completed
                     } catch (error) {
+                        console.error('Error setting up map:', error);
                         throw new Error('Failed to setup map. Please check your internet connection.');
                     }
 
@@ -468,13 +476,11 @@
 
                             const deleteBtn = popupEl.querySelector('.btn-delete-temp');
                             if (deleteBtn) {
-                                deleteBtn.onclick = ((capturedEntry) => {
-                                    return () => {
-                                        window.deleteTempCommodity(isTemporary ? capturedEntry.commodity.id :
-                                            capturedEntry.id, isTemporary ? 1 :
-                                            0);
-                                    };
-                                })(entry);
+                                deleteBtn.onclick = () => {
+                                    window.deleteTempCommodity(isTemporary ? entry.commodity.id :
+                                        entry.id, isTemporary ? 1 :
+                                        0);
+                                };
                             }
                         });
 
@@ -511,6 +517,7 @@
                     polygons.length = 0;
 
                     if (!boundaries || boundaries.length === 0) {
+                        console.warn(`No ${type} boundaries available for rendering`);
                         return;
                     }
 
@@ -520,11 +527,13 @@
                     }
 
                     if (filteredBoundaries.length === 0) {
+                        console.warn(`No ${type} boundaries to render after filtering. selectedId:`, selectedId);
                         return;
                     }
 
                     filteredBoundaries.forEach(boundary => {
                         if (!boundary.boundary_geojson) {
+                            console.warn(`Boundary ${boundary.name} has no geojson data`);
                             return;
                         }
 
@@ -543,10 +552,11 @@
                                 });
                             }
                         } catch (error) {
-                            // Error parsing boundary
+                            console.error(`Error parsing ${type} boundary for ${boundary.name}:`, error);
                         }
                     });
 
+                    console.log(`Rendered ${polygons.length} ${type} polygons`);
                 },
 
                 /** Add province polygons to the map */
@@ -602,7 +612,7 @@
                                 }
                             }
                         } catch (error) {
-                            // Error checking point in province
+                            console.error('Error checking point in province for', province.name, ':', error);
                         }
                     }
 
@@ -649,7 +659,7 @@
                                 }
                             }
                         } catch (error) {
-                            // Error checking point in region
+                            console.error('Error checking point in region for', region.name, ':', error);
                         }
                     }
 
@@ -753,7 +763,7 @@
                                 coords.forEach(coordSet => polygonCoords.push(coordSet));
                             }
                         } catch (error) {
-                            // Error processing boundary
+                            console.error(`Error processing ${type} boundary for ${boundary.name}:`, error);
                         }
                     });
 
@@ -875,14 +885,9 @@
                 },
 
                 bindLivewireEvents() {
-                    // Set global reference for delete function
-                    window.mapSearchInstance = this;
                     Livewire.on('temporaryGeoUpdated', newGeo => {
-                        this.localTemporaryGeo = newGeo.flat ? newGeo.flat() : newGeo;
-                        this.originalTemporaryGeo = (newGeo.flat ? newGeo.flat() : newGeo).slice();
-                        this.changesCounter = 0; // Reset changes counter when data is updated from backend
-                        this.hasChanges = false;
-                        this.addMarkers(this.localTemporaryGeo, true);
+                        this.temporaryGeo = newGeo.flat ? newGeo.flat() : newGeo;
+                        this.addMarkers(this.temporaryGeo, true);
                     });
 
                     Livewire.on('provinceGeoUpdated', newGeo => {
@@ -1055,19 +1060,6 @@
                         }
                     });
 
-                    Livewire.on('clearLocalTemporaryGeo', () => {
-                        this.localTemporaryGeo = [];
-                        this.changesCounter = 0; // Reset changes counter when cleared
-                        this.hasChanges = false;
-                        this.addMarkers(this.localTemporaryGeo, true);
-                        // Note: originalTemporaryGeo remains unchanged to track changes
-                    });
-
-                    Livewire.on('clearLocalDeletedProvinceGeo', () => {
-                        this.localDeletedProvinceGeo = [];
-                        this.hasChanges = false;
-                    });
-
                     Livewire.on('selectedRegionChanged', newSelectedRegionId => {
                         this.selectedRegionId = newSelectedRegionId;
 
@@ -1121,7 +1113,7 @@
                                     if (this.regionBoundaries && this.regionBoundaries.length > 0) {
                                         this.addRegionPolygons(); // Show selected region boundaries
                                     } else {
-                                        // Region boundaries not loaded yet, deferring polygon rendering
+                                        console.warn('Region boundaries not loaded yet, deferring polygon rendering');
                                         // Retry after a short delay
                                         setTimeout(() => {
                                             if (this.regionBoundaries && this.regionBoundaries.length > 0) {
@@ -1139,7 +1131,7 @@
                                     if (this.regionBoundaries && this.regionBoundaries.length > 0) {
                                         this.addRegionPolygons(); // Show all region boundaries
                                     } else {
-                                        // Region boundaries not loaded yet, deferring polygon rendering
+                                        console.warn('Region boundaries not loaded yet, deferring polygon rendering');
                                         // Retry after a short delay
                                         setTimeout(() => {
                                             if (this.regionBoundaries && this.regionBoundaries.length > 0) {
@@ -1281,19 +1273,6 @@
                         });
 
                         this.marker.openPopup(); // Open popup only once here
-
-                        // Focus on the popup after it opens
-                        setTimeout(() => {
-                            const popupEl = this.marker.getPopup().getElement();
-                            if (popupEl) {
-                                const select = popupEl.querySelector('#commodity-select');
-                                if (select) {
-                                    select.focus();
-                                    // Scroll the popup into view if needed
-                                    popupEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                }
-                            }
-                        }, 100);
                     } else {
                         // Update marker position and popup content without reopening popup
                         this.marker.setLatLng([lat, lon]);
@@ -1309,6 +1288,7 @@
                 setupPopupHandlers(popupEl) {
                     const component = Alpine.closestDataStack(popupEl)?.find(x => x.$wire)?.$wire;
                     if (!component) {
+                        console.warn('Livewire component not found in popup');
                         return;
                     }
 
@@ -1343,74 +1323,22 @@
                     if (addBtn) {
                         addBtn.addEventListener('click', () => {
                             if (!selectedCommodity || selectedInterventions.length === 0) {
-                                Swal.fire({
+                                swal.fire({
                                     icon: 'error',
                                     title: 'Error',
                                     text: 'Please select a commodity and at least one intervention.'
-                                });
+                                })
                                 return;
                             }
 
                             const markerLatLng = this.marker.getLatLng();
 
-                            // Find selected commodity
-                            const commodity = this.commodities.find(c => c.id == selectedCommodity);
-                            if (!commodity) return;
-
-                            // Find selected interventions
-                            const selectedInterventionObjects = this.interventions.filter(i => selectedInterventions.includes(i.id.toString()));
-
-                            // Create new entry
-                            const newEntry = {
-                                commodity_id: selectedCommodity,
-                                latitude: markerLatLng.lat,
-                                longitude: markerLatLng.lng,
-                                commodity: {
-                                    id: commodity.id,
-                                    name: commodity.name,
-                                    icon: commodity.icon,
-                                },
-                                geo_interventions: selectedInterventionObjects.map(i => ({
-                                    intervention_id: i.id,
-                                    intervention: {
-                                        id: i.id,
-                                        name: i.name,
-                                        created_at: i.created_at,
-                                        updated_at: i.updated_at,
-                                    },
-                                })),
-                            };
-
-                            // Check if entry already exists at this location for this commodity
-                            const existingIndex = this.localTemporaryGeo.findIndex(entry =>
-                                entry.commodity_id === selectedCommodity &&
-                                entry.latitude === markerLatLng.lat &&
-                                entry.longitude === markerLatLng.lng
-                            );
-
-                            if (existingIndex !== -1) {
-                                // Update existing
-                                this.localTemporaryGeo[existingIndex] = newEntry;
-                                this.changesCounter++; // Increment for update
-                            } else {
-                                // Add new
-                                this.localTemporaryGeo.push(newEntry);
-                                this.changesCounter++; // Increment for new addition
-                            }
-
-                            // Force reactivity
-                            this.localTemporaryGeo = [...this.localTemporaryGeo];
-                            this.hasChanges = true;
-
-                            // Re-render temporary markers
-                            this.addMarkers(this.localTemporaryGeo, true);
-
-                            // Close popup and reset
+                            component.set('lat', markerLatLng.lat);
+                            component.set('lon', markerLatLng.lng);
+                            component.set('selectedCommodity', selectedCommodity);
+                            component.set('selectedInterventions', selectedInterventions);
+                            component.addTempCommodity();
                             this.map.closePopup();
-                            commoditySelect.value = '';
-                            interventionSelect.value = [];
-                            $(commoditySelect).trigger('change');
-                            $(interventionSelect).trigger('change');
                         });
                     }
 
@@ -1451,6 +1379,7 @@
                                 }
                             })
                             .catch(err => {
+                                console.warn('Reverse geocoding failed:', err);
                                 const fallback = `Lat: ${lat.toFixed(5)}, Lng: ${lon.toFixed(5)}`;
                                 this.query = this.selectedLabel = fallback;
                                 this.results = [];
@@ -1458,62 +1387,21 @@
                                 if (updateMap) this.placeMarker(lat, lon, fallback);
                             });
                     } catch (error) {
+                        console.error('Error in reverse geocoding:', error);
                         this.showErrorAlert('Failed to get location information');
                     }
-                },
-
-                /** Handle save updates by calling Livewire method */
-                handleSaveUpdates() {
-                    $wire.call('saveUpdates', this.localTemporaryGeo, this.localDeletedProvinceGeo);
-                    // Reset changes counter after save
-                    this.changesCounter = 0;
-                    this.hasChanges = false;
                 },
             };
         };
 
         window.deleteTempCommodity = function(commodityId, isTemp) {
             if (!commodityId) return;
-
-            // Handle temporary commodities locally
-            if (isTemp) {
-                // Find the Alpine instance
-                const alpineInstance = window.mapSearchInstance;
-                if (alpineInstance) {
-                    // Remove from localTemporaryGeo
-                    const originalLength = alpineInstance.localTemporaryGeo.length;
-                    alpineInstance.localTemporaryGeo = alpineInstance.localTemporaryGeo.filter(entry =>
-                        entry.commodity.id != commodityId
-                    );
-                    // Force reactivity
-                    alpineInstance.localTemporaryGeo = [...alpineInstance.localTemporaryGeo];
-                    // Increment changes counter if item was actually removed
-                    if (alpineInstance.localTemporaryGeo.length < originalLength) {
-                        alpineInstance.changesCounter++;
-                        alpineInstance.hasChanges = true;
-                    }
-                    // Re-render markers
-                    alpineInstance.addMarkers(alpineInstance.localTemporaryGeo, true);
-                }
-            } else {
-                // Handle permanent commodities locally
-                const alpineInstance = window.mapSearchInstance;
-                if (alpineInstance) {
-                    // Find the province geo entry by ID
-                    const entryToDelete = alpineInstance.provinceGeo.find(entry => entry.id == commodityId);
-                    if (entryToDelete) {
-                        // Add to localDeletedProvinceGeo if not already there
-                        if (!alpineInstance.localDeletedProvinceGeo.find(entry => entry.id == commodityId)) {
-                            alpineInstance.localDeletedProvinceGeo.push(entryToDelete);
-                            alpineInstance.localDeletedProvinceGeo = [...alpineInstance.localDeletedProvinceGeo];
-                            alpineInstance.hasChanges = true;
-                        }
-                        // Remove from displayed provinceGeo markers
-                        alpineInstance.provinceGeo = alpineInstance.provinceGeo.filter(entry => entry.id != commodityId);
-                        alpineInstance.addMarkers(alpineInstance.provinceGeo, false);
-                    }
-                }
-            }
+            Livewire.dispatch('deleteTempCommodity', {
+                payload: {
+                    id: commodityId,
+                    isTemp
+                },
+            });
         };
     </script>
 @endscript

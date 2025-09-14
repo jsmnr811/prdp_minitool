@@ -45,6 +45,9 @@
             // Map instance
             map: null,
 
+            // Marker layer group
+            markerLayer: null,
+
             // Fullscreen state
             isFullscreen: false,
 
@@ -71,11 +74,12 @@
             /** Setup Livewire event listeners */
             setupLivewireListeners() {
                 Livewire.on('provinceGeoUpdated', newGeo => {
-                     let audio = new Audio('{{ asset('audio/wow.mp3') }}');
+                     let audio = new Audio('{{ asset('audio/popup.mp3') }}');
                     audio.play().catch((error) => {
                         console.error('Error playing sound:', error);
                     });
                     this.provinceGeo = newGeo.flat ? newGeo.flat() : newGeo;
+                    this.clearMarkers();
                     this.addMarkers(this.provinceGeo, false);
                 });
             },
@@ -105,6 +109,16 @@
                     maxZoom: 19,
                     attribution: '© OpenStreetMap contributors'
                 }).addTo(this.map);
+
+                // Create marker layer group
+                this.markerLayer = L.layerGroup().addTo(this.map);
+            },
+
+            /** Clear all markers */
+            clearMarkers() {
+                if (this.markerLayer) {
+                    this.markerLayer.clearLayers();
+                }
             },
 
             /** Add clickable markers for commodities with intervention popups */
@@ -139,7 +153,7 @@
                         iconAnchor: [16, 32]
                     });
 
-                    const marker = L.marker([entry.latitude, entry.longitude], { icon: customIcon }).addTo(this.map);
+                    const marker = L.marker([entry.latitude, entry.longitude], { icon: customIcon }).addTo(this.markerLayer);
 
                     // Create popup content with commodity name and interventions
                     const interventions = (entry.geo_interventions && entry.geo_interventions.length > 0) ?

@@ -29,6 +29,7 @@ class MainMap extends Component
     public ?object $interventions = null;
     public ?array $provinceGeo = [];
     public ?array $temporaryGeo = [];
+    public ?array $temporaryForDeletion = [];
     public ?array $selectedInterventions = [];
     public  $selectedCommodity = null;
     public ?array $selectedFilterCommoditites = [];
@@ -65,19 +66,15 @@ class MainMap extends Component
             $this->selectedFilterCommoditites = $this->commodities->pluck('id')->toArray();
 
             // Fetch all provinces for dropdown (role 1)
-            $this->allProvinces = Cache::rememberForever('all_provinces', function () {
-                return Province::select('code', 'name', 'latitude', 'longitude')
-                    ->orderBy('name')
-                    ->get()
-                    ->toArray();
-            });
-            $this->allRegions = Cache::rememberForever('all_regions', function () {
-                return Region::select('code', 'name', 'latitude', 'longitude')
-                    ->where('code', '!=', '16')
-                    ->orderBy('order')
-                    ->get()
-                    ->toArray();
-            });
+            $this->allProvinces = Province::select('code', 'name', 'latitude', 'longitude')
+                ->orderBy('name')
+                ->get()
+                ->toArray();
+            $this->allRegions = Region::select('code', 'name', 'latitude', 'longitude')
+                ->where('code', '!=', '16')
+                ->orderBy('order')
+                ->get()
+                ->toArray();
 
             // Load province boundaries directly for immediate availability
             $this->loadProvinceBoundaries();
@@ -102,12 +99,11 @@ class MainMap extends Component
     private function loadProvinceGeoData($user): void
     {
         if (intval($this->userRole) === 1) {
-            $this->provinceGeo = GeoCommodity::with('commodity', 'geoInterventions.intervention')
-                ->get()
-                ->toArray();
+            $this->provinceGeo = GeoCommodity::with('commodity', 'geoInterventions.intervention')->get()->toArray();
         } else {
             $this->provinceGeo = GeoCommodity::where('province_id', $user->province_id)
                 ->where('user_id', $user->id)
+                ->whereNotIn('id', $this->temporaryForDeletion)
                 ->with('commodity', 'geoInterventions.intervention')
                 ->get()
                 ->toArray();
@@ -174,6 +170,29 @@ class MainMap extends Component
             $this->selectedRegionId = null;
         }
     }
+    #[On('deleteTempCommodity')]
+    public function deleteTempCommodity($payload)
+    {
+        $user = Auth::guard('geomapping')->user();
+        $id = $payload['id'] ?? null;
+
+        if (!$id) {
+            return;
+        }
+
+        if ($payload['isTemp']) {
+            $this->temporaryGeo = array_values(
+                array_filter($this->temporaryGeo, function ($item) use ($id) {
+                    return $item['commodity']['id'] != $id;
+                }),
+            );
+            $this->dispatch('temporaryGeoUpdated', $this->temporaryGeo);
+        } else {
+            array_push($this->temporaryForDeletion, $id);
+            $this->loadProvinceGeoData($user);
+            $this->dispatch('provinceGeoUpdated', $this->provinceGeo);
+        }
+    }
 
     public function addTempCommodity()
     {
@@ -185,8 +204,8 @@ class MainMap extends Component
             'selectedInterventions' => 'required',
         ]);
 
-        $commodity = $this->commodities->find($this->selectedCommodity);
-        $interventions = $this->interventions->whereIn('id', $this->selectedInterventions);
+        $commodity = Commodity::find($this->selectedCommodity);
+        $interventions = Intervention::whereIn('id', $this->selectedInterventions)->get();
 
         if (!$commodity) {
             return;
@@ -237,18 +256,14 @@ class MainMap extends Component
         $this->selectedInterventions = [];
     }
 
-    #[On('saveUpdates')]
-    public function saveUpdates($temporaryGeo = null, $deletedProvinceGeo = null)
+    public function saveUpdates()
     {
         $this->dispatch('savingStarted');
 
         try {
             $user = Auth::guard('geomapping')->user();
 
-            // Use provided temporaryGeo or fallback to property
-            $geoData = $temporaryGeo ?? $this->temporaryGeo;
-
-            foreach ($geoData as $geo) {
+            foreach ($this->temporaryGeo as $geo) {
                 $geoCommodity = GeoCommodity::create([
                     'commodity_id' => $geo['commodity_id'],
                     'latitude' => $geo['latitude'],
@@ -266,26 +281,16 @@ class MainMap extends Component
                 }
             }
 
-            // Delete permanently marked items from frontend
-            $itemsToDelete = $deletedProvinceGeo ?? [];
-            foreach ($itemsToDelete as $item) {
-                GeoCommodity::find($item['id'])?->delete(); // triggers deletion of related geo_interventions
+            foreach ($this->temporaryForDeletion as $id) {
+                GeoCommodity::find($id)?->delete(); // triggers deletion of related geo_interventions
             }
 
+            $this->temporaryForDeletion = [];
             $this->temporaryGeo = [];
             $this->lat = 0;
             $this->lon = 0;
             // GeoCommodityUpdated::dispatch();
             LivewireAlert::title('Updated!')->text('The commodities entries have been updated.')->success()->toast()->position('top-end')->show();
-
-            // Reload province geo data to show newly saved items
-            $this->loadProvinceGeoData($user);
-            $this->dispatch('provinceGeoUpdated', $this->provinceGeo);
-
-            // Dispatch event to clear local temporary geo and deleted province geo in frontend
-            $this->dispatch('clearLocalTemporaryGeo');
-            $this->dispatch('clearLocalDeletedProvinceGeo');
-            GeoCommodityUpdated::dispatch();
 
         } catch (\Exception $e) {
             Log::error('Save updates error: ' . $e->getMessage());
@@ -337,23 +342,15 @@ class MainMap extends Component
 
         if ($this->selectedRegionId === null || $this->selectedRegionId === -1 || $this->selectedRegionId === '') {
             // Reset to default view - show all provinces and reset map
-            $this->allProvinces = Cache::rememberForever('all_provinces', function () {
-                return Province::select('code', 'name', 'latitude', 'longitude')
-                    ->orderBy('name')
-                    ->get()
-                    ->toArray();
-            });
+            $this->allProvinces = Province::select('code', 'name', 'latitude', 'longitude')
+                ->orderBy('name')
+                ->get()
+                ->toArray();
 
             $this->dispatch('resetMapView');
         } else {
             // Zoom to selected region
-            $this->allProvinces = Cache::rememberForever('provinces_region_' . $this->selectedRegionId, function () {
-                return Province::where('region_code', $this->selectedRegionId)
-                    ->select('code', 'name', 'latitude', 'longitude')
-                    ->orderBy('name')
-                    ->get()
-                    ->toArray();
-            });
+            $this->allProvinces = Province::where('region_code', $this->selectedRegionId)->orderBy('name')->get()->toArray();
             $this->handleZoomToLocation(Region::class, $this->selectedRegionId, 'zoomToRegion', ['code' => $this->selectedRegionId]);
         }
 
@@ -387,24 +384,20 @@ class MainMap extends Component
 
             if (intval($this->userRole) === 1) {
                 // Admin: load all boundaries with GeoJSON data
-                $this->$property = Cache::rememberForever($modelName . '_boundaries_all', function () use ($model) {
-                    return $model::whereNotNull('boundary_geojson')
-                        ->select('code', 'name', 'boundary_geojson', 'latitude', 'longitude')
-                        ->get()
-                        ->toArray();
-                });
+                $this->$property = $model::whereNotNull('boundary_geojson')
+                    ->select('code', 'name', 'boundary_geojson', 'latitude', 'longitude')
+                    ->get()
+                    ->toArray();
                 Log::info('Loaded ' . count($this->$property) . " {$modelName} boundaries for admin user (with GeoJSON)");
             } else {
                 // Regular user: load only their boundary with GeoJSON
-                $userId = $user->$userIdField;
-                $this->$property = Cache::rememberForever($modelName . '_boundary_' . $userId, function () use ($model, $userId) {
-                    $userBoundary = $model::where('id', $userId)
-                        ->whereNotNull('boundary_geojson')
-                        ->select('code', 'name', 'boundary_geojson', 'latitude', 'longitude')
-                        ->first();
-                    return $userBoundary ? [$userBoundary->toArray()] : [];
-                });
-                Log::info("Loaded {$modelName} boundary for user {$userIdField} ID: {$userId}, found: " . (count($this->$property) > 0 ? 'yes' : 'no'));
+                $userBoundary = $model::where('id', $user->$userIdField)
+                    ->whereNotNull('boundary_geojson')
+                    ->select('code', 'name', 'boundary_geojson', 'latitude', 'longitude')
+                    ->first();
+
+                $this->$property = $userBoundary ? [$userBoundary->toArray()] : [];
+                Log::info("Loaded {$modelName} boundary for user {$userIdField} ID: {$user->$userIdField}, found: " . ($userBoundary ? 'yes' : 'no'));
             }
 
             Log::info("Dispatching {$eventName} event with " . count($this->$property) . ' boundaries');
@@ -424,7 +417,6 @@ class MainMap extends Component
     {
         $this->loadBoundaries(Region::class, 'regionBoundaries', 'regionBoundariesLoaded', 'region_id');
     }
-
 
 
     public function render()

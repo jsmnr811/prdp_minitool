@@ -1,15 +1,15 @@
-<div class="row g-4" wire:ignore.self x-data="window.mapSearch(@js($provinceGeo), @js($temporaryGeo), @js($provinceBoundaries), @js($selectedProvinceId), @js($regionBoundaries), @js($selectedRegionId), @js($commodities), @js($interventions))" x-init="initMap()">
+<div class="row g-4" wire:ignore.self x-data="window.mapSearch(@js($provinceGeo), @js($temporaryGeo), @js($provinceBoundaries), @js($selectedProvinceId), @js($regionBoundaries), @js($selectedRegionId))" x-init="initMap()">
     <!-- Mobile: Stack vertically, Desktop: Side by side -->
     <div class="col-12 col-lg-9 order-2 order-lg-1">
         <div class="card shadow-sm p-2 p-sm-3 p-md-4">
 
+            {{-- <button wire:click='test'>dasdadsa</button> --}}
             <!-- Province Dropdown for Role 1 -->
             @if ($userRole == 1)
                 <div class="d-flex flex-column flex-sm-row gap-2 gap-sm-3 mb-3">
                     <div class="flex-fill">
                         <label for="region-select" class="form-label fw-bold fs-6 fs-sm-5">Zoom to Region</label>
-                        <select wire:model.live="selectedRegionId" wire:loading.attr="disabled" id="region-select"
-                            class="form-select form-select-sm">
+                        <select wire:model.live="selectedRegionId" id="region-select" class="form-select form-select-sm">
                             <option value=""></option>
                             @foreach ($allRegions as $region)
                                 <option value="{{ $region['code'] }}">{{ $region['name'] }}</option>
@@ -19,7 +19,7 @@
 
                     <div class="flex-fill">
                         <label for="province-select" class="form-label fw-bold fs-6 fs-sm-5">Zoom to Province</label>
-                        <select wire:model.live="selectedProvinceId" wire:loading.attr="disabled" id="province-select"
+                        <select wire:model.live="selectedProvinceId" id="province-select"
                             class="form-select form-select-sm">
                             <option value=""></option>
                             @foreach ($allProvinces as $province)
@@ -36,40 +36,6 @@
 
             <!-- Map Container with Loading Indicator - Responsive height -->
             <div class="position-relative">
-                <div wire:loading wire:target='selectedRegionId'>
-                    <div class="d-flex justify-content-center align-items-center position-absolute top-0 start-0 w-100 bg-light bg-opacity-75 rounded shadow-sm"
-                        style="z-index: 1000; height: 80vh; min-height: 400px;">
-                        <div class="text-center">
-                            <div class="spinner-border text-primary mb-2" role="status">
-                                <span class="visually-hidden">Zooming to region...</span>
-                            </div>
-                            <div class="text-muted">Zooming to region...</div>
-                        </div>
-                    </div>
-                </div>
-                <div wire:loading wire:target='selectedProvinceId'>
-                    <div class="d-flex justify-content-center align-items-center position-absolute top-0 start-0 w-100 bg-light bg-opacity-75 rounded shadow-sm"
-                        style="z-index: 1000; height: 80vh; min-height: 400px;">
-                        <div class="text-center">
-                            <div class="spinner-border text-primary mb-2" role="status">
-                                <span class="visually-hidden">Zooming to province...</span>
-                            </div>
-                            <div class="text-muted">Zooming to province...</div>
-                        </div>
-                    </div>
-                </div>
-                <div wire:loading wire:target='saveUpdates'>
-                    <div class="d-flex justify-content-center align-items-center position-absolute top-0 start-0 w-100 bg-light bg-opacity-75 rounded shadow-sm"
-                        style="z-index: 1000; height: 80vh; min-height: 400px;">
-                        <div class="text-center">
-                            <div class="spinner-border text-primary mb-2" role="status">
-                                <span class="visually-hidden">Saving updates...</span>
-                            </div>
-                            <div class="text-muted">Saving updates...</div>
-                        </div>
-                    </div>
-                </div>
-
                 @if ($isLoadingMap)
                     <div class="d-flex justify-content-center align-items-center position-absolute top-0 start-0 w-100 bg-light bg-opacity-75 rounded shadow-sm"
                         style="z-index: 1000; height: 80vh; min-height: 400px;">
@@ -91,7 +57,6 @@
                         </div>
                     </div>
                 @endif
-
                 <div wire:ignore id="map" class="rounded shadow-sm"
                     style="height: 50vh; min-height: 600px; max-height: 600px;" oncontextmenu="return false;"></div>
             </div>
@@ -105,6 +70,23 @@
         <!-- Commodity Toggles -->
         @include('geomapping.iplan.mini-comp.commodity-toggles')
 
+        <!-- Save Button - Mobile optimized -->
+        <div class="card shadow-sm p-2 p-sm-3 mt-3 d-xl-none d-lg-none  d-md-none d-sm-block">
+            <button wire:click="saveUpdates" :disabled="$wire.isSaving"
+                class="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2 py-2 py-sm-1 btn-sm">
+                @if ($isSaving)
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Saving...</span>
+                    </div>
+                    <span class="d-none d-sm-inline">Saving...</span>
+                    <span class="d-sm-none">Saving...</span>
+                @else
+                    <i class="bi bi-check-circle"></i>
+                    <span class="d-none d-sm-inline">Save Changes</span>
+                    <span class="d-sm-none">Save</span>
+                @endif
+            </button>
+        </div>
     </div>
 </div>
 <!-- Scripts -->
@@ -113,7 +95,7 @@
 @script
     <script>
         window.mapSearch = function(provinceGeo, temporaryGeo, provinceBoundaries, selectedProvinceId, regionBoundaries,
-            selectedRegionId, commodities, interventions) {
+            selectedRegionId) {
             return {
 
 
@@ -125,7 +107,6 @@
                 lat: 12.8797,
                 lon: 121.7740,
                 hasMarker: false,
-                hasChanges: false,
 
                 // Map and markers
                 map: null,
@@ -151,20 +132,6 @@
                 selectedProvinceId,
                 regionBoundaries,
                 selectedRegionId,
-                commodities,
-                interventions,
-
-                // Local temporary geo for frontend handling
-                localTemporaryGeo: temporaryGeo.slice(),
-
-                // Local deleted province geo for frontend handling
-                localDeletedProvinceGeo: [],
-
-                // Original temporary geo to track changes
-                originalTemporaryGeo: temporaryGeo.slice(),
-
-                // Track changes for reactivity
-                changesCounter: 0,
 
                 /** Show error alert using SweetAlert2 */
                 showErrorAlert(message, timer = 3000) {
@@ -184,87 +151,11 @@
                     }
                 },
 
-                /** Check if there are unsaved changes in temporaryGeo or deleted province geo */
-                get hasUnsavedChanges() {
-                    return JSON.stringify(this.localTemporaryGeo) !== JSON.stringify(this.originalTemporaryGeo) ||
-                           this.changesCounter > 0 ||
-                           this.localDeletedProvinceGeo.length > 0;
-                },
-
                 /** Validate latitude and longitude coordinates */
                 isValidCoordinates(lat, lng) {
                     return !isNaN(lat) && !isNaN(lng) &&
                         lat >= -90 && lat <= 90 &&
                         lng >= -180 && lng <= 180;
-                },
-
-                /** Validate location against boundaries based on user role and selection */
-                validateLocationAgainstBoundaries(lat, lng, context = 'general') {
-                    let isValidLocation = true;
-                    let errorMessage = '';
-
-                    // For role 2 users, always check if click is within province boundaries
-                    if (@js($userRole) == 2) {
-                        if (!this.isPointInProvince(lat, lng)) {
-                            isValidLocation = false;
-                            errorMessage = context === 'search' ?
-                                'The selected location is outside your province boundaries. Please search for a location within your assigned province.' :
-                                'You can only place markers within your assigned province boundaries. Please click on a location inside your province to add a commodity marker.';
-                        }
-                    }
-
-                    // For role 1 users with region selected but no province, check if within region boundaries
-                    if (@js($userRole) == 1 && this.selectedRegionId && this.selectedRegionId !== -1 &&
-                        (!this.selectedProvinceId || this.selectedProvinceId === -1 || this.selectedProvinceId === '')
-                    ) {
-                        if (!this.isPointInRegion(lat, lng)) {
-                            isValidLocation = false;
-                            errorMessage = context === 'search' ?
-                                'The selected location is outside the selected region boundaries. Please search for a location within the selected region.' :
-                                'You can only place markers within the selected region boundaries. Please click on a location inside the selected region to add a commodity marker.';
-                        }
-                    }
-
-                    // For role 1 users with specific province selected, check if within that province
-                    if (@js($userRole) == 1 && this.selectedProvinceId && this.selectedProvinceId !== -
-                        1) {
-                        if (!this.isPointInProvince(lat, lng)) {
-                            isValidLocation = false;
-                            errorMessage = context === 'search' ?
-                                'The selected location is outside the selected province boundaries. Please search for a location within the selected province.' :
-                                'You can only place markers within the selected province boundaries. Please click on a location inside the selected province to add a commodity marker.';
-                        }
-                    }
-
-                    return {
-                        isValid: isValidLocation,
-                        message: errorMessage
-                    };
-                },
-
-                /** Convert GeoJSON coordinates from [lng, lat] to [lat, lng] for Leaflet */
-                convertGeoJsonCoords(geometry) {
-                    if (geometry.type === 'Polygon') {
-                        return geometry.coordinates[0].map(coord => [coord[1], coord[0]]);
-                    } else if (geometry.type === 'MultiPolygon') {
-                        return geometry.coordinates.map(coords => coords[0].map(coord => [coord[1], coord[0]]));
-                    }
-                    return [];
-                },
-
-                /** Create polygon with common styling */
-                createStyledPolygon(coords, options = {}) {
-                    const defaultOptions = {
-                        color: '#496B4A',
-                        weight: 2,
-                        opacity: 0.9,
-                        fill: false,
-                        interactive: false
-                    };
-                    return L.polygon(coords, {
-                        ...defaultOptions,
-                        ...options
-                    });
                 },
 
                 /** Initialize map and related features */
@@ -296,10 +187,7 @@
                         this.map.options.fadeAnimation = false;
                         this.map.options.zoomAnimation = false;
                         this.addMarkers(this.provinceGeo, false);
-                        this.addMarkers(this.localTemporaryGeo, true);
-
-                        // Set original state after initialization
-                        this.originalTemporaryGeo = temporaryGeo.slice();
+                        this.addMarkers(this.temporaryGeo, true);
 
                         // Defer polygon and mask loading to improve initial loading performance
                         setTimeout(() => {
@@ -342,7 +230,7 @@
                         this.initTooltips();
 
                     } catch (error) {
-
+                        console.error('Error initializing map:', error);
                         this.showErrorAlert('Failed to initialize map. Please refresh the page.');
                     } finally {
                         // Map rendering completed
@@ -380,7 +268,7 @@
                                         initialZoom = 10;
                                     }
                                 } catch (error) {
-                                    // Error setting province bounds
+                                    console.warn('Error setting province bounds:', error);
                                 }
                             }
                         }
@@ -402,6 +290,7 @@
 
                         // Map setup completed
                     } catch (error) {
+                        console.error('Error setting up map:', error);
                         throw new Error('Failed to setup map. Please check your internet connection.');
                     }
 
@@ -468,13 +357,11 @@
 
                             const deleteBtn = popupEl.querySelector('.btn-delete-temp');
                             if (deleteBtn) {
-                                deleteBtn.onclick = ((capturedEntry) => {
-                                    return () => {
-                                        window.deleteTempCommodity(isTemporary ? capturedEntry.commodity.id :
-                                            capturedEntry.id, isTemporary ? 1 :
-                                            0);
-                                    };
-                                })(entry);
+                                deleteBtn.onclick = () => {
+                                    window.deleteTempCommodity(isTemporary ? entry.commodity.id :
+                                        entry.id, isTemporary ? 1 :
+                                        0);
+                                };
                             }
                         });
 
@@ -487,75 +374,148 @@
 
                 /** Add region polygons to the map */
                 addRegionPolygons() {
-                    this.addBoundaryPolygons('region', {
-                        color: '#4A90E2',
-                        fillColor: '#4A90E2',
-                        fillOpacity: 0.1
-                    });
-                },
-
-                /** Generic method to add boundary polygons */
-                addBoundaryPolygons(type, styleOptions = {}) {
-                    if (!this.map) return;
-
-                    const polygons = type === 'region' ? this.regionPolygons : this.provincePolygons;
-                    const boundaries = type === 'region' ? this.regionBoundaries : this.provinceBoundaries;
-                    const selectedId = type === 'region' ? this.selectedRegionId : this.selectedProvinceId;
+                    // Check if map object exists
+                    if (!this.map) {
+                        return;
+                    }
 
                     // Clear existing polygons
-                    polygons.forEach(polygon => {
+                    this.regionPolygons.forEach(polygon => {
                         if (this.map.hasLayer(polygon)) {
                             this.map.removeLayer(polygon);
                         }
                     });
-                    polygons.length = 0;
+                    this.regionPolygons.length = 0;
 
-                    if (!boundaries || boundaries.length === 0) {
+                    if (!this.regionBoundaries || this.regionBoundaries.length === 0) {
                         return;
                     }
 
-                    let filteredBoundaries = boundaries;
-                    if (selectedId && selectedId !== -1 && selectedId !== '' && selectedId !== null) {
-                        filteredBoundaries = boundaries.filter(b => b.code == selectedId);
+                    let filteredBoundaries = this.regionBoundaries;
+                    if (this.selectedRegionId && this.selectedRegionId !== -1 && this.selectedRegionId !== '') {
+                        filteredBoundaries = this.regionBoundaries.filter(r => r.code == this.selectedRegionId);
                     }
 
-                    if (filteredBoundaries.length === 0) {
-                        return;
-                    }
-
-                    filteredBoundaries.forEach(boundary => {
-                        if (!boundary.boundary_geojson) {
+                    filteredBoundaries.forEach((region, index) => {
+                        if (!region.boundary_geojson) {
                             return;
                         }
 
                         try {
-                            const geometry = JSON.parse(boundary.boundary_geojson);
-                            const coords = this.convertGeoJsonCoords(geometry);
+                            const geometry = JSON.parse(region.boundary_geojson);
 
                             if (geometry.type === 'Polygon') {
-                                const polygon = this.createStyledPolygon(coords, styleOptions).addTo(this.map);
-                                polygons.push(polygon);
+                                // Convert coordinates from [lng, lat] to [lat, lng] for Leaflet
+                                const leafletCoords = geometry.coordinates[0].map(coord => [coord[1], coord[
+                                    0]]);
+
+                                const polygon = L.polygon(leafletCoords, {
+                                    color: '#4A90E2', // Blue for regions
+                                    weight: 2,
+                                    opacity: 0.8,
+                                    fillColor: '#4A90E2',
+                                    fillOpacity: 0.1, // Light fill
+                                    interactive: false // Don't interfere with map clicks
+                                }).addTo(this.map);
+
+                                this.regionPolygons.push(polygon);
+
                             } else if (geometry.type === 'MultiPolygon') {
-                                coords.forEach(coordSet => {
-                                    const polygon = this.createStyledPolygon(coordSet, styleOptions)
-                                        .addTo(this.map);
-                                    polygons.push(polygon);
+                                geometry.coordinates.forEach((coords, partIndex) => {
+                                    // Convert coordinates from [lng, lat] to [lat, lng] for Leaflet
+                                    const leafletCoords = coords[0].map(coord => [coord[1], coord[0]]);
+
+                                    const polygon = L.polygon(leafletCoords, {
+                                        color: '#4A90E2', // Blue for regions
+                                        weight: 2,
+                                        opacity: 0.8,
+                                        fillColor: '#4A90E2',
+                                        fillOpacity: 0.1, // Light fill
+                                        interactive: false // Don't interfere with map clicks
+                                    }).addTo(this.map);
+
+                                    this.regionPolygons.push(polygon);
                                 });
                             }
                         } catch (error) {
-                            // Error parsing boundary
+                            console.error(`Error parsing region boundary for ${region.name}:`, error);
                         }
                     });
-
                 },
 
                 /** Add province polygons to the map */
                 addProvincePolygons() {
-                    const isUserProvince = @js($userRole) == 2 && this.provinceBoundaries.length === 1;
-                    this.addBoundaryPolygons('province', {
-                        color: isUserProvince ? '#dc2626' : '#496B4A',
-                        weight: isUserProvince ? 3 : 2,
-                        fill: false
+                    // Clear existing polygons
+                    this.provincePolygons.forEach(polygon => {
+                        if (this.map.hasLayer(polygon)) {
+                            this.map.removeLayer(polygon);
+                        }
+                    });
+                    this.provincePolygons.length = 0;
+
+                    if (!this.provinceBoundaries || this.provinceBoundaries.length === 0) {
+                        return;
+                    }
+
+                    let filteredBoundaries = this.provinceBoundaries;
+                    if (this.selectedProvinceId && this.selectedProvinceId !== -1 && this.selectedProvinceId !== '') {
+                        filteredBoundaries = this.provinceBoundaries.filter(p => p.code == this.selectedProvinceId);
+                    }
+
+                    filteredBoundaries.forEach(province => {
+                        if (!province.boundary_geojson) {
+                            return;
+                        }
+
+                        try {
+                            const geometry = JSON.parse(province.boundary_geojson);
+
+                            if (geometry.type === 'Polygon') {
+                                // Convert coordinates from [lng, lat] to [lat, lng] for Leaflet
+                                const leafletCoords = geometry.coordinates[0].map(coord => [coord[1], coord[
+                                    0]]);
+
+                                // Highlight user's province for role 2
+                                const isUserProvince = @js($userRole) == 2 && this
+                                    .provinceBoundaries.length === 1;
+
+                                const polygon = L.polygon(leafletCoords, {
+                                    color: isUserProvince ? '#dc2626' :
+                                    '#496B4A', // Red for user's province, green for others
+                                    weight: isUserProvince ? 3 :
+                                    2, // Thicker border for user's province
+                                    opacity: 0.9,
+                                    fill: false, // No fill, just borders
+                                    interactive: false // Don't interfere with map clicks
+                                }).addTo(this.map);
+
+                                this.provincePolygons.push(polygon);
+
+                            } else if (geometry.type === 'MultiPolygon') {
+                                // Highlight user's province for role 2
+                                const isUserProvince = @js($userRole) == 2 && this
+                                    .provinceBoundaries.length === 1;
+
+                                geometry.coordinates.forEach(coords => {
+                                    // Convert coordinates from [lng, lat] to [lat, lng] for Leaflet
+                                    const leafletCoords = coords[0].map(coord => [coord[1], coord[0]]);
+
+                                    const polygon = L.polygon(leafletCoords, {
+                                        color: isUserProvince ? '#dc2626' :
+                                        '#496B4A', // Red for user's province, green for others
+                                        weight: isUserProvince ? 3 :
+                                        2, // Thicker border for user's province
+                                        opacity: 0.9,
+                                        fill: false, // No fill, just borders
+                                        interactive: false // Don't interfere with map clicks
+                                    }).addTo(this.map);
+
+                                    this.provincePolygons.push(polygon);
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Error parsing province boundary for', province.name, ':', error);
+                        }
                     });
                 },
 
@@ -602,7 +562,7 @@
                                 }
                             }
                         } catch (error) {
-                            // Error checking point in province
+                            console.error('Error checking point in province for', province.name, ':', error);
                         }
                     }
 
@@ -649,7 +609,7 @@
                                 }
                             }
                         } catch (error) {
-                            // Error checking point in region
+                            console.error('Error checking point in region for', region.name, ':', error);
                         }
                     }
 
@@ -716,89 +676,123 @@
                     this.provinceMaskLayers.length = 0; // Clear the array
                 },
 
-                /** Generic method to add visibility mask */
-                addVisibilityMask(type, boundaries, maskLayers, errorMessage) {
-                    if (!boundaries || boundaries.length === 0) return;
-
-                    const selectedId = type === 'region' ? this.selectedRegionId : this.selectedProvinceId;
-                    let boundariesToShow = boundaries;
-
-                    // Filter to selected boundary if applicable
-                    if (@js($userRole) == 1 && selectedId && selectedId !== -1) {
-                        boundariesToShow = boundaries.filter(b => b.code == selectedId);
+                /** Add province visibility mask for role 2 users or role 1 when specific province selected */
+                addProvinceVisibilityMask() {
+                    if (!this.provinceBoundaries || this.provinceBoundaries.length === 0) {
+                        return;
                     }
 
-                    if (boundariesToShow.length === 0) return;
+                    // Determine which provinces to show as cutouts
+                    let provincesToShow = this.provinceBoundaries;
 
+                    // For role 1 users with specific province selected, only show that province
+                    if (@js($userRole) == 1 && this.selectedProvinceId && this.selectedProvinceId !== -
+                        1) {
+                        provincesToShow = this.provinceBoundaries.filter(p => p.code == this.selectedProvinceId);
+                    }
+
+                    if (provincesToShow.length === 0) {
+                        return; // No provinces to show, don't apply mask
+                    }
+
+                    // Create a grey/white semi-transparent mask that covers the entire world
                     const worldBounds = [
-                        [-90, -180],
-                        [90, -180],
-                        [90, 180],
-                        [-90, 180],
-                        [-90, -180]
+                        [-90, -180], // Southwest
+                        [90, -180], // Northwest
+                        [90, 180], // Northeast
+                        [-90, 180], // Southeast
+                        [-90, -180] // Southwest (close the polygon)
                     ];
+
+                    // Create the mask polygon (world coverage) - darker grey semi-transparent overlay
+                    const maskPolygon = L.polygon(worldBounds, {
+                        color: '#666666',
+                        weight: 1,
+                        fillColor: '#666666',
+                        fillOpacity: 0.7, // More visible semi-transparent overlay
+                        interactive: true // Allow clicks to be captured
+                    }).addTo(this.map);
+
+                    // Store mask layer for cleanup
+                    this.provinceMaskLayers.push(maskPolygon);
+
+                    // Create a single polygon with holes for all provinces to show
+                    // Start with world bounds as outer ring
                     const polygonCoords = [worldBounds];
 
-                    // Add each boundary as an inner ring (hole)
-                    boundariesToShow.forEach(boundary => {
-                        if (!boundary.boundary_geojson) return;
+                    // Add each province as an inner ring (hole)
+                    provincesToShow.forEach(province => {
+                        if (!province.boundary_geojson) {
+                            return;
+                        }
 
                         try {
-                            const geometry = JSON.parse(boundary.boundary_geojson);
-                            const coords = this.convertGeoJsonCoords(geometry);
+                            const geometry = JSON.parse(province.boundary_geojson);
 
                             if (geometry.type === 'Polygon') {
-                                polygonCoords.push(coords);
+                                // Convert coordinates from [lng, lat] to [lat, lng] for Leaflet
+                                const leafletCoords = geometry.coordinates[0].map(coord => [coord[1], coord[
+                                    0]]);
+                                polygonCoords.push(leafletCoords);
+
                             } else if (geometry.type === 'MultiPolygon') {
-                                coords.forEach(coordSet => polygonCoords.push(coordSet));
+                                // For MultiPolygon, add each polygon part as a separate hole
+                                geometry.coordinates.forEach((coords, index) => {
+                                    const leafletCoords = coords[0].map(coord => [coord[1], coord[0]]);
+                                    polygonCoords.push(leafletCoords);
+                                });
                             }
                         } catch (error) {
-                            // Error processing boundary
+                            console.error('Error processing province boundary for', province.name, ':', error);
                         }
                     });
+
+                    // Remove the simple world mask and create the polygon with holes
+                    this.map.removeLayer(maskPolygon);
+                    this.maskLayers = this.maskLayers.filter(layer => layer !== maskPolygon);
 
                     // Create the mask polygon with holes
                     const maskWithHoles = L.polygon(polygonCoords, {
                         color: '#666666',
                         weight: 1,
                         fillColor: '#666666',
-                        fillOpacity: 0.7,
-                        interactive: true,
-                        pane: 'maskPane'
-                    }).addTo(this.map);
+                        fillOpacity: 0.7, // More visible semi-transparent overlay with holes
+                        interactive: true, // Allow clicks to be captured
+                        pane: 'maskPane' // Use custom pane above markers
+                    });
 
-                    maskLayers.push(maskWithHoles);
+                    maskWithHoles.addTo(this.map);
 
-                    // Add click handler to prevent interaction outside boundaries
+                    // Store the new mask layer
+                    this.provinceMaskLayers.push(maskWithHoles);
+
+                    // Add click handler to mask to prevent interaction outside province (for role 2 or when specific province selected)
                     maskWithHoles.on('click', (e) => {
+                        // Prevent the click from propagating to map
                         L.DomEvent.stopPropagation(e);
+                        // Prevent default behavior
                         L.DomEvent.preventDefault(e);
-                        this.showErrorAlert(errorMessage);
+                        // Show error message to user
+                        this.showErrorAlert(
+                            'You can only interact within the selected province boundaries. Please click inside the province to add markers.'
+                        );
                         return false;
                     });
 
+
+                    // Also prevent other interactions like double-click, context menu, etc.
                     maskWithHoles.on('dblclick contextmenu', (e) => {
                         L.DomEvent.stopPropagation(e);
                         L.DomEvent.preventDefault(e);
                         return false;
                     });
 
-                    // Ensure mask stays on top
+                    // Ensure mask stays on top of all layers including markers
                     this.map.on('layeradd', () => {
                         if (this.map.hasLayer(maskWithHoles)) {
                             maskWithHoles.bringToFront();
                         }
                     });
-                },
-
-                /** Add province visibility mask for role 2 users or role 1 when specific province selected */
-                addProvinceVisibilityMask() {
-                    this.addVisibilityMask(
-                        'province',
-                        this.provinceBoundaries,
-                        this.provinceMaskLayers,
-                        'You can only interact within the selected province boundaries. Please click inside the province to add markers.'
-                    );
                 },
 
                 /** Update region visibility mask based on current selection */
@@ -829,12 +823,120 @@
 
                 /** Add region visibility mask for role 1 users when specific region selected and no province */
                 addRegionVisibilityMask() {
-                    this.addVisibilityMask(
-                        'region',
-                        this.regionBoundaries,
-                        this.regionMaskLayers,
-                        'You can only interact within the selected region boundaries. Please click inside the region to add markers.'
-                    );
+                    if (!this.regionBoundaries || this.regionBoundaries.length === 0) {
+                        return;
+                    }
+
+                    // Determine which regions to show as cutouts
+                    let regionsToShow = this.regionBoundaries;
+
+                    // For role 1 users with specific region selected, only show that region
+                    if (@js($userRole) == 1 && this.selectedRegionId && this.selectedRegionId !== -1) {
+                        regionsToShow = this.regionBoundaries.filter(r => r.code == this.selectedRegionId);
+                    }
+
+                    if (regionsToShow.length === 0) {
+                        return; // No regions to show, don't apply mask
+                    }
+
+                    // Create a grey/white semi-transparent mask that covers the entire world
+                    const worldBounds = [
+                        [-90, -180], // Southwest
+                        [90, -180], // Northwest
+                        [90, 180], // Northeast
+                        [-90, 180], // Southeast
+                        [-90, -180] // Southwest (close the polygon)
+                    ];
+
+
+                    // Create the mask polygon (world coverage) - darker grey semi-transparent overlay
+                    const maskPolygon = L.polygon(worldBounds, {
+                        color: '#666666',
+                        weight: 1,
+                        fillColor: '#666666',
+                        fillOpacity: 0.7, // More visible semi-transparent overlay
+                        interactive: true // Allow clicks to be captured
+                    }).addTo(this.map);
+
+
+                    // Store mask layer for cleanup
+                    this.regionMaskLayers.push(maskPolygon);
+                    // Start with world bounds as outer ring
+                    const polygonCoords = [worldBounds];
+
+                    // Add each region as an inner ring (hole)
+                    regionsToShow.forEach(region => {
+                        if (!region.boundary_geojson) {
+                            return;
+                        }
+
+                        try {
+                            const geometry = JSON.parse(region.boundary_geojson);
+
+                            if (geometry.type === 'Polygon') {
+                                // Convert coordinates from [lng, lat] to [lat, lng] for Leaflet
+                                const leafletCoords = geometry.coordinates[0].map(coord => [coord[1], coord[
+                                    0]]);
+                                polygonCoords.push(leafletCoords);
+
+                            } else if (geometry.type === 'MultiPolygon') {
+                                // For MultiPolygon, add each polygon part as a separate hole
+                                geometry.coordinates.forEach((coords, index) => {
+                                    const leafletCoords = coords[0].map(coord => [coord[1], coord[0]]);
+                                    polygonCoords.push(leafletCoords);
+
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Error processing region boundary for', region.name, ':', error);
+                        }
+                    });
+
+
+                    // Remove the simple world mask and create the polygon with holes
+                    this.map.removeLayer(maskPolygon);
+                    this.maskLayers = this.maskLayers.filter(layer => layer !== maskPolygon);
+
+                    // Create the mask polygon with holes
+                    const maskWithHoles = L.polygon(polygonCoords, {
+                        color: '#666666',
+                        weight: 1,
+                        fillColor: '#666666',
+                        fillOpacity: 0.7, // More visible semi-transparent overlay with holes
+                        interactive: true, // Allow clicks to be captured
+                        pane: 'maskPane' // Use custom pane above markers
+                    }).addTo(this.map);
+
+
+                    // Store the new mask layer
+                    this.regionMaskLayers.push(maskWithHoles);
+
+                    // Add click handler to mask to prevent interaction outside region
+                    maskWithHoles.on('click', (e) => {
+                        // Prevent the click from propagating to map
+                        L.DomEvent.stopPropagation(e);
+                        // Prevent default behavior
+                        L.DomEvent.preventDefault(e);
+                        // Show error message to user
+                        this.showErrorAlert(
+                            'You can only interact within the selected region boundaries. Please click inside the region to add markers.'
+                        );
+                        return false;
+                    });
+
+                    // Also prevent other interactions like double-click, context menu, etc.
+                    maskWithHoles.on('dblclick contextmenu', (e) => {
+                        L.DomEvent.stopPropagation(e);
+                        L.DomEvent.preventDefault(e);
+                        return false;
+                    });
+
+                    // Ensure mask stays on top of all layers including markers
+                    this.map.on('layeradd', () => {
+                        if (this.map.hasLayer(maskWithHoles)) {
+                            maskWithHoles.bringToFront();
+                        }
+                    });
                 },
 
                 createIcon(iconPath) {
@@ -875,14 +977,9 @@
                 },
 
                 bindLivewireEvents() {
-                    // Set global reference for delete function
-                    window.mapSearchInstance = this;
                     Livewire.on('temporaryGeoUpdated', newGeo => {
-                        this.localTemporaryGeo = newGeo.flat ? newGeo.flat() : newGeo;
-                        this.originalTemporaryGeo = (newGeo.flat ? newGeo.flat() : newGeo).slice();
-                        this.changesCounter = 0; // Reset changes counter when data is updated from backend
-                        this.hasChanges = false;
-                        this.addMarkers(this.localTemporaryGeo, true);
+                        this.temporaryGeo = newGeo.flat ? newGeo.flat() : newGeo;
+                        this.addMarkers(this.temporaryGeo, true);
                     });
 
                     Livewire.on('provinceGeoUpdated', newGeo => {
@@ -905,8 +1002,6 @@
                                 animate: true,
                                 duration: 1.5
                             });
-                            // Reset loading state after zoom animation
-
                         } else {
                             this.showErrorAlert('Unable to zoom to province: Invalid location data');
                         }
@@ -927,8 +1022,6 @@
                                 duration: 1.5
                             });
 
-                            // Reset loading state after zoom animation
-
                             // Ensure region's boundaries are rendered and mask is applied
                             if (@js($userRole) == 1 && (!this.selectedProvinceId || this
                                     .selectedProvinceId === -1)) {
@@ -948,48 +1041,6 @@
                             }
                         } else {
                             this.showErrorAlert('Unable to zoom to region: Invalid location data');
-                        }
-                    });
-
-                    Livewire.on('resetMapView', () => {
-                        if (this.map) {
-                            // Reset to default view
-                            this.map.setView([this.lat, this.lon], 6, {
-                                animate: true,
-                                duration: 1.5
-                            });
-
-                            // Clear selected region
-                            this.selectedRegionId = null;
-
-                            // Clear existing polygons first
-                            this.regionPolygons.forEach(polygon => {
-                                if (this.map.hasLayer(polygon)) {
-                                    this.map.removeLayer(polygon);
-                                }
-                            });
-                            this.regionPolygons.length = 0;
-
-                            this.provincePolygons.forEach(polygon => {
-                                if (this.map.hasLayer(polygon)) {
-                                    this.map.removeLayer(polygon);
-                                }
-                            });
-                            this.provincePolygons.length = 0;
-
-                            // Show appropriate boundaries based on user role
-                            if (@js($userRole) == 1) {
-                                // Role 1: Show all region boundaries by default
-                                this.addRegionPolygons();
-                                // Remove region mask since we're showing all regions
-                                this.removeRegionVisibilityMask();
-                            } else if (@js($userRole) == 2) {
-                                // Role 2: Show their province boundaries
-                                this.addProvincePolygons();
-                            }
-
-                            // Remove province mask if it exists
-                            this.removeProvinceVisibilityMask();
                         }
                     });
 
@@ -1055,39 +1106,13 @@
                         }
                     });
 
-                    Livewire.on('clearLocalTemporaryGeo', () => {
-                        this.localTemporaryGeo = [];
-                        this.changesCounter = 0; // Reset changes counter when cleared
-                        this.hasChanges = false;
-                        this.addMarkers(this.localTemporaryGeo, true);
-                        // Note: originalTemporaryGeo remains unchanged to track changes
-                    });
-
-                    Livewire.on('clearLocalDeletedProvinceGeo', () => {
-                        this.localDeletedProvinceGeo = [];
-                        this.hasChanges = false;
-                    });
-
                     Livewire.on('selectedRegionChanged', newSelectedRegionId => {
                         this.selectedRegionId = newSelectedRegionId;
 
-                        // Handle array case (like [null])
-                        if (Array.isArray(this.selectedRegionId)) {
-                            if (this.selectedRegionId.length === 0 ||
-                                this.selectedRegionId[0] === null ||
-                                this.selectedRegionId[0] === '' ||
-                                this.selectedRegionId[0] === 'null' ||
-                                this.selectedRegionId[0] === '-1') {
-                                this.selectedRegionId = null;
-                            } else {
-                                this.selectedRegionId = this.selectedRegionId[0];
-                            }
-                        } else {
-                            // Handle single value case
-                            if (this.selectedRegionId === '' || this.selectedRegionId === null || this
-                                .selectedRegionId === 'null' || this.selectedRegionId === '-1') {
-                                this.selectedRegionId = null;
-                            }
+                        // Normalize null/empty values to null for consistent handling
+                        if (this.selectedRegionId === '' || this.selectedRegionId === null || this
+                            .selectedRegionId === 'null' || this.selectedRegionId === '-1') {
+                            this.selectedRegionId = null;
                         }
 
                         // Normalize selectedProvinceId to handle array cases like [null]
@@ -1114,41 +1139,19 @@
 
                         if (@js($userRole) == 1) {
                             // Role 1: Handle region selection
-                            if (this.selectedRegionId && this.selectedRegionId !== -1 && this.selectedRegionId !== null) {
+                            if (this.selectedRegionId && this.selectedRegionId !== -1) {
                                 // Region selected
-                                if (!this.selectedProvinceId || this.selectedProvinceId === -1 || this.selectedProvinceId === null) {
-                                    // Check if boundaries are loaded before rendering
-                                    if (this.regionBoundaries && this.regionBoundaries.length > 0) {
-                                        this.addRegionPolygons(); // Show selected region boundaries
-                                    } else {
-                                        // Region boundaries not loaded yet, deferring polygon rendering
-                                        // Retry after a short delay
-                                        setTimeout(() => {
-                                            if (this.regionBoundaries && this.regionBoundaries.length > 0) {
-                                                this.addRegionPolygons();
-                                            }
-                                        }, 200);
-                                    }
+                                if (!this.selectedProvinceId || this.selectedProvinceId === -1) {
+                                    this.addRegionPolygons(); // Show selected region boundaries
                                 } else {
                                     // Province selected, don't show region polygons
                                 }
                             } else {
-                                // Region deselected (null, -1, or empty)
-                                if (!this.selectedProvinceId || this.selectedProvinceId === -1 || this.selectedProvinceId === null) {
-                                    // Check if boundaries are loaded before rendering
-                                    if (this.regionBoundaries && this.regionBoundaries.length > 0) {
-                                        this.addRegionPolygons(); // Show all region boundaries
-                                    } else {
-                                        // Region boundaries not loaded yet, deferring polygon rendering
-                                        // Retry after a short delay
-                                        setTimeout(() => {
-                                            if (this.regionBoundaries && this.regionBoundaries.length > 0) {
-                                                this.addRegionPolygons();
-                                            }
-                                        }, 200);
-                                    }
+                                // Region deselected
+                                if (!this.selectedProvinceId || this.selectedProvinceId === -1) {
+                                    this.addRegionPolygons(); // Show all region boundaries
                                 } else {
-                                    // Province is selected, don't show region polygons
+                                    // Province is selected, not calling addRegionPolygons
                                 }
                             }
                         }
@@ -1167,9 +1170,44 @@
                         lng
                     } = e.latlng;
 
-                    const validation = this.validateLocationAgainstBoundaries(lat, lng);
-                    if (!validation.isValid) {
-                        this.showErrorAlert(validation.message);
+                    // Enhanced validation: Check if click is within allowed boundaries
+                    let isValidLocation = true;
+                    let errorMessage = '';
+
+                    // For role 2 users, always check if click is within province boundaries
+                    if (@js($userRole) == 2) {
+                        if (!this.isPointInProvince(lat, lng)) {
+                            isValidLocation = false;
+                            errorMessage =
+                                'You can only place markers within your assigned province boundaries. Please click on a location inside your province to add a commodity marker.';
+                        }
+                    }
+
+                    // For role 1 users with region selected but no province, check if click is within region boundaries
+                    if (@js($userRole) == 1 && this.selectedRegionId && this.selectedRegionId !== -1 &&
+                        (!this.selectedProvinceId || this.selectedProvinceId === -1 || this.selectedProvinceId === '')
+                    ) {
+                        if (!this.isPointInRegion(lat, lng)) {
+                            isValidLocation = false;
+                            errorMessage =
+                                'You can only place markers within the selected region boundaries. Please click on a location inside the selected region to add a commodity marker.';
+                        }
+                    }
+
+                    // For role 1 users with specific province selected, check if click is within that province
+                    if (@js($userRole) == 1 && this.selectedProvinceId && this.selectedProvinceId !== -
+                        1) {
+                        if (!this.isPointInProvince(lat, lng)) {
+                            isValidLocation = false;
+                            errorMessage =
+                                'You can only place markers within the selected province boundaries. Please click on a location inside the selected province to add a commodity marker.';
+                        }
+                    }
+
+                    // If location is not valid, show error and prevent any further processing
+                    if (!isValidLocation) {
+                        this.showErrorAlert(errorMessage);
+                        // Prevent the click from doing anything else
                         L.DomEvent.stopPropagation(e);
                         L.DomEvent.preventDefault(e);
                         return false;
@@ -1201,9 +1239,43 @@
                     const lat = parseFloat(res.lat);
                     const lon = parseFloat(res.lon);
 
-                    const validation = this.validateLocationAgainstBoundaries(lat, lon, 'search');
-                    if (!validation.isValid) {
-                        this.showErrorAlert(validation.message, 5000);
+                    // Enhanced validation for search results
+                    let isValidLocation = true;
+                    let errorMessage = '';
+
+                    // For role 2 users, check if search result is within province boundaries
+                    if (@js($userRole) == 2) {
+                        if (!this.isPointInProvince(lat, lon)) {
+                            isValidLocation = false;
+                            errorMessage = 'The selected location "' + res.display_name +
+                                '" is outside your province boundaries. Please search for a location within your assigned province.';
+                        }
+                    }
+
+                    // For role 1 users with region selected but no province, check if search result is within region boundaries
+                    if (@js($userRole) == 1 && this.selectedRegionId && this.selectedRegionId !== -1 &&
+                        (!this.selectedProvinceId || this.selectedProvinceId === -1 || this.selectedProvinceId === '')
+                    ) {
+                        if (!this.isPointInRegion(lat, lon)) {
+                            isValidLocation = false;
+                            errorMessage = 'The selected location "' + res.display_name +
+                                '" is outside the selected region boundaries. Please search for a location within the selected region.';
+                        }
+                    }
+
+                    // For role 1 users with specific province selected, check if search result is within that province
+                    if (@js($userRole) == 1 && this.selectedProvinceId && this.selectedProvinceId !== -
+                        1) {
+                        if (!this.isPointInProvince(lat, lon)) {
+                            isValidLocation = false;
+                            errorMessage = 'The selected location "' + res.display_name +
+                                '" is outside the selected province boundaries. Please search for a location within the selected province.';
+                        }
+                    }
+
+                    // If location is not valid, show error and prevent selection
+                    if (!isValidLocation) {
+                        this.showErrorAlert(errorMessage, 5000);
                         return;
                     }
 
@@ -1215,7 +1287,9 @@
                     this.$wire.set('lat', this.lat);
                     this.$wire.set('lon', this.lon);
 
-                    if (!this.map) return;
+                    if (!this.map) {
+                        return;
+                    }
 
                     this.map.setView([this.lat, this.lon], 14);
                     this.placeMarker(this.lat, this.lon, this.selectedLabel);
@@ -1281,19 +1355,6 @@
                         });
 
                         this.marker.openPopup(); // Open popup only once here
-
-                        // Focus on the popup after it opens
-                        setTimeout(() => {
-                            const popupEl = this.marker.getPopup().getElement();
-                            if (popupEl) {
-                                const select = popupEl.querySelector('#commodity-select');
-                                if (select) {
-                                    select.focus();
-                                    // Scroll the popup into view if needed
-                                    popupEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                }
-                            }
-                        }, 100);
                     } else {
                         // Update marker position and popup content without reopening popup
                         this.marker.setLatLng([lat, lon]);
@@ -1309,6 +1370,7 @@
                 setupPopupHandlers(popupEl) {
                     const component = Alpine.closestDataStack(popupEl)?.find(x => x.$wire)?.$wire;
                     if (!component) {
+                        console.warn('Livewire component not found in popup');
                         return;
                     }
 
@@ -1343,74 +1405,22 @@
                     if (addBtn) {
                         addBtn.addEventListener('click', () => {
                             if (!selectedCommodity || selectedInterventions.length === 0) {
-                                Swal.fire({
+                                swal.fire({
                                     icon: 'error',
                                     title: 'Error',
                                     text: 'Please select a commodity and at least one intervention.'
-                                });
+                                })
                                 return;
                             }
 
                             const markerLatLng = this.marker.getLatLng();
 
-                            // Find selected commodity
-                            const commodity = this.commodities.find(c => c.id == selectedCommodity);
-                            if (!commodity) return;
-
-                            // Find selected interventions
-                            const selectedInterventionObjects = this.interventions.filter(i => selectedInterventions.includes(i.id.toString()));
-
-                            // Create new entry
-                            const newEntry = {
-                                commodity_id: selectedCommodity,
-                                latitude: markerLatLng.lat,
-                                longitude: markerLatLng.lng,
-                                commodity: {
-                                    id: commodity.id,
-                                    name: commodity.name,
-                                    icon: commodity.icon,
-                                },
-                                geo_interventions: selectedInterventionObjects.map(i => ({
-                                    intervention_id: i.id,
-                                    intervention: {
-                                        id: i.id,
-                                        name: i.name,
-                                        created_at: i.created_at,
-                                        updated_at: i.updated_at,
-                                    },
-                                })),
-                            };
-
-                            // Check if entry already exists at this location for this commodity
-                            const existingIndex = this.localTemporaryGeo.findIndex(entry =>
-                                entry.commodity_id === selectedCommodity &&
-                                entry.latitude === markerLatLng.lat &&
-                                entry.longitude === markerLatLng.lng
-                            );
-
-                            if (existingIndex !== -1) {
-                                // Update existing
-                                this.localTemporaryGeo[existingIndex] = newEntry;
-                                this.changesCounter++; // Increment for update
-                            } else {
-                                // Add new
-                                this.localTemporaryGeo.push(newEntry);
-                                this.changesCounter++; // Increment for new addition
-                            }
-
-                            // Force reactivity
-                            this.localTemporaryGeo = [...this.localTemporaryGeo];
-                            this.hasChanges = true;
-
-                            // Re-render temporary markers
-                            this.addMarkers(this.localTemporaryGeo, true);
-
-                            // Close popup and reset
+                            component.set('lat', markerLatLng.lat);
+                            component.set('lon', markerLatLng.lng);
+                            component.set('selectedCommodity', selectedCommodity);
+                            component.set('selectedInterventions', selectedInterventions);
+                            component.addTempCommodity();
                             this.map.closePopup();
-                            commoditySelect.value = '';
-                            interventionSelect.value = [];
-                            $(commoditySelect).trigger('change');
-                            $(interventionSelect).trigger('change');
                         });
                     }
 
@@ -1421,13 +1431,42 @@
 
                 reverseGeocode(lat, lon, updateMap = false) {
                     try {
-                        // Validate location if updating map
-                        if (updateMap) {
-                            const validation = this.validateLocationAgainstBoundaries(lat, lon);
-                            if (!validation.isValid) {
-                                this.showErrorAlert(validation.message);
-                                return;
+                        // Enhanced validation for reverse geocoding
+                        let isValidLocation = true;
+                        let errorMessage = '';
+
+                        // For role 2 users, validate location before reverse geocoding
+                        if (@js($userRole) == 2 && updateMap) {
+                            if (!this.isPointInProvince(lat, lon)) {
+                                isValidLocation = false;
+                                errorMessage = 'Location is outside your province boundaries';
                             }
+                        }
+
+                        // For role 1 users with region selected but no province, validate location before reverse geocoding
+                        if (@js($userRole) == 1 && this.selectedRegionId && this.selectedRegionId !== -
+                            1 &&
+                            (!this.selectedProvinceId || this.selectedProvinceId === -1 || this.selectedProvinceId ===
+                                '') && updateMap) {
+                            if (!this.isPointInRegion(lat, lon)) {
+                                isValidLocation = false;
+                                errorMessage = 'Location is outside the selected region boundaries';
+                            }
+                        }
+
+                        // For role 1 users with specific province selected, validate location before reverse geocoding
+                        if (@js($userRole) == 1 && this.selectedProvinceId && this.selectedProvinceId !==
+                            -1 && updateMap) {
+                            if (!this.isPointInProvince(lat, lon)) {
+                                isValidLocation = false;
+                                errorMessage = 'Location is outside the selected province boundaries';
+                            }
+                        }
+
+                        // If location is not valid, show error and prevent reverse geocoding
+                        if (!isValidLocation) {
+                            this.showErrorAlert(errorMessage);
+                            return;
                         }
 
                         fetch(
@@ -1451,6 +1490,7 @@
                                 }
                             })
                             .catch(err => {
+                                console.warn('Reverse geocoding failed:', err);
                                 const fallback = `Lat: ${lat.toFixed(5)}, Lng: ${lon.toFixed(5)}`;
                                 this.query = this.selectedLabel = fallback;
                                 this.results = [];
@@ -1458,62 +1498,21 @@
                                 if (updateMap) this.placeMarker(lat, lon, fallback);
                             });
                     } catch (error) {
+                        console.error('Error in reverse geocoding:', error);
                         this.showErrorAlert('Failed to get location information');
                     }
-                },
-
-                /** Handle save updates by calling Livewire method */
-                handleSaveUpdates() {
-                    $wire.call('saveUpdates', this.localTemporaryGeo, this.localDeletedProvinceGeo);
-                    // Reset changes counter after save
-                    this.changesCounter = 0;
-                    this.hasChanges = false;
                 },
             };
         };
 
         window.deleteTempCommodity = function(commodityId, isTemp) {
             if (!commodityId) return;
-
-            // Handle temporary commodities locally
-            if (isTemp) {
-                // Find the Alpine instance
-                const alpineInstance = window.mapSearchInstance;
-                if (alpineInstance) {
-                    // Remove from localTemporaryGeo
-                    const originalLength = alpineInstance.localTemporaryGeo.length;
-                    alpineInstance.localTemporaryGeo = alpineInstance.localTemporaryGeo.filter(entry =>
-                        entry.commodity.id != commodityId
-                    );
-                    // Force reactivity
-                    alpineInstance.localTemporaryGeo = [...alpineInstance.localTemporaryGeo];
-                    // Increment changes counter if item was actually removed
-                    if (alpineInstance.localTemporaryGeo.length < originalLength) {
-                        alpineInstance.changesCounter++;
-                        alpineInstance.hasChanges = true;
-                    }
-                    // Re-render markers
-                    alpineInstance.addMarkers(alpineInstance.localTemporaryGeo, true);
-                }
-            } else {
-                // Handle permanent commodities locally
-                const alpineInstance = window.mapSearchInstance;
-                if (alpineInstance) {
-                    // Find the province geo entry by ID
-                    const entryToDelete = alpineInstance.provinceGeo.find(entry => entry.id == commodityId);
-                    if (entryToDelete) {
-                        // Add to localDeletedProvinceGeo if not already there
-                        if (!alpineInstance.localDeletedProvinceGeo.find(entry => entry.id == commodityId)) {
-                            alpineInstance.localDeletedProvinceGeo.push(entryToDelete);
-                            alpineInstance.localDeletedProvinceGeo = [...alpineInstance.localDeletedProvinceGeo];
-                            alpineInstance.hasChanges = true;
-                        }
-                        // Remove from displayed provinceGeo markers
-                        alpineInstance.provinceGeo = alpineInstance.provinceGeo.filter(entry => entry.id != commodityId);
-                        alpineInstance.addMarkers(alpineInstance.provinceGeo, false);
-                    }
-                }
-            }
+            Livewire.dispatch('deleteTempCommodity', {
+                payload: {
+                    id: commodityId,
+                    isTemp
+                },
+            });
         };
     </script>
 @endscript
