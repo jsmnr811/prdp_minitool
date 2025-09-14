@@ -59,6 +59,8 @@ Route::name('geomapping.')->prefix('geomapping')->group(function () {
         });
     });
 });
+Route::view('geomapping/iplan/map-dashboard', 'geomapping.iplan.map-dashboard')->name('map-dashboard');
+
 
 Route::get('sidlaner', function () {
     $user = GeomappingUser::find(1);

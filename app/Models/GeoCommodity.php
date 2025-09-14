@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Observers\GeoCommodityObserver;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
+#[ObservedBy([GeoCommodityObserver::class])]
 class GeoCommodity extends Model
 {
     protected $table = 'geo_commodities';

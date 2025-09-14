@@ -10,6 +10,7 @@ use App\Models\GeomappingUser;
 use App\Notifications\MailUserId;
 use Spatie\Browsershot\Browsershot;
 use Illuminate\Support\Facades\Storage;
+use App\Notifications\NafifAnnouncement;
 use Barryvdh\Snappy\Facades\SnappyImage;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
@@ -42,6 +43,10 @@ new class extends Component {
 
     public $editModal = false;
     public $assignModal = false;
+
+    public bool $isProcessing = false;
+    public int $progress = 0;
+    public int $total = 0;
 
     public function mount(): void
     {
@@ -196,6 +201,7 @@ new class extends Component {
 
         $this->office = '';
     }
+
     #[On('confirmUpdateBlockStatus')]
     public function confirmUpdateBlockStatus(GeomappingUser $user)
     {
@@ -215,66 +221,6 @@ new class extends Component {
         $this->dispatch('reloadDataTable');
     }
 
-    #[On('confirmSendGeomappingUserId')]
-    public function confirmSendGeomappingUserId(GeomappingUser $user)
-    {
-        $this->user = $user;
-        LivewireAlert::title('Are you sure?')->question()->text('Are you sure you want to mail the geomapping user id? ')->timer(0)->withConfirmButton('Send')->withCancelButton('Cancel')->onConfirm('sendGeomappingUserId')->show();
-    }
-
-
-public function sendGeomappingUserId()
-{
-    // $bgPath = public_path('icons/NAFIF-ID-Template.png');
-    // $bgData = base64_encode(file_get_contents($bgPath));
-    // $bgSrc = 'data:image/png;base64,' . $bgData;
-    // $fileName = 'user-id-' . $this->user->id . '.png';
-    // $storagePath = storage_path('app/public/' . $fileName);
-
-    // // Load logo image and convert to base64
-    // $logoPath = public_path('media/Scale-Up.png');
-    // $logoData = base64_encode(file_get_contents($logoPath));
-    // $logoSrc = 'data:image/png;base64,' . $logoData;
-
-    // // Load user image and convert to base64 (default if not exists)
-    // $userImagePath = $this->user->image && Storage::disk('public')->exists(str_replace('storage/', '', $this->user->image)) && file_exists(public_path($this->user->image)) 
-    //     ? public_path($this->user->image) 
-    //     : storage_path('app/public/investmentforum2025/default.png');
-
-    // $userImageData = base64_encode(file_get_contents($userImagePath));
-    // $userImageSrc = 'data:image/png;base64,' . $userImageData;
-
-    // $html = view('components.user-id-mail', [
-    //     'user' => $this->user,
-    //     'logoSrc' => $logoSrc,
-    //     'userImageSrc' => $userImageSrc,
-    //     'bgSrc' => $bgSrc
-    // ])->render();
-
-    // // Delete old image if exists
-    // if (file_exists($storagePath)) {
-    //     unlink($storagePath);
-    // }
-
-    // // Generate image with Browsershot
-    // Browsershot::html($html)
-    //     ->windowSize(330, 520) // same as your Snappy width/height
-    // ->deviceScaleFactor(2)  // scale factor for retina quality
-    //     ->waitUntilNetworkIdle() // ensures all assets are loaded
-    //     ->save($storagePath);
-
-    $this->user->notify(new MailUserId($this->user));
-    LivewireAlert::title('Success')
-        ->text('Geomapping User ID has been sent successfully')
-        ->success()
-        ->toast()
-        ->position('top-end')
-        ->show();
-
-    $this->dispatch('reloadDataTable');
-}
-
-
     #[On('updateVerified')]
     public function updateVerified(GeomappingUser $user)
     {
@@ -282,11 +228,81 @@ public function sendGeomappingUserId()
         $user->save();
         $this->dispatch('reloadDataTable');
     }
+
+    #[On('confirmSendGeomappingUserId')]
+    public function confirmSendGeomappingUserId(GeomappingUser $user)
+    {
+        $this->user = $user;
+        LivewireAlert::title('Are you sure?')->question()->text('Are you sure you want to mail the geomapping user id? ')->timer(0)->withConfirmButton('Send')->withCancelButton('Cancel')->onConfirm('sendGeomappingUserId')->show();
+    }
+
+    #[On('start-nafif-announcement')]
+    public function sendNafifAnnouncement(): void
+    {
+        $this->total = GeomappingUser::where('is_verified', 1)->count();
+
+        if ($this->total === 0) {
+            LivewireAlert::title('Warning')->warning()->text('No validated users found')->toast()->position('top-end')->show();
+            return;
+        }
+
+        $this->progress = 0;
+        $this->isProcessing = true;
+
+        // Start processing directly
+        $this->processChunksRecursively();
+    }
+
+    protected function processChunksRecursively(): void
+    {
+        if (!$this->isProcessing) {
+            LivewireAlert::title('Warning')->warning()->text('Processing has not started')->toast()->position('top-end')->show();
+            return;
+        }
+
+        $chunkSize = 20;
+
+        $users = GeomappingUser::query()
+        // ->where('is_verified', 1)
+        ->where('email', 'spaboyinfo@gmail.com')->skip($this->progress)->take($chunkSize)->get();
+
+        if ($users->isEmpty()) {
+            $this->isProcessing = false;
+            LivewireAlert::title('Success')
+                ->success()
+                ->text("All {$this->total} Geomapping User IDs have been queued for sending")
+                ->toast()
+                ->position('top-end')
+                ->show();
+            $this->dispatch('reloadDataTable');
+            return;
+        }
+
+        foreach ($users as $user) {
+            $user->notify(new NafifAnnouncement($user));
+            $this->progress++;
+        }
+
+        // Continue processing the next chunk
+        if ($this->progress < $this->total) {
+            $this->processChunksRecursively();
+        } else {
+            $this->isProcessing = false;
+            LivewireAlert::title('Success')
+                ->success()
+                ->text("All {$this->total} Geomapping User IDs have been queued for sending")
+                ->toast()
+                ->position('top-end')
+                ->show();
+            $this->dispatch('reloadDataTable');
+        }
+    }
 };
 
 ?>
 <div>
-    @vite(['resources/css/app.css'])
+    @vite(['resources/css/app.css']);
+
 
     @if ($editModal)
         <!-- Bootstrap Modal (container only) -->
@@ -740,4 +756,70 @@ public function sendGeomappingUserId()
         <!-- Backdrop -->
         <div class="modal-backdrop fade show"></div>
     @endif
+    @if ($isProcessing)
+        <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+            <div class="modal-dialog modal-md" role="document">
+                <div class="modal-content rounded-2xl shadow-lg">
+
+                    <!-- Header -->
+                    <div class="modal-header border-b">
+                        <h5 class="modal-title font-semibold text-lg">Sending Announcement</h5>
+                        <button type="button" class="btn-close"
+                            wire:click='$set("nafifAnnouncementModal", false)'></button>
+                    </div>
+
+                    @if ($isProcessing)
+                        <script>
+                            document.addEventListener("livewire:initialized", () => {
+                                Livewire.dispatch('process-chunk-trigger');
+                            });
+                        </script>
+                    @endif
+
+                    <!-- Body -->
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <p class="text-gray-700">
+                                Please wait while we send announcements to all validated users...
+                            </p>
+                        </div>
+
+                        {{-- Progress bar --}}
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                role="progressbar"
+                                style="width: {{ $total > 0 ? round(($progress / $total) * 100) : 0 }}%;"
+                                aria-valuenow="{{ $progress }}" aria-valuemin="0"
+                                aria-valuemax="{{ $total }}">
+                                {{ $progress }} / {{ $total }}
+                            </div>
+                        </div>
+
+                        {{-- Status text --}}
+                        <div class="mt-3 text-center">
+                            @if ($isProcessing)
+                                <span class="text-sm text-gray-600">Processing... Please don’t close this
+                                    window.</span>
+                            @else
+                                <span class="text-sm text-green-600 font-semibold">✅ Completed!</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="modal-footer border-t">
+                        <button type="button" class="btn btn-secondary"
+                            wire:click='$set("nafifAnnouncementModal", false)'
+                            @if ($isProcessing) disabled @endif>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Backdrop -->
+        <div class="modal-backdrop fade show"></div>
+    @endif
+
 </div>

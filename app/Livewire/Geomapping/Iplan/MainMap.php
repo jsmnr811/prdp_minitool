@@ -2,18 +2,20 @@
 
 namespace App\Livewire\Geomapping\Iplan;
 
+use App\Models\Region;
 use Livewire\Component;
+use App\Models\Province;
 use App\Models\Commodity;
 use Livewire\Attributes\On;
 use App\Models\GeoCommodity;
 use App\Models\Intervention;
 use App\Models\CommodityGroup;
-use App\Models\Province;
 
+use App\Events\GeoCommodityUpdated;
 use App\Services\LeafletJSServices;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Jantinnerezo\LivewireAlert\Facades\LivewireAlert;
 
 
@@ -34,11 +36,17 @@ class MainMap extends Component
     public ?string $userRole = null;
     public ?string $userGroup = null;
     public ?array $provinceBoundaries = [];
+    public ?array $regionBoundaries = [];
     public ?int $selectedProvinceId = null;
+    public ?int $selectedRegionId = null;
     public ?array $allProvinces = [];
     public bool $isLoadingMap = true;
+    public bool $isMapRendering = true;
     public bool $isSearching = false;
     public bool $isSaving = false;
+    public $zoomOption = ''; // 'region' or 'province'
+    public $allRegions = [];     // Set this in mount() or render()
+
 
     public function mount(): void
     {
@@ -56,12 +64,12 @@ class MainMap extends Component
             });
 
             if (intval($this->userRole) === 1) {
-                $this->provinceGeo = GeoCommodity::where('province_id', $user->province_id)->with('commodity', 'geoInterventions.intervention')->get()->toArray();
+                $this->provinceGeo = GeoCommodity::with('commodity', 'geoInterventions.intervention')->get()->toArray();
             } else {
                 $this->provinceGeo = GeoCommodity::where('province_id', $user->province_id)
                     ->where('user_id', $user->id)
                     ->whereNotIn('id', $this->temporaryForDeletion)
-                    ->with('commodity')
+                    ->with('commodity', 'geoInterventions.intervention')
                     ->get()
                     ->toArray();
             }
@@ -69,13 +77,19 @@ class MainMap extends Component
             $this->selectedFilterCommoditites = $this->commodities->pluck('id')->toArray();
 
             // Fetch all provinces for dropdown (role 1)
-            $this->allProvinces = Province::select('id', 'name', 'latitude', 'longitude')
+            $this->allProvinces = Province::select('code', 'name', 'latitude', 'longitude')
                 ->orderBy('name')
+                ->get()
+                ->toArray();
+            $this->allRegions = Region::select('code', 'name', 'latitude', 'longitude')
+                ->where('code', '!=', '16')
+                ->orderBy('order')
                 ->get()
                 ->toArray();
 
             // Load province boundaries directly for immediate availability
             $this->loadProvinceBoundaries();
+            $this->loadRegionBoundaries();
         } catch (\Exception $e) {
             Log::error('Mount error: ' . $e->getMessage());
             LivewireAlert::title('Initialization Error')->text('Unable to load map data. Please refresh the page.')->error()->toast()->position('top-end')->show();
@@ -84,6 +98,11 @@ class MainMap extends Component
         }
     }
 
+    public function placeholder()
+    {
+
+        return view('livewire.geomapping.iplan.placeholder.main-map-placeholder');
+    }
     public function search(): void
     {
         if (strlen($this->query) < 3) {
@@ -131,12 +150,24 @@ class MainMap extends Component
         $this->dispatch('provinceGeoUpdated', $loadedProvinceGeo);
         $this->dispatch('temporaryGeoUpdated', $loadedTemporaryGeo);
     }
+    public function updatedZoomOption($value)
+    {
 
+        if ($value === 'region') {
+            $this->selectedProvinceId = null;
+        } elseif ($value === 'province') {
+            $this->selectedRegionId = null;
+        } else {
+            $this->selectedProvinceId = null;
+            $this->selectedRegionId = null;
+        }
+    }
     #[On('deleteTempCommodity')]
     public function deleteTempCommodity($payload)
     {
         $user = Auth::guard('geomapping')->user();
         $id = $payload['id'] ?? null;
+
         if (!$id) {
             return;
         }
@@ -150,7 +181,17 @@ class MainMap extends Component
             $this->dispatch('temporaryGeoUpdated', $this->temporaryGeo);
         } else {
             array_push($this->temporaryForDeletion, $id);
-            $this->provinceGeo = GeoCommodity::where('province_id', $user->province_id)->whereNotIn('id', $this->temporaryForDeletion)->with('commodity')->get()->toArray();
+
+            if (intval($this->userRole) === 1) {
+                $this->provinceGeo = GeoCommodity::where('province_id', $user->province_id)->with('commodity', 'geoInterventions.intervention')->get()->toArray();
+            } else {
+                $this->provinceGeo = GeoCommodity::where('province_id', $user->province_id)
+                    ->where('user_id', $user->id)
+                    ->whereNotIn('id', $this->temporaryForDeletion)
+                    ->with('commodity', 'geoInterventions.intervention')
+                    ->get()
+                    ->toArray();
+            }
             $this->dispatch('provinceGeoUpdated', $this->provinceGeo);
         }
     }
@@ -250,8 +291,9 @@ class MainMap extends Component
             $this->temporaryGeo = [];
             $this->lat = 0;
             $this->lon = 0;
-
+            // GeoCommodityUpdated::dispatch();
             LivewireAlert::title('Updated!')->text('The commodities entries have been updated.')->success()->toast()->position('top-end')->show();
+
         } catch (\Exception $e) {
             Log::error('Save updates error: ' . $e->getMessage());
             LivewireAlert::title('Save Error')->text('Unable to save updates. Please try again.')->error()->toast()->position('top-end')->show();
@@ -260,6 +302,7 @@ class MainMap extends Component
         }
     }
 
+
     public function updatedSelectedProvinceId()
     {
         if ($this->selectedProvinceId && $this->selectedProvinceId !== -1) {
@@ -267,9 +310,9 @@ class MainMap extends Component
             if ($province && $this->isValidCoordinates($province->latitude, $province->longitude)) {
                 // Dispatch event to zoom to province
                 $this->dispatch('zoomToProvince', [
-                    'lat' => $province->latitude,
-                    'lng' => $province->longitude,
-                    'name' => $province->name
+                    'lat' => (float) $province->latitude,
+                    'lng' => (float) $province->longitude,
+                    'name' => $province->name,
                 ]);
             } else {
                 // Handle case where coordinates are missing or invalid
@@ -281,15 +324,45 @@ class MainMap extends Component
         $this->dispatch('selectedProvinceChanged', $this->selectedProvinceId);
     }
 
+    public function updatedSelectedRegionId()
+    {
+        $this->selectedProvinceId = null;
+        $this->allProvinces = Province::where('region_code', $this->selectedRegionId)->orderBy('name')->get()->toArray();
+
+        if ($this->selectedRegionId && $this->selectedRegionId !== -1) {
+            $region = Region::where('code',$this->selectedRegionId)->first();
+            if ($region && $this->isValidCoordinates($region->latitude, $region->longitude)) {
+                // Dispatch event to zoom to region
+                $this->dispatch('zoomToRegion', [
+                    'lat' => (float) $region->latitude,
+                    'lng' => (float) $region->longitude,
+                    'name' => $region->name,
+                    'code' => $region->code,
+                ]);
+            } else {
+                // Handle case where coordinates are missing or invalid
+                Log::warning('Invalid or missing coordinates for region: ' . ($region ? $region->name : 'Unknown'));
+                LivewireAlert::title('Region Location Unavailable')->text('The coordinates for this region are not available.')->warning()->toast()->position('top-end')->show();
+            }
+        }
+
+        // Dispatch event to update region polygons
+        $this->dispatch('selectedRegionChanged', $this->selectedRegionId);
+        $this->dispatch('selectedProvinceChanged', $this->selectedProvinceId);
+    }
+
+
+
+
     /**
      * Validate latitude and longitude coordinates
      */
     private function isValidCoordinates($lat, $lng)
     {
         return !is_null($lat) && !is_null($lng) &&
-               is_numeric($lat) && is_numeric($lng) &&
-               $lat >= -90 && $lat <= 90 &&
-               $lng >= -180 && $lng <= 180;
+            is_numeric($lat) && is_numeric($lng) &&
+            $lat >= -90 && $lat <= 90 &&
+            $lng >= -180 && $lng <= 180;
     }
 
     public function loadProvinceBoundaries()
@@ -299,17 +372,18 @@ class MainMap extends Component
             Log::info('Loading province boundaries for user role: ' . $this->userRole . ', user ID: ' . $user->id);
 
             if (intval($this->userRole) === 1) {
-                // Admin: load all province boundaries
+                // Admin: load all province boundaries with GeoJSON data initially
+                // This is needed for the map to display polygons correctly
                 $this->provinceBoundaries = Province::whereNotNull('boundary_geojson')
-                    ->select('id', 'name', 'boundary_geojson', 'latitude', 'longitude')
+                    ->select('code', 'name', 'boundary_geojson', 'latitude', 'longitude')
                     ->get()
                     ->toArray();
-                Log::info('Loaded ' . count($this->provinceBoundaries) . ' province boundaries for admin user');
+                Log::info('Loaded ' . count($this->provinceBoundaries) . ' province boundaries for admin user (with GeoJSON)');
             } else {
-                // Regular user: load only their province boundary
+                // Regular user: load only their province boundary with GeoJSON
                 $userProvince = Province::where('id', $user->province_id)
                     ->whereNotNull('boundary_geojson')
-                    ->select('id', 'name', 'boundary_geojson', 'latitude', 'longitude')
+                    ->select('code', 'name', 'boundary_geojson', 'latitude', 'longitude')
                     ->first();
 
                 $this->provinceBoundaries = $userProvince ? [$userProvince->toArray()] : [];
@@ -324,12 +398,48 @@ class MainMap extends Component
         }
     }
 
+    public function loadRegionBoundaries()
+    {
+        try {
+            $user = Auth::guard('geomapping')->user();
+            Log::info('Loading region boundaries for user role: ' . $this->userRole . ', user ID: ' . $user->id);
+
+            if (intval($this->userRole) === 1) {
+                // Admin: load all region boundaries with GeoJSON data initially
+                // This is needed for the map to display polygons correctly
+                $this->regionBoundaries = Region::whereNotNull('boundary_geojson')
+                    ->select('code', 'name', 'boundary_geojson', 'latitude', 'longitude')
+                    ->get()
+                    ->toArray();
+                Log::info('Loaded ' . count($this->regionBoundaries) . ' region boundaries for admin user (with GeoJSON)');
+            } else {
+                // Regular user: load only their region boundary with GeoJSON
+                $userRegion = Region::where('id', $user->region_id)
+                    ->whereNotNull('boundary_geojson')
+                    ->select('code', 'name', 'boundary_geojson', 'latitude', 'longitude')
+                    ->first();
+
+                $this->regionBoundaries = $userRegion ? [$userRegion->toArray()] : [];
+                Log::info('Loaded region boundary for user region ID: ' . $user->region_id . ', found: ' . ($userRegion ? 'yes' : 'no'));
+            }
+
+            Log::info('Dispatching regionBoundariesLoaded event with ' . count($this->regionBoundaries) . ' boundaries');
+            $this->dispatch('regionBoundariesLoaded', $this->regionBoundaries);
+        } catch (\Exception $e) {
+            Log::error('Load region boundaries error: ' . $e->getMessage());
+            $this->regionBoundaries = [];
+        }
+    }
+
+
     public function render()
     {
         return view('livewire.geomapping.iplan.main-map', [
             'userRole' => $this->userRole,
             'allProvinces' => $this->allProvinces,
             'selectedProvinceId' => $this->selectedProvinceId,
+            'regionBoundaries' => $this->regionBoundaries,
+            'selectedRegionId' => $this->selectedRegionId,
         ]);
     }
 }

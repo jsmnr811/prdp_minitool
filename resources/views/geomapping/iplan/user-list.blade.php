@@ -7,6 +7,9 @@
         <div class="col-lg-12">
             <div class="card shadow-sm">
                 <div class="card-header p-3 d-flex justify-content-end align-items-center gap-3">
+                    <button onclick="Livewire.dispatch('start-nafif-announcement');" class="btn btn-primary d-flex align-items-center">
+                        Send NAFIF Announcement
+                    </button>
                     <a href="{{ route('geomapping.iplan.export.users') }}"
                         class="btn btn-success d-flex align-items-center">
                         <i class="bi bi-file-earmark-spreadsheet me-2"></i>Export CSV
@@ -15,11 +18,12 @@
                         class="btn btn-success d-flex align-items-center">
                         <i class="bi bi-speedometer2 me-2"></i>User Dashboard
                     </a>
-                    @if(Auth::guard('geomapping')->user()->email == 'work.jasaure@gmail.com' || Auth::guard('geomapping')->user()->email == 'spaboyinfo@gmail.com')
-                     <a href="{{ route('geomapping.iplan.investment.generate-user-id') }}"
-                        class="btn btn-success d-flex align-items-center">
-                        <i class="bi bi-speedometer2 me-2"></i>Generate ID
-                    </a>
+                    @if (Auth::guard('geomapping')->user()->email == 'work.jasaure@gmail.com' ||
+                            Auth::guard('geomapping')->user()->email == 'spaboyinfo@gmail.com')
+                        <a href="{{ route('geomapping.iplan.investment.generate-user-id') }}"
+                            class="btn btn-success d-flex align-items-center">
+                            <i class="bi bi-speedometer2 me-2"></i>Generate ID
+                        </a>
                     @endif
                 </div>
                 <div class="card-body">
