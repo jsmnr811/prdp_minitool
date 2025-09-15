@@ -186,9 +186,54 @@
 
                 /** Check if there are unsaved changes in temporaryGeo or deleted province geo */
                 get hasUnsavedChanges() {
-                    return JSON.stringify(this.localTemporaryGeo) !== JSON.stringify(this.originalTemporaryGeo) ||
-                           this.changesCounter > 0 ||
-                           this.localDeletedProvinceGeo.length > 0;
+                    console.log('hasUnsavedChanges getter called');
+                    console.log('changesCounter:', this.changesCounter);
+                    console.log('localDeletedProvinceGeo.length:', this.localDeletedProvinceGeo.length);
+
+                    // Check if changes counter indicates modifications
+                    if (this.changesCounter > 0 || this.localDeletedProvinceGeo.length > 0) {
+                        console.log('Returning true due to changesCounter > 0 or localDeletedProvinceGeo.length > 0');
+                        return true;
+                    }
+
+                    console.log('localTemporaryGeo.length:', this.localTemporaryGeo.length);
+                    console.log('originalTemporaryGeo.length:', this.originalTemporaryGeo.length);
+
+                    // Check if local temporary geo length differs from original
+                    if (this.localTemporaryGeo.length !== this.originalTemporaryGeo.length) {
+                        console.log('Returning true due to length difference in temporary geo arrays');
+                        return true;
+                    }
+
+                    // For same length, check if any entries differ (simple comparison)
+                    for (let i = 0; i < this.localTemporaryGeo.length; i++) {
+                        const local = this.localTemporaryGeo[i];
+                        const original = this.originalTemporaryGeo[i];
+
+                        console.log(`Comparing entry ${i}:`);
+                        console.log('local.commodity_id:', local.commodity_id, 'original.commodity_id:', original.commodity_id);
+                        console.log('local.latitude:', local.latitude, 'original.latitude:', original.latitude);
+                        console.log('local.longitude:', local.longitude, 'original.longitude:', original.longitude);
+
+                        // Compare key properties that matter for changes
+                        if (local.commodity_id !== original.commodity_id ||
+                            local.latitude !== original.latitude ||
+                            local.longitude !== original.longitude) {
+                            console.log('Returning true due to difference in key properties');
+                            return true;
+                        }
+
+                        console.log('local.geo_interventions?.length:', local.geo_interventions?.length, 'original.geo_interventions?.length:', original.geo_interventions?.length);
+
+                        // Check if interventions differ in count
+                        if (local.geo_interventions?.length !== original.geo_interventions?.length) {
+                            console.log('Returning true due to difference in interventions count');
+                            return true;
+                        }
+                    }
+
+                    console.log('Returning false - no unsaved changes detected');
+                    return false;
                 },
 
                 /** Validate latitude and longitude coordinates */
@@ -1178,9 +1223,36 @@
                     // Only proceed if location is valid
                     this.lat = lat;
                     this.lon = lng;
-                    this.$wire.set('lat', lat);
-                    this.$wire.set('lon', lng);
-                    this.reverseGeocode(lat, lng, true);
+                    // this.reverseGeocode(lat, lng, true); //enable mo to tapos disable mo asa baba kung gusto mo may reverseGeocode
+                    this.handleMapClickWithoutReverse(e);
+                },
+
+                handleMapClickWithoutReverse(e) {
+                    const {
+                        lat,
+                        lng
+                    } = e.latlng;
+
+                    const validation = this.validateLocationAgainstBoundaries(lat, lng);
+                    if (!validation.isValid) {
+                        this.showErrorAlert(validation.message);
+                        L.DomEvent.stopPropagation(e);
+                        L.DomEvent.preventDefault(e);
+                        return false;
+                    }
+
+                    // Only proceed if location is valid
+                    this.lat = lat;
+                    this.lon = lng;
+
+                    // Create fallback label similar to reverseGeocode failure case
+                    const fallbackLabel = `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
+                    this.query = this.selectedLabel = fallbackLabel;
+                    this.results = [];
+                    this.open = false;
+
+                    // Directly place marker without reverse geocoding
+                    this.placeMarker(lat, lng, fallbackLabel);
                 },
 
                 onInput() {
@@ -1211,9 +1283,6 @@
                     this.lat = lat;
                     this.lon = lon;
                     this.query = this.selectedLabel = res.display_name;
-
-                    this.$wire.set('lat', this.lat);
-                    this.$wire.set('lon', this.lon);
 
                     if (!this.map) return;
 
@@ -1275,8 +1344,6 @@
                             this.lat = newPos.lat;
                             this.lon = newPos.lng;
 
-                            this.$wire.set('lat', this.lat);
-                            this.$wire.set('lon', this.lon);
                             // Do NOT call placeMarker here or openPopup again to avoid animation conflicts
                         });
 
@@ -1415,8 +1482,6 @@
                     }
 
                     const markerLatLng = this.marker.getLatLng();
-                    component.set('lat', markerLatLng.lat);
-                    component.set('lon', markerLatLng.lng);
                 },
 
                 reverseGeocode(lat, lon, updateMap = false) {
@@ -1442,7 +1507,6 @@
                             .then(data => {
                                 const name = data.display_name || `Lat: ${lat.toFixed(5)}, Lng: ${lon.toFixed(5)}`;
                                 this.query = this.selectedLabel = name;
-                                this.$wire.set('query', name);
                                 this.results = [];
                                 this.open = false;
                                 if (updateMap) {

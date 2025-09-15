@@ -1,13 +1,15 @@
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2">
       <h5 class="fw-semibold mb-0">📍 Select Location</h5>
-          <div x-show="hasChanges" class="d-flex gap-2">
-              <button id="save-updates-btn" @click="handleSaveUpdates" wire:loading.attr="disabled"
-                class="btn btn-success d-flex align-items-center justify-content-center gap-2 py-2 py-sm-1 btn-sm">
-                    <i class="bi bi-check-circle"></i>
-                    <span class="d-none d-sm-inline">Save Changes</span>
-                    <span class="d-sm-none">Save</span>
-              </button>
-          </div>
+          <template x-if="hasUnsavedChanges">
+              <div class="d-flex gap-2">
+                  <button id="save-updates-btn" @click="handleSaveUpdates" wire:loading.attr="disabled"
+                    class="btn btn-success d-flex align-items-center justify-content-center gap-2 py-2 py-sm-1 btn-sm">
+                        <i class="bi bi-check-circle"></i>
+                        <span class="d-none d-sm-inline">Save Changes</span>
+                        <span class="d-sm-none">Save</span>
+                  </button>
+              </div>
+          </template>
   </div>
   <div class="position-relative mb-3">
       <input type="text" class="form-control form-control-lg" x-model="query" @input.debounce.500="onInput"
