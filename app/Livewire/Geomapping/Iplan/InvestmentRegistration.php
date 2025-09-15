@@ -39,14 +39,6 @@ class InvestmentRegistration extends Component
     public $institutions = [];
     public $offices = [];
 
-        protected $listeners = ['imageCaptured' => 'handleImageCaptured'];
-
-    public function handleImageCaptured($imageData)
-    {
-        // Process the base64 image data here
-        $this->image = $imageData;
-    }
-
     protected $rules = [
         'image' => 'required|image|mimes:jpeg,jpg,png,gif,heic|max:5048',
         'firstname'        => 'required|string|min:2',

@@ -13,11 +13,11 @@
         {{-- Form Start --}}
         <form wire:submit.prevent="register" enctype="multipart/form-data" class="space-y-10">
             {{-- ✅ Upload Profile Image --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Profile Image</label>
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                    {{-- Image Upload --}}
-                    <!-- <div>
+       <div>
+    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Profile Image</label>
+    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+        {{-- Image Upload --}}
+        <div>
             @if ($image)
                 <img src="{{ $image->temporaryUrl() }}" class="w-28 h-28 object-cover rounded-lg border">
             @else
@@ -34,58 +34,28 @@
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
             </div>
-        </div> -->
-
-                    <div>
-    @if ($image)
-        <img src="{{ $image->temporaryUrl() }}" class="w-28 h-28 object-cover rounded-lg border">
-    @else
-        <div class="w-28 h-28 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg text-gray-400 dark:border-gray-600">
-            No Image
-        </div>
-    @endif
-
-    <div class="mt-3 w-full sm:w-auto">
-        <!-- Webcam Capture Button -->
-        <button id="start-camera" class="bg-blue-500 text-white px-4 py-2 rounded-lg">
-            Start Webcam
-        </button>
-
-        <!-- Webcam Stream (hidden until activated) -->
-        <div id="webcam-container" class="hidden mt-3">
-            <video id="webcam" width="100%" height="auto" class="border-2 border-gray-300 rounded-lg"></video>
-            <button id="capture-image" class="bg-green-500 text-white px-4 py-2 mt-2 rounded-lg">Capture</button>
         </div>
 
-        <!-- Hidden File Input (Fallback) -->
-        <input type="file" wire:model="image" accept="image/*" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2 cursor-pointer dark:bg-gray-700 dark:border-gray-600 dark:text-white" style="display: none;">
-
-        @error('image')
-            <span class="text-red-500 text-sm">{{ $message }}</span>
-        @enderror
+        {{-- Alert Reminder --}}
+        <div class="flex-1">
+            <div class="p-4 text-sm text-blue-800 rounded-lg bg-blue-50 border border-blue-200
+                        dark:bg-gray-800 dark:text-blue-300 dark:border-blue-700" role="alert">
+                <span class="font-semibold">Reminder:</span> For PLGU participants, each province is encouraged to send one (1) representative per office, preferably the Head or another decision-maker, to ensure meaningful participation.
+                <br><br>
+                <span class="font-semibold">Expected participants:</span>
+                <ul class="list-disc list-inside ml-4">
+                    <li>Governor</li>
+                    <li>SP Committee on Agriculture Chair</li>
+                    <li>Provincial Planning and Development Coordinator</li>
+                    <li>Provincial Agriculturist</li>
+                    <li>Provincial Veterinarian</li>
+                </ul>
+                <br>
+                <span class="font-semibold">Optional:</span> PPMIU Head (if not already covered).
+            </div>
+        </div>
     </div>
 </div>
-
-                    {{-- Alert Reminder --}}
-                    <div class="flex-1">
-                        <div class="p-4 text-sm text-blue-800 rounded-lg bg-blue-50 border border-blue-200
-                        dark:bg-gray-800 dark:text-blue-300 dark:border-blue-700" role="alert">
-                            <span class="font-semibold">Reminder:</span> For PLGU participants, each province is encouraged to send one (1) representative per office, preferably the Head or another decision-maker, to ensure meaningful participation.
-                            <br><br>
-                            <span class="font-semibold">Expected participants:</span>
-                            <ul class="list-disc list-inside ml-4">
-                                <li>Governor</li>
-                                <li>SP Committee on Agriculture Chair</li>
-                                <li>Provincial Planning and Development Coordinator</li>
-                                <li>Provincial Agriculturist</li>
-                                <li>Provincial Veterinarian</li>
-                            </ul>
-                            <br>
-                            <span class="font-semibold">Optional:</span> PPMIU Head (if not already covered).
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             {{-- 🆔 Primary Info --}}
             <div>
@@ -97,7 +67,7 @@
                         <input type="text" wire:model="firstname" placeholder="First Name"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
                         @error('firstname')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
 
@@ -107,7 +77,7 @@
                         <input type="text" wire:model="middlename" placeholder="Middle Name"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
                         @error('middlename')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
 
@@ -117,7 +87,7 @@
                         <input type="text" wire:model="lastname" placeholder="Last Name"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
                         @error('lastname')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
 
@@ -127,7 +97,7 @@
                         <input type="text" wire:model="ext_name" placeholder="e.g. Jr., Sr."
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
                         @error('ext_name')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
 
@@ -141,7 +111,7 @@
                             <option value="Female">Female</option>
                         </select>
                         @error('sex')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
                 </div>
@@ -161,11 +131,11 @@
            dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             <option value="">Select Institution</option>
                             @foreach ($institutions as $inst)
-                            <option value="{{ $inst }}">{{ $inst }}</option>
+                                <option value="{{ $inst }}">{{ $inst }}</option>
                             @endforeach
                         </select>
                         @error('institution')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
 
@@ -175,23 +145,23 @@
                             Office <span class="text-red-600">*</span>
                         </label>
                         @if (!empty($availableOffices))
-                        <select wire:model="office"
-                            class="mt-3 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5
+                            <select wire:model="office"
+                                class="mt-3 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5
                    dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <option value="">Select Office</option>
-                            @foreach ($availableOffices as $off)
-                            <option value="{{ $off }}">{{ $off }}</option>
-                            @endforeach
-                        </select>
+                                <option value="">Select Office</option>
+                                @foreach ($availableOffices as $off)
+                                    <option value="{{ $off }}">{{ $off }}</option>
+                                @endforeach
+                            </select>
                         @else
-                        {{-- Fallback text input --}}
-                        <input type="text" wire:model="office"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
-                            placeholder="Enter your office" disabled>
+                            {{-- Fallback text input --}}
+                            <input type="text" wire:model="office"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
+                                placeholder="Enter your office" disabled>
                         @endif
 
                         @error('office')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
 
@@ -206,7 +176,7 @@
                         <input type="text" wire:model="designation" placeholder="Designation"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
                         @error('designation')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
 
@@ -217,26 +187,26 @@
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             <option value="">Select Region</option>
                             @foreach ($regions as $reg)
-                            <option value="{{ $reg->code }}">{{ $reg->abbr }}</option>
+                                <option value="{{ $reg->code }}">{{ $reg->abbr }}</option>
                             @endforeach
                         </select>
                         @error('region')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
 
                     {{-- Province --}}
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Province</label>
-                        <select wire:model="province" @if (count($provinces)==0) disabled @endif
+                        <select wire:model="province" @if (count($provinces) == 0) disabled @endif
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             <option value="">Select Province</option>
                             @foreach ($provinces as $prov)
-                            <option value="{{ $prov->code }}">{{ $prov->name }}</option>
+                                <option value="{{ $prov->code }}">{{ $prov->name }}</option>
                             @endforeach
                         </select>
                         @error('province')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
                 </div>
@@ -256,7 +226,7 @@
                         <input type="email" wire:model="email" placeholder="you@example.com"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
                         @error('email')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
 
@@ -268,7 +238,7 @@
                             placeholder="09123456789"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
                         @error('contact_number')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
                 </div>
@@ -288,7 +258,7 @@
                         placeholder="Specify any food restriction...">
         </textarea>
                     @error('food_restriction')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -299,16 +269,16 @@
 
                     <div class="flex flex-wrap gap-4">
                         @foreach (['Day 1', 'Day 2', 'Day 3'] as $day)
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" wire:model="attendance_days" value="{{ $day }}"
-                                class="form-checkbox h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500">
-                            <span class="ml-2 text-gray-700 dark:text-gray-300">{{ $day }}</span>
-                        </label>
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" wire:model="attendance_days" value="{{ $day }}"
+                                    class="form-checkbox h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500">
+                                <span class="ml-2 text-gray-700 dark:text-gray-300">{{ $day }}</span>
+                            </label>
                         @endforeach
                     </div>
 
                     @error('attendance_days')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
             </div>
@@ -327,45 +297,3 @@
         </form>
     </div>
 </section>
-
-@script
-<script>
-    document.getElementById('start-camera').addEventListener('click', function() {
-    const webcamContainer = document.getElementById('webcam-container');
-    const webcam = document.getElementById('webcam');
-    
-    // Show the webcam container and start the video stream
-    webcamContainer.classList.remove('hidden');
-    
-    // Access webcam stream
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(function(stream) {
-            webcam.srcObject = stream;
-            webcam.play();
-        })
-        .catch(function(err) {
-            console.error("Error accessing webcam: ", err);
-        });
-});
-
-document.getElementById('capture-image').addEventListener('click', function() {
-    const canvas = document.createElement('canvas');
-    const webcam = document.getElementById('webcam');
-    
-    // Set canvas size to webcam video size
-    canvas.width = webcam.videoWidth;
-    canvas.height = webcam.videoHeight;
-    
-    // Draw the current frame from the webcam onto the canvas
-    const context = canvas.getContext('2d');
-    context.drawImage(webcam, 0, 0, canvas.width, canvas.height);
-    
-    // Convert canvas image to base64
-    const imageData = canvas.toDataURL('image/png');
-    
-    // Emit the image data to Livewire (via Livewire.emit)
-    Livewire.emit('imageCaptured', imageData);  // This is the key change
-});
-
-</script>
-@endscript
