@@ -12,7 +12,7 @@ class GeoCommodityUpdated implements ShouldBroadcastNow
 
     public $message;
 
-    public function __construct($message)
+    public function __construct($message ="Message Sent")
     {
         $this->message = $message;
     }
