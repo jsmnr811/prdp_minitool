@@ -64,6 +64,9 @@ class InvestmentRegistration extends Component
 
     public function mount()
     {
+        
+                return redirect()->route('geomapping.iplan.login');
+
         if (Auth::guard('geomapping')->check()) {
             $user = Auth::guard('geomapping')->user();
 
