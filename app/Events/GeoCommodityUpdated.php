@@ -27,6 +27,7 @@ class GeoCommodityUpdated implements ShouldBroadcastNow
      */
     public function broadcastOn(): array
     {
+        \Log::info('Broadcasting event: ' . get_class($this));
         return [
             new Channel('commodities-updates'),
         ];
