@@ -48,6 +48,9 @@
             // Marker layer group
             markerLayer: null,
 
+            // Markers tracking map
+            markersMap: new Map(),
+
             // Fullscreen state
             isFullscreen: false,
 
@@ -58,7 +61,7 @@
                     this.setupMap();
 
                     // Add clickable markers for commodities
-                    this.addMarkers(provinceGeo);
+                    this.updateMarkers(provinceGeo);
 
                     // Setup Livewire listeners
                     this.setupLivewireListeners();
@@ -74,13 +77,8 @@
             /** Setup Livewire event listeners */
             setupLivewireListeners() {
                 Livewire.on('provinceGeoUpdated', newGeo => {
-                     let audio = new Audio('{{ asset('audio/popup.mp3') }}');
-                    audio.play().catch((error) => {
-                        console.error('Error playing sound:', error);
-                    });
                     this.provinceGeo = newGeo.flat ? newGeo.flat() : newGeo;
-                    this.clearMarkers();
-                    this.addMarkers(this.provinceGeo, false);
+                    this.updateMarkers(this.provinceGeo);
                 });
             },
 
@@ -144,7 +142,7 @@
 
                     const customIcon = L.divIcon({
                         className: 'custom-marker-icon position-relative',
-                        html: `<div class="marker-circle">
+                        html: `<div class="marker-circle" style="opacity: 0;">
                             <img src="${iconUrl}" alt="${entry.commodity.name}"
                                 onerror="this.onerror=null;this.src='/icons/commodities/default.png';"
                                 style="width:32px; height:32px; border-radius:50%;" />
@@ -154,6 +152,15 @@
                     });
 
                     const marker = L.marker([entry.latitude, entry.longitude], { icon: customIcon }).addTo(this.markerLayer);
+
+                    // Make marker visible after adding to DOM
+                    setTimeout(() => {
+                        const element = marker.getElement();
+                        if (element) {
+                            const circle = element.querySelector('.marker-circle');
+                            if (circle) circle.style.opacity = '1';
+                        }
+                    }, 10);
 
                     // Create popup content with commodity name and interventions
                     const interventions = (entry.geo_interventions && entry.geo_interventions.length > 0) ?
@@ -201,8 +208,186 @@
                     if (btn) btn.className = 'bi bi-arrows-fullscreen';
                     this.isFullscreen = false;
                 }
+            },
+
+            /** Create unique key for marker */
+            createMarkerKey(entry) {
+                return `${entry.latitude}_${entry.longitude}_${entry.commodity.name}`;
+            },
+
+            /** Add a single marker with animation and sound */
+            addMarker(entry) {
+                const key = this.createMarkerKey(entry);
+                if (this.markersMap.has(key)) return; // Already exists
+
+                const iconUrl = entry.commodity.icon.startsWith('http')
+                    ? entry.commodity.icon
+                    : `/icons/${entry.commodity.icon}`;
+
+                const customIcon = L.divIcon({
+                    className: 'custom-marker-icon position-relative',
+                    html: `<div class="marker-circle" style="opacity: 0;">
+                        <img src="${iconUrl}" alt="${entry.commodity.name}"
+                            onerror="this.onerror=null;this.src='/icons/commodities/default.png';"
+                            style="width:32px; height:32px; border-radius:50%;" />
+                    </div>`,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 32]
+                });
+
+                const marker = L.marker([entry.latitude, entry.longitude], { icon: customIcon }).addTo(this.markerLayer);
+
+                // Create popup content
+                const interventions = (entry.geo_interventions && entry.geo_interventions.length > 0) ?
+                    entry.geo_interventions.map(i => `<li>${i.intervention?.name || ''}</li>`).join('') :
+                    '<li>No interventions</li>';
+
+                const popupContent = `
+                    <div class="text-center" style="min-width: 200px;">
+                        <div class="fw-bold mb-2 text-primary">${entry.commodity.name}</div>
+                        <div class="small text-muted my-2 text-start">
+                            <strong>Interventions:</strong>
+                            <ul class="mb-0 ps-3 mt-1">${interventions}</ul>
+                        </div>
+                    </div>`;
+
+                marker.bindPopup(popupContent);
+
+                // Store marker
+                this.markersMap.set(key, { marker, popupContent, entry });
+
+                // Start animation after marker is added to DOM
+                setTimeout(() => {
+                    const element = marker.getElement();
+                    if (element) {
+                        const circle = element.querySelector('.marker-circle');
+                        if (circle) {
+                            circle.style.opacity = '1';
+                            element.classList.add('marker-bounce');
+                        }
+                    }
+                }, 10);
+
+                // Remove bounce class after animation
+                setTimeout(() => {
+                    const element = marker.getElement();
+                    if (element) element.classList.remove('marker-bounce');
+                }, 1010);
+            },
+
+            /** Remove a marker with fade-out animation */
+            removeMarker(key) {
+                const markerData = this.markersMap.get(key);
+                if (!markerData) return;
+
+                const element = markerData.marker.getElement();
+                if (element) {
+                    element.classList.add('marker-fade-out');
+                    setTimeout(() => {
+                        this.markerLayer.removeLayer(markerData.marker);
+                        this.markersMap.delete(key);
+                    }, 500); // Match CSS transition duration
+                } else {
+                    this.markerLayer.removeLayer(markerData.marker);
+                    this.markersMap.delete(key);
+                }
+            },
+
+            /** Update marker popup if content changed */
+            updateMarker(key, newEntry) {
+                const markerData = this.markersMap.get(key);
+                if (!markerData) return;
+
+                const interventions = (newEntry.geo_interventions && newEntry.geo_interventions.length > 0) ?
+                    newEntry.geo_interventions.map(i => `<li>${i.intervention?.name || ''}</li>`).join('') :
+                    '<li>No interventions</li>';
+
+                const newPopupContent = `
+                    <div class="text-center" style="min-width: 200px;">
+                        <div class="fw-bold mb-2 text-primary">${newEntry.commodity.name}</div>
+                        <div class="small text-muted my-2 text-start">
+                            <strong>Interventions:</strong>
+                            <ul class="mb-0 ps-3 mt-1">${interventions}</ul>
+                        </div>
+                    </div>`;
+
+                if (markerData.popupContent !== newPopupContent) {
+                    markerData.marker.setPopupContent(newPopupContent);
+                    markerData.popupContent = newPopupContent;
+                    markerData.entry = newEntry;
+                }
+            },
+
+            /** Update markers based on new data */
+            updateMarkers(newData) {
+                if (!newData || !Array.isArray(newData)) return;
+
+                const newKeys = new Set();
+                const newMarkersMap = new Map();
+                const newEntries = [];
+
+                // Process additions and updates
+                newData.forEach(entry => {
+                    if (!entry.latitude || !entry.longitude || !entry.commodity) return;
+
+                    const key = this.createMarkerKey(entry);
+                    newKeys.add(key);
+
+                    if (this.markersMap.has(key)) {
+                        // Update if needed
+                        this.updateMarker(key, entry);
+                        newMarkersMap.set(key, this.markersMap.get(key));
+                    } else {
+                        // Collect new entries for staggered addition
+                        newEntries.push({ entry, key });
+                    }
+                });
+
+                // Stagger new marker additions with sound
+                newEntries.forEach((obj, index) => {
+                    setTimeout(() => {
+                        this.addMarker(obj.entry);
+                        newMarkersMap.set(obj.key, this.markersMap.get(obj.key));
+
+                        // Play sound for new marker
+                        const audio = new Audio('{{ asset('audio/popup.mp3') }}');
+                        audio.play().catch((error) => {
+                            console.error('Error playing sound:', error);
+                        });
+                    }, index * 200); // 200ms delay between each marker
+                });
+
+                // Process deletions
+                for (const [key] of this.markersMap) {
+                    if (!newKeys.has(key)) {
+                        this.removeMarker(key);
+                    }
+                }
+
+                // Update markersMap
+                this.markersMap = newMarkersMap;
             }
         };
     };
+
+    // Add CSS styles for animations
+    const style = document.createElement('style');
+    style.textContent = `
+        .marker-bounce {
+            animation: markerBounce 1s ease-out;
+        }
+
+        @keyframes markerBounce {
+            0% { transform: scale(0); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .marker-fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+    `;
+    document.head.appendChild(style);
 </script>
 @endscript
