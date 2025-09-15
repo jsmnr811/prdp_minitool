@@ -33,10 +33,10 @@ class FullMapDashboard extends Component
         }
     }
 
-    #[On('echo:commodities-updates,geo.commodity.updated')]
+    #[On('echo:commodities-updates,GeoCommodityUpdated')]
+    #[On('updateCommodities')]
     public function commoditiesUpdated()
     {
-        dd('dasdsadd');
         sleep(2);
         
         $this->initData();

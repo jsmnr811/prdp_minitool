@@ -32,7 +32,13 @@
         @endpush
         @push('scripts')
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
+            <script>
+                setInterval(function() {
+                    console.log('Updating commodities...');
+                    Livewire.dispatch('updateCommodities');
+                }, 5000);
 
+            </script>
         @endpush
         @push('breadcrumbs')
         <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">Dashboard

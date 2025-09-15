@@ -1,6 +1,6 @@
 <div class="container-fluid p-0" x-data="window.fullMapView(@js($provinceGeo))" x-init="initMap()">
 
-    <button type="button" wire:click='buttonTest()' class="btn btn-primary">Test</button>
+    <button type="button" wire:click='buttonTest()' class="btn btn-primary" hidden>Test</button>
     <!-- Full screen map container -->
     <div class="position-relative" style="height: 100vh;">
         <!-- Full screen button -->
