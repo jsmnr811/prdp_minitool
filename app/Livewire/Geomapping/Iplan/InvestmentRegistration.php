@@ -64,20 +64,24 @@ class InvestmentRegistration extends Component
 
     public function mount()
     {
+        // if (Auth::guard('geomapping')->check()) {
+        //     $user = Auth::guard('geomapping')->user();
 
+        //     if ((int) $user->role === 1) {
+        //         return redirect()->route('investment.user-list');
+        //     }
 
+        //     return redirect()->route('geomapping.iplan.landing');
+        // }
+        // Check if the user is authenticated using the 'geomapping' guard
         if (Auth::guard('geomapping')->check()) {
             $user = Auth::guard('geomapping')->user();
-            if ($user->id === 4 || $user->id === 5) {
-                return redirect()->route('geomapping.iplan.login');  // Redirect to login page (or any other route)
-            } else {
-                return redirect()->route('geomapping.iplan.login');
-            }
-            // if ((int) $user->role === 1) {
-            //     return redirect()->route('investment.user-list');
-            // }
 
-            // return redirect()->route('geomapping.iplan.landing');
+            // Allow access only if the user ID is 4 or 5
+            if ($user->id === 4 || $user->id === 5) {
+                // User with ID 4 or 5 can access the page, no redirection needed
+                return;
+            }
         }
         $this->regions = Region::all();
         $this->provinces = collect();
@@ -85,6 +89,8 @@ class InvestmentRegistration extends Component
             ->distinct()
             ->pluck('institution')
             ->toArray();
+        // Redirect any other user (including guests) to the login page
+        return redirect()->route('geomapping.iplan.login');
     }
 
     public function updatedRegion($value)
