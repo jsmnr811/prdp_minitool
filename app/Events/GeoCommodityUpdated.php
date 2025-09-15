@@ -34,4 +34,8 @@ class GeoCommodityUpdated implements ShouldBroadcastNow
     }
 
 
+    public function broadcastAs(): string
+    {
+        return 'geo.commodity.updated';
+    }
 }
