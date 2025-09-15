@@ -36,10 +36,16 @@ class FullMapDashboard extends Component
     #[On('echo:commodities-updates,GeoCommodityUpdated')]
     public function commoditiesUpdated()
     {
+        dd('dasdsadd');
         sleep(2);
+        
         $this->initData();
         $this->dispatch('provinceGeoUpdated', $this->provinceGeo);
 
+    }
+
+    public function buttonTest(){
+        GeoCommodityUpdated::dispatch();
     }
 
     public function render()
