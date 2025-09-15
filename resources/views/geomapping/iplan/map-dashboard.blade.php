@@ -33,13 +33,6 @@
         @push('scripts')
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
 
-        <script>
-            Echo.channel('commodities-updated')
-                .listen('GeoCommodityUpdated', (e) => {
-                    console.log('GeoCommodityUpdated event received:', e);
-                });
-        </script>
-
         @endpush
         @push('breadcrumbs')
         <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">Dashboard
