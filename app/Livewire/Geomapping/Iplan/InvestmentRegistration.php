@@ -64,17 +64,20 @@ class InvestmentRegistration extends Component
 
     public function mount()
     {
-        
-                return redirect()->route('geomapping.iplan.login');
+
 
         if (Auth::guard('geomapping')->check()) {
             $user = Auth::guard('geomapping')->user();
-
-            if ((int) $user->role === 1) {
-                return redirect()->route('investment.user-list');
+            if ($user->id === 4 || $user->id === 5) {
+                return redirect()->route('geomapping.iplan.login');  // Redirect to login page (or any other route)
+            } else {
+                return redirect()->route('geomapping.iplan.login');
             }
+            // if ((int) $user->role === 1) {
+            //     return redirect()->route('investment.user-list');
+            // }
 
-            return redirect()->route('geomapping.iplan.landing');
+            // return redirect()->route('geomapping.iplan.landing');
         }
         $this->regions = Region::all();
         $this->provinces = collect();
