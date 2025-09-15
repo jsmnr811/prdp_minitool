@@ -69,6 +69,17 @@
                         </div>
                     </div>
                 </div>
+                  <div wire:loading wire:target='selectedFilterCommoditites'>
+                    <div class="d-flex justify-content-center align-items-center position-absolute top-0 start-0 w-100 bg-light bg-opacity-75 rounded shadow-sm"
+                        style="z-index: 1000; height: 80vh; min-height: 400px;">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Updating Markers</span>
+                            </div>
+                            <div class="text-muted">Updating Markers</div>
+                        </div>
+                    </div>
+                </div>
 
                 @if ($isLoadingMap)
                     <div class="d-flex justify-content-center align-items-center position-absolute top-0 start-0 w-100 bg-light bg-opacity-75 rounded shadow-sm"
