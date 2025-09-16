@@ -58,7 +58,7 @@ class MainMap extends Component
                 return Intervention::orderBy('name', 'asc')->get();
             });
             $this->commodities = Cache::rememberForever('commodities_all', function () {
-                return Commodity::where('is_blocked', 0)->orderBy('name', 'asc')->get();
+                return Commodity::where('is_blocked', '!=', 1)->orderBy('name', 'asc')->get();
             });
 
             $this->loadProvinceGeoData($user);
@@ -66,7 +66,7 @@ class MainMap extends Component
 
             // Fetch all provinces for dropdown (role 1)
             $this->allProvinces = Cache::rememberForever('all_provinces', function () {
-                return Province::select('code', 'name', 'latitude', 'longitude')
+                return Province::select('code', 'name', 'latitude', 'longitude')->where('status', 1)
                     ->orderBy('name')
                     ->get()
                     ->toArray();

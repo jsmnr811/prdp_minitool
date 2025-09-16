@@ -53,8 +53,7 @@ class GeomappingUsersTableController extends Controller
         ini_set('memory_limit', '4096M');
 
         // $users = GeomappingUser::where('is_verified', 1)->get();
-        $users = GeomappingUser::whereIn('id', [682,684,688,689,690,691,692,693,
-        694,695,696,697,698,699,700,701,702,703,652,627])->get();
+        $users = GeomappingUser::whereIn('id', [705,706])->get();
 
 
         foreach ($users as $user) {

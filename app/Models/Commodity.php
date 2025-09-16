@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache; 
 
 class Commodity extends Model
 {
@@ -14,4 +15,12 @@ class Commodity extends Model
     {
         return $this->hasMany(CommodityGroup::class);
     }
+
+    protected static function booted()
+{
+    static::saved(function () {
+        Cache::forget('commodities_all');
+    });
+}
+
 }
