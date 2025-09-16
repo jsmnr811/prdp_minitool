@@ -80,11 +80,11 @@
                     style="text-align:center; margin-top:0px; white-space:nowrap; overflow:hidden; padding-left:{{ 4 * $scale }}px; padding-right:{{ 4 * $scale }}px;">
                     <div
                         style="font-family:'Arial Black', Arial, sans-serif; font-size:{{ $firstFontSize }}px; font-weight:900; color:#2f4482; line-height:1.1; margin-left: 50px;  margin-right: 50px;">
-                        {{ $firstName }}
+                        {{ strtoupper(str_replace(['Ñ', 'ñ'], ['N;', 'n;'], $firstName)) }}
                     </div>
                     <div
                         style="font-family:Arial, sans-serif; font-size:{{ $lastFontSize }}px; font-style:italic; color:#2f4482; line-height:1.1; font-weight:600;">
-                        {{ $lastName }}
+                        {{strtoupper(str_replace(['Ñ', 'ñ'], ['N;', 'n'],   $lastName)) }}
                     </div>
                 </div>
             </div>
