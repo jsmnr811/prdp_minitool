@@ -13,9 +13,9 @@ class GeomappingInterventionsTableController extends Controller
     public function index(GeomappingInterventionsDataTable $dataTable)
     {
         if (Auth::guard('geomapping')->check()) {
-            if (Auth::guard('geomapping')->user()->role != '1') {
+            // if (Auth::guard('geomapping')->user()->role != '1') {
                 return abort(403);
-            }
+            // }
         }
         return $dataTable->render('geomapping.iplan.intervention-list');
     }
