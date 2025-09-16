@@ -344,7 +344,6 @@ https://cdn.jsdelivr.net/npm/sweetalert2@11.23.0/dist/sweetalert2.min.css
                 </ol>
             </nav>
             @auth('geomapping')
-                @if (Auth::guard('geomapping')->check() && Auth::guard('geomapping')->user()->role === '1')
                     <div class="dropdown order-1 order-md-2">
                         <button class="btn btn-primary dropdown-toggle d-flex align-items-center w-100 w-md-auto" type="button"
                             id="menuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -354,9 +353,12 @@ https://cdn.jsdelivr.net/npm/sweetalert2@11.23.0/dist/sweetalert2.min.css
                             <li><a class="dropdown-item py-2" href="{{ route('geomapping.iplan.landing') }}">
                                     <i class="bi bi-geo-alt me-2"></i>Go to Map
                                 </a></li>
+                @if (Auth::guard('geomapping')->check() && Auth::guard('geomapping')->user()->role === '1')
+
                             <li><a class="dropdown-item py-2" href="{{ route('geomapping.iplan.investment.user-list') }}">
                                     <i class="bi bi-people me-2"></i>User List
                                 </a></li>
+                                @endif
                             <li><a class="dropdown-item py-2"
                                     href="{{ route('geomapping.iplan.investment.commodity-list') }}">
                                     <i class="bi bi-box-seam me-2"></i>Commodity List
@@ -367,7 +369,6 @@ https://cdn.jsdelivr.net/npm/sweetalert2@11.23.0/dist/sweetalert2.min.css
                                 </a></li>
                         </ul>
                     </div>
-                @endif
             @endauth
         </div>
         {{ $slot }}
