@@ -12,11 +12,11 @@ class GeomappingCommoditiesTableController extends Controller
 {
     public function index(GeomappingCommoditiesDataTable $dataTable)
     {
-        if (Auth::guard('geomapping')->check()) {
-            // if (Auth::guard('geomapping')->user()->role != '1') {
-                return abort(403);
-            // }
-        }
+        // if (Auth::guard('geomapping')->check()) {
+        //     if (Auth::guard('geomapping')->user()->role != '1') {
+        //         return abort(403);
+        //     }
+        // }
         return $dataTable->render('geomapping.iplan.commodity-list');
     }
 }
