@@ -907,7 +907,7 @@
                     </div>
                     <hr>
                     <div class="d-flex justify-content-center">
-                        <button type="button" class="btn btn-sm btn-outline-danger btn-icon d-flex align-items-center gap-1 btn-delete-temp d-none">
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-icon d-flex align-items-center gap-1 btn-delete-temp">
                             <i class="bi bi-trash-fill"></i>
                         </button>
                     </div>
