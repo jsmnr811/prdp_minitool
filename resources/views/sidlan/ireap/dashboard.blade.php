@@ -48,12 +48,10 @@
 <body style="min-height: 100%;" class="" cz-shortcut-listen="true">
 
     <div class="container py-5 min-h-100 position-relative">
-        <!-- <div class="position-absolute top-0 start-0 p-4 bg-dark rounded" id="cust-tooltip" style="z-index: 1000;"></div> -->
         <div class="d-flex justify-content-center">
             <img class="drop-shadow" src="https://geomapping.da.gov.ph/prdp/assets/img/prdp_rz.png" alt=""
                 style="max-width: 130px;">
         </div>
-        <!-- <h1 class="text-5xl md:text-5xl font-extrabold text-center text-blue-900 mb-20 leading-tight drop-shadow-md rounded-xl"> -->
         <h1 class="chart-page-title">
 
             PRDP Scale-Up I-REAP Management Dashboard
@@ -65,13 +63,13 @@
         <!-- portfolio -->
         <div class="section-title ps-lg-2 d-flex flex-column flex-lg-row justify-content-between align-items-start">
             Our Portfolio
-            <a href="https://geomapping.da.gov.ph/prdp/sidlan/d2-portfolio" target="_blank"
+            <a href="{{ route('sidlan.ireap.d2-portfolio') }}" target="_blank"
                 class="btn btn-primary d-none d-lg-block dashboard-redirect">View Detailed Data</a>
         </div>
 
         <div class="row d-block d-lg-none">
             <div class="col-12">
-                <a href="https://geomapping.da.gov.ph/prdp/sidlan/d2-portfolio" target="_blank"
+                <a href="{{ route('sidlan.ireap.d2-portfolio') }}" target="_blank"
                     class="btn btn-primary btn-sm my-2">View Detailed Data</a>
             </div>
         </div>
@@ -145,9 +143,6 @@
     <script src="https://geomapping.da.gov.ph/prdp/assets/js/sidlan-dashboard/main/main-construction.js?v1753948749163">
     </script>
 
-    <!-- <script
-        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-piechart-outlabels@0.1.4/dist/chartjs-plugin-piechart-outlabels.min.js">
-    </script> -->
     <script>
         var portfolio_sps_data;
         var portfolio_sps = {};
@@ -158,229 +153,7 @@
         const modal_sp_list = $('#modal-sp-list');
         const chart_table_sps = $('#tbl-chart-sps');
         const cust_tp = $('#cust-tooltip');
-
-        $(window).ready(function() {
-            // onLoadFunctions();
-        });
-
-        // function onLoadFunctions() {
-        //     init_controls();
-        //     update_charts();
-
-        //     // const sidlan_frame = $(document).closest('sidlan-dashboard-frame');
-        //     // if(window.self !== window.top){
-        //     //     console.log('in iFrame');
-
-        //     //     const iFrame = $(window.top).find('iFrame');
-        //     //     console.log(iFrame)
-        //     // }
-        //     // console.log(sidlan_frame);
-        // }
-
-    //     const init_controls = () => {
-
-    //         // populate proc regions
-    //         $('#cbo-filter-proc-sps-cost').find('optgroup[label="Regionwide"]').html(region_options);
-    //         $('#cbo-filter-pipeline-status').find('optgroup[label="Regionwide"]').html(region_options);
-    //         $('#cbo-filter-pipeline-status-timeline').find('optgroup[label="Regionwide"]').html(region_options);
-    //         $('#cbo-filter-pipeline-status-pace').find('optgroup[label="Regionwide"]').html(region_options);
-    //         $('#cbo-filter-proc-sps-activity-experience').find('optgroup[label="Regionwide"]').html(region_options);
-    //         $('#cbo-filter-proc-sps-activity').find('optgroup[label="Regionwide"]').html(region_options);
-    //         $('#cbo-filter-construction-variance').find('optgroup[label="Regionwide"]').html(region_options);
-
-    //         $(document).on('change', '#cbo-filter-proc-sps', function() {
-    //             const params = {};
-    //             const cbo_val = $(this).val();
-    //             if (cbo_val !== 'All') params.cluster = cbo_val;
-    //             fetch_subproject_under_procurement_already_beyond(params);
-    //         });
-    //         $(document).on('change', '#cbo-filter-proc-sps-activity', function() {
-    //             const params = {};
-    //             const cbo_val = $(this).val();
-    //             if (cbo_val !== 'All') {
-    //                 const cbo_val_group = $(this).find('option:selected').closest('optgroup').attr('label');
-    //                 if (cbo_val_group === 'Clusterwide') params.cluster = cbo_val;
-    //                 if (cbo_val_group === 'Regionwide') params.region = cbo_val;
-    //             }
-    //             fetch_subproject_under_procurement_actual_pace(params, 'proc-activity');
-    //         });
-    //         $(document).on('change', '#cbo-filter-proc-sps-cost', function() {
-    //             const params = {};
-    //             const cbo_val = $(this).val();
-    //             if (cbo_val !== 'All') {
-    //                 const cbo_val_group = $(this).find('option:selected').closest('optgroup').attr('label');
-    //                 if (cbo_val_group === 'Clusterwide') params.cluster = cbo_val;
-    //                 if (cbo_val_group === 'Regionwide') params.region = cbo_val;
-    //             }
-    //             fetch_subproject_under_procurement_actual_pace(params, 'proc-cost');
-    //         });
-
-    //         $(document).on('change', '#cbo-filter-proc-sps-activity-experience', function() {
-    //             const params = {};
-    //             const cbo_val = $(this).val();
-    //             if (cbo_val !== 'All') {
-    //                 const cbo_val_group = $(this).find('option:selected').closest('optgroup').attr('label');
-    //                 if (cbo_val_group === 'Clusterwide') params.cluster = cbo_val;
-    //                 if (cbo_val_group === 'Regionwide') params.region = cbo_val;
-    //             }
-    //             fetch_subproject_under_procurement_actual_experience(params);
-    //         });
-
-    //         $(document).on('change', '#cbo-filter-contstruction-sps', function() {
-    //             const params = {};
-    //             const cbo_val = $(this).val();
-    //             if (cbo_val !== 'All') {
-    //                 params.cluster = cbo_val;
-    //             }
-    //             fetch_ongoing_subprojects(params, 'ongoing-list');
-    //         });
-
-    //         $(document).on('change', '#cbo-filter-contstruction-slippage', function() {
-    //             const params = {};
-    //             const cbo_val = $(this).val();
-    //             if (cbo_val !== 'All') {
-    //                 params.cluster = cbo_val;
-    //             }
-    //             fetch_ongoing_subprojects(params, 'ongoing-slippage');
-    //         });
-
-    //         $(document).on('change', '#cbo-filter-construction-variance', function() {
-    //             const params = {};
-    //             const cbo_val = $(this).val();
-    //             if (cbo_val !== 'All') {
-    //                 const cbo_val_group = $(this).find('option:selected').closest('optgroup').attr('label');
-    //                 if (cbo_val_group === 'Clusterwide') params.cluster = cbo_val;
-    //                 if (cbo_val_group === 'Regionwide') params.region = cbo_val;
-    //             }
-    //             fetch_ongoing_subprojects(params, 'ongoing-variance');
-    //         });
-
-    //         $(document).on('change',
-    //             '#cbo-filter-pipeline-status, #cbo-filter-pipeline-status-timeline, #cbo-filter-pipeline-status-pace',
-    //             function() {
-    //                 const params = {};
-    //                 const cbo_val = $(this).val();
-    //                 const cbo_id = $(this).attr('id');
-    //                 if (cbo_val !== 'All') {
-    //                     const cbo_val_group = $(this).find('option:selected').closest('optgroup').attr('label');
-    //                     if (cbo_val_group === 'Clusterwide') params.cluster = cbo_val;
-    //                     if (cbo_val_group === 'Regionwide') params.region = cbo_val;
-    //                 }
-    //                 if (['cbo-filter-pipeline-status', 'cbo-filter-pipeline-status-timeline'].includes(cbo_id)) {
-    //                     const mode = cbo_id === 'cbo-filter-pipeline-status' ? 'number' : 'timeline';
-    //                     fetchPipelinedSPs(params, mode);
-    //                 } else if (cbo_id === 'cbo-filter-pipeline-status-pace') {
-    //                     fetchPipelinedSPsPace(params);
-    //                 }
-    //             });
-
-
-    //         // manage custom chart
-    //         // $(document).on('mouseleave', '.custom-chart', function(){
-    //         //     // isMouseOverTooltip = false;
-    //         //     const customTooltip = $(this).parent().find('.chartjs-tooltip')[0];
-    //         //     hideCustomTooltip(customTooltip);
-    //         // });
-    //         $(document).on('click', '.custom-chart', function(e) {
-    //             const chart = Chart.getChart($(this));
-    //             const chart_id = $(this).attr('id');
-    //             const activeElements = chart.getElementsAtEventForMode(event, 'nearest', {
-    //                 intersect: true
-    //             }, false);
-
-
-    //             if (activeElements.length > 0) {
-    //                 const chartElement = activeElements[0];
-    //                 const currentLabel = chart.data.labels[chartElement.index];
-    //                 const currentData = chart.data.datasets[chartElement.datasetIndex];
-
-    //                 // pipeline
-    //                 if (['chrt-pipelined-by-status', 'chrt-pipelined-by-status-timeline'].includes(chart_id)) {
-    //                     if (chart_id === 'chrt-pipelined-by-status') showPipelinedSPs(chart, chartElement);
-    //                     if (chart_id === 'chrt-pipelined-by-status-timeline' && chartElement.datasetIndex === 1)
-    //                         showPipelinedSPs(chart, chartElement);
-    //                     return;
-    //                 }
-
-    //                 // procurement
-    //                 if (['chrt-scope-procurement', 'chrt-scope-procurement-current-pace'].includes(chart_id)) {
-
-    //                     if (chartElement.datasetIndex === 1) {
-    //                         showProcurementSPs(chart, chartElement);
-    //                     }
-    //                     return;
-    //                 }
-
-    //                 // implementation
-    //                 showOngoingSPs(chart, chartElement);
-
-    //                 // console.log(currentLabel, currentData.data[chartElement.index]);
-    //             }
-    //             // isMouseOverTooltip = true;
-    //             // clearTimeout(hideTooltipTimeout); // Keep it open
-    //         });
-    //         // $(document).on('mouseleave', '.chartjs-tooltip', function(){
-    //         //     isMouseOverTooltip = false;
-    //         //     const customTooltip = $(this).parent().find('.chartjs-tooltip')[0];
-    //         //     hideCustomTooltip(customTooltip); // Initiate hide when mouse leaves the tooltip
-    //         // });
-
-    //         $(document).on('click', '.dashboard-redirect', function(e) {
-    //             e.preventDefault();
-    //             const redirectLink = $(this).attr('href');
-
-    //             // check if in iFrame
-    //             if (window.self !== window.top) {
-    //                 window.parent.postMessage({
-    //                     action: 'changeSrc',
-    //                     newSrc: redirectLink
-    //                 }, '*');
-    //                 return;
-    //             }
-
-    //             location.href = redirectLink;
-
-    //         });
-
-    //     }
-
-    //     const update_charts = async () => {
-
-    //         modal_loading.modal('show');
-    //         try {
-
-    //             await Promise.all([
-    //                 fetch_portfolio(),
-    //                 fetchPipelinedSPs(),
-    //                 fetchPipelinedSPsPace(),
-    //                 fetch_subproject_under_procurement_already_beyond(),
-    //                 fetch_subproject_under_procurement_actual_pace(),
-    //                 fetch_subproject_under_procurement_actual_experience(),
-    //                 fetch_ongoing_subprojects(),
-    //             ])
-    //             // await fetch_portfolio();
-    //             // await fetch_subproject_under_procurement_already_beyond();
-    //             // await fetch_subproject_under_procurement_actual_pace();
-    //             // await fetch_ongoing_subprojects();
-    //         } finally {
-    //             setTimeout(() => {
-    //                 modal_loading.modal('hide');
-    //                 // modal_loading.removeClass('show');
-    //                 // $('body').removeClass('modal-open');
-    //                 // $('.modal-backdrop').remove();
-    //                 // modal_loading.css('display', 'none');
-    //                 // Manual failsafe cleanup
-    //                 $('body').removeClass('modal-open');
-    //                 $('body').css('overflow', 'auto'); // ← important!
-    //                 $('.modal-backdrop').remove();
-    //                 modal_loading.removeClass('show').hide();
-    //             }, 300);
-    //         }
-
-
-
-    //     }
-    // </script>
+        </script>
 
 </body>
 
