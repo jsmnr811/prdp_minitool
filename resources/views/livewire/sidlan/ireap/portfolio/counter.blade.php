@@ -39,84 +39,84 @@ new class extends Component {
         $this->computeFilteredTotals();
     }
     // Compute filtered totals
-private function computeFilteredTotals()
-{
-    $apiService = new SidlanGoogleSheetService();
-    $irZeroTwoData = $apiService->getSheetData('ir-01-002');
+    private function computeFilteredTotals()
+    {
+        $apiService = new SidlanGoogleSheetService();
+        $irZeroTwoData = $apiService->getSheetData('ir-01-002');
 
-    // --- Normalize ZERO ONE ---
-    $zeroOne = collect($this->irZeroOneData)->map(function ($row) {
-        $normalized = [];
-        foreach ($row as $key => $value) {
-            $normalizedKey = strtolower(str_replace([' ', '-', '/', ':'], '_', trim($key)));
-            $normalized[$normalizedKey] = trim((string)$value);
-        }
-        // Ensure sp_id always normalized
-        $normalized['sp_id'] = isset($normalized['sp_id'])
-            ? strtolower(trim($normalized['sp_id']))
-            : null;
-        return $normalized;
-    });
-
-    // --- Normalize ZERO TWO ---
-    $zeroTwo = collect($irZeroTwoData)
-        ->filter(fn($row) => is_array($row) && count($row) > 0)
-        ->values()
-        ->map(function ($row) {
+        // --- Normalize ZERO ONE ---
+        $zeroOne = collect($this->irZeroOneData)->map(function ($row) {
             $normalized = [];
             foreach ($row as $key => $value) {
                 $normalizedKey = strtolower(str_replace([' ', '-', '/', ':'], '_', trim($key)));
                 $normalized[$normalizedKey] = trim((string)$value);
             }
-            // Normalize ID
+            // Ensure sp_id always normalized
             $normalized['sp_id'] = isset($normalized['sp_id'])
                 ? strtolower(trim($normalized['sp_id']))
                 : null;
             return $normalized;
         });
 
-    // --- Build NOL1 Lookup ---
-    $nol1Lookup = $zeroTwo
-        ->filter(fn($item) => !empty($item['sp_id'] ?? null))
-        ->mapWithKeys(fn($item) => [$item['sp_id'] => $item['nol1_issued'] ?? null]);
+        // --- Normalize ZERO TWO ---
+        $zeroTwo = collect($irZeroTwoData)
+            ->filter(fn($row) => is_array($row) && count($row) > 0)
+            ->values()
+            ->map(function ($row) {
+                $normalized = [];
+                foreach ($row as $key => $value) {
+                    $normalizedKey = strtolower(str_replace([' ', '-', '/', ':'], '_', trim($key)));
+                    $normalized[$normalizedKey] = trim((string)$value);
+                }
+                // Normalize ID
+                $normalized['sp_id'] = isset($normalized['sp_id'])
+                    ? strtolower(trim($normalized['sp_id']))
+                    : null;
+                return $normalized;
+            });
 
-    // --- Apply Filters ---
-    $filtered = $zeroOne->filter(function ($item) {
-        $clusterMatch = $this->filterCluster === 'All' || ($item['cluster'] ?? '') === $this->filterCluster;
-        $typeMatch = $this->filterType === 'All' || ($item['project_type'] ?? '') === $this->filterType;
-        return $clusterMatch && $typeMatch;
-    });
+        // --- Build NOL1 Lookup ---
+        $nol1Lookup = $zeroTwo
+            ->filter(fn($item) => !empty($item['sp_id'] ?? null))
+            ->mapWithKeys(fn($item) => [$item['sp_id'] => $item['nol1_issued'] ?? null]);
 
-    // --- PIPELINE ---
-    $pipelineItems = $filtered->filter(
-        fn($item) => ($item['stage'] ?? '') === 'Pre-procurement'
-            && ($item['status'] ?? '') === 'Subproject Confirmed'
-    );
+        // --- Apply Filters ---
+        $filtered = $zeroOne->filter(function ($item) {
+            $clusterMatch = $this->filterCluster === 'All' || ($item['cluster'] ?? '') === $this->filterCluster;
+            $typeMatch = $this->filterType === 'All' || ($item['project_type'] ?? '') === $this->filterType;
+            return $clusterMatch && $typeMatch;
+        });
 
-    // --- APPROVED ---
-    $approvedItems = $filtered->filter(function ($item) use ($nol1Lookup) {
-        $spId = strtolower($item['sp_id'] ?? '');
-        $stage = $item['stage'] ?? '';
-        $nol1 = $nol1Lookup[$spId] ?? null;
-        $hasNol1 = !empty($nol1) && !in_array(strtolower(trim($nol1)), ['no', 'n/a', 'none', '0']);
-        return in_array($stage, ['Implementation', 'Procurement', 'Completed']) && $hasNol1;
-    });
+        // --- PIPELINE ---
+        $pipelineItems = $filtered->filter(
+            fn($item) => ($item['stage'] ?? '') === 'Pre-procurement'
+                && ($item['status'] ?? '') === 'Subproject Confirmed'
+        );
 
-    // --- Totals ---
-    $this->pipelineCount = $pipelineItems->count();
-    $this->approvedCount = $approvedItems->count();
-    $this->totalCount = $this->pipelineCount + $this->approvedCount;
+        // --- APPROVED ---
+        $approvedItems = $filtered->filter(function ($item) use ($nol1Lookup) {
+            $spId = strtolower($item['sp_id'] ?? '');
+            $stage = $item['stage'] ?? '';
+            $nol1 = $nol1Lookup[$spId] ?? null;
+            $hasNol1 = !empty($nol1) && !in_array(strtolower(trim($nol1)), ['no', 'n/a', 'none', '0']);
+            return in_array($stage, ['Implementation', 'For procurement', 'Completed']) && $hasNol1;
+        });
 
-    $this->pipelineAmount = $pipelineItems->sum(
-        fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0)
-    );
+        // --- Totals ---
+        $this->pipelineCount = $pipelineItems->count();
+        $this->approvedCount = $approvedItems->count();
+        $this->totalCount = $this->pipelineCount + $this->approvedCount;
 
-    $this->approvedAmount = $approvedItems->sum(
-        fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0)
-    );
+        $this->pipelineAmount = $pipelineItems->sum(
+            fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0)
+        );
 
-    $this->totalAmount = $this->pipelineAmount + $this->approvedAmount;
-}
+        $this->approvedAmount = $approvedItems->sum(
+            fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0)
+        );
+
+        $this->totalAmount = $this->pipelineAmount + $this->approvedAmount;
+    }
 
 
 

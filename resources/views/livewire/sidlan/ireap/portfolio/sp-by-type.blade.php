@@ -4,33 +4,20 @@ use Illuminate\View\View;
 use Livewire\Volt\Component;
 use App\Services\SidlanGoogleSheetService;
 use Livewire\Attributes\On;
-use Illuminate\Support\Facades\Log;
 
 new class extends Component {
     public $irZeroOneData = [];
-
-    public $approvedCount = 0;
-    public $pipelineCount = 0;
-    public $totalCount = 0;
-
-    public $approvedAmount = 0.0;
-    public $pipelineAmount = 0.0;
-    public $totalAmount = 0.0;
-
     public $filterCluster = 'All';
     public $filterType = 'All';
     public $chartData = [];
 
     protected $listeners = ['filterUpdated'];
 
-    // Mount initial data
     public function mount($irZeroOneData = []): void
     {
         $this->irZeroOneData = $irZeroOneData;
         $this->computeFilteredTotals();
     }
-
-    // Handle filter event from Filter component
 
     #[On('filter-updated')]
     public function filterUpdated($cluster, $type)
@@ -39,11 +26,13 @@ new class extends Component {
         $this->filterType = $type;
         $this->computeFilteredTotals();
     }
+
     private function computeFilteredTotals()
     {
         $apiService = new SidlanGoogleSheetService();
         $irZeroTwoData = $apiService->getSheetData('ir-01-002');
 
+        // Normalize sheet data
         $zeroOne = collect($this->irZeroOneData)->map(function ($row) {
             $normalized = [];
             foreach ($row as $key => $value) {
@@ -71,15 +60,17 @@ new class extends Component {
             ->filter(fn($item) => !empty($item['sp_id'] ?? null))
             ->mapWithKeys(fn($item) => [$item['sp_id'] => $item['nol1_issued'] ?? null]);
 
-        // Apply Filters
+        // Apply filters
         $filtered = $zeroOne->filter(function ($item) {
             $clusterMatch = $this->filterCluster === 'All' || ($item['cluster'] ?? '') === $this->filterCluster;
-            $typeMatch = $this->filterType === 'All' || ($item['project_type'] ?? '') === $this->filterType;
-            return $clusterMatch && $typeMatch;
+            return $clusterMatch;
         });
 
-        // Pipeline and Approved
-        $pipelineItems = $filtered->filter(fn($item) => ($item['stage'] ?? '') === 'Pre-procurement' && ($item['status'] ?? '') === 'Subproject Confirmed');
+        // Identify pipeline and approved
+        $pipelineItems = $filtered->filter(fn($item) =>
+            ($item['stage'] ?? '') === 'Pre-procurement' &&
+            ($item['status'] ?? '') === 'Subproject Confirmed'
+        );
 
         $approvedItems = $filtered->filter(function ($item) use ($nol1Lookup) {
             $spId = strtolower($item['sp_id'] ?? '');
@@ -89,59 +80,52 @@ new class extends Component {
             return in_array($stage, ['Implementation', 'For procurement', 'Completed']) && $hasNol1;
         });
 
-        // Totals
-        $this->pipelineCount = $pipelineItems->count();
-        $this->approvedCount = $approvedItems->count();
-        $this->totalCount = $this->pipelineCount + $this->approvedCount;
-
-        $this->pipelineAmount = $pipelineItems->sum(fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0));
-        $this->approvedAmount = $approvedItems->sum(fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0));
-        $this->totalAmount = $this->pipelineAmount + $this->approvedAmount;
-
-        // --- Determine clusters to display ---
-        $allClusters = ['Luzon A', 'Luzon B', 'Visayas', 'Mindanao'];
-
-        $clustersToShow = $this->filterCluster === 'All' ? $allClusters : [$this->filterCluster];
+        $spTypes = $filtered
+            ->pluck('sp_type')
+            ->filter(fn($t) => !empty($t))
+            ->unique()
+            ->values()
+            ->toArray();
 
         $this->chartData = [
-            'labels' => $clustersToShow,
+            'labels' => $spTypes,
             'datasets' => [
                 [
-                    'label' => 'Approved Sps',
-                    'data' => array_map(fn($cluster) => $approvedItems->where('cluster', $cluster)->count(), $clustersToShow),
+                    'label' => 'Approved',
+                    'data' => array_map(fn($type) => $approvedItems->where('sp_type', $type)->count(), $spTypes),
                     'backgroundColor' => '#004ef5'
                 ],
                 [
-                    'label' => 'Pipeline Sps',
-                    'data' => array_map(fn($cluster) => $pipelineItems->where('cluster', $cluster)->count(), $clustersToShow),
+                    'label' => 'Pipeline',
+                    'data' => array_map(fn($type) => $pipelineItems->where('sp_type', $type)->count(), $spTypes),
                     'backgroundColor' => '#1abc9c'
                 ],
             ]
         ];
     }
 
-
     public function placeholder(): View
     {
         return view('livewire.sidlan.ireap.portfolio.placeholder.counter');
     }
 };
-
 ?>
-
 
 <div class="col">
     <div class="tile-container">
-        <div class="tile-title">Subprojects by Cluster (No.)</div>
+        <div class="tile-title">Subprojects by Type (No.)</div>
         <div class="tile-content position-relative" style="height: 300px;"
-            x-data="ClusterStackedChart(@entangle('chartData'))"
-            x-init="$watch('chartData', () => init())">
-            <canvas id="chrt-sp-by-cluster"></canvas>
+             x-data="SPTypeStackedChart(@entangle('chartData'))"
+             x-init="$watch('chartData', () => init())">
+            <canvas id="chrt-sp-by-type"></canvas>
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+
 <script>
-function ClusterStackedChart(chartData) {
+function SPTypeStackedChart(chartData) {
     return {
         chart: null,
         chartData: chartData,
@@ -169,7 +153,7 @@ function ClusterStackedChart(chartData) {
                 }
             }));
 
-            const ctx = document.getElementById('chrt-sp-by-cluster').getContext('2d');
+            const ctx = document.getElementById('chrt-sp-by-type').getContext('2d');
             this.chart = new Chart(ctx, {
                 type: 'bar',
                 data: {

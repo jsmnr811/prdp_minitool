@@ -61,7 +61,7 @@ new class extends Component {
         $nol1Lookup = $zeroTwo->mapWithKeys(fn($item) => [$item['sp_id'] => $item['nol1_issued']]);
 
         $pipelineItems = $zeroOne->filter(fn($item) => $item['stage'] === 'Pre-procurement' && $item['status'] === 'Subproject Confirmed');
-        $approvedItems = $zeroOne->filter(fn($item) => in_array($item['stage'], ['Implementation', 'Procurement', 'Completed']) && !empty($nol1Lookup[$item['sp_id']] ?? null));
+        $approvedItems = $zeroOne->filter(fn($item) => in_array($item['stage'], ['Implementation', 'For procurement', 'Completed']) && !empty($nol1Lookup[$item['sp_id']] ?? null));
 
         $pipeline = $pipelineItems->count();
         $approved = $approvedItems->count();

@@ -4,33 +4,20 @@ use Illuminate\View\View;
 use Livewire\Volt\Component;
 use App\Services\SidlanGoogleSheetService;
 use Livewire\Attributes\On;
-use Illuminate\Support\Facades\Log;
 
 new class extends Component {
     public $irZeroOneData = [];
-
-    public $approvedCount = 0;
-    public $pipelineCount = 0;
-    public $totalCount = 0;
-
-    public $approvedAmount = 0.0;
-    public $pipelineAmount = 0.0;
-    public $totalAmount = 0.0;
-
     public $filterCluster = 'All';
     public $filterType = 'All';
     public $chartData = [];
 
     protected $listeners = ['filterUpdated'];
 
-    // Mount initial data
     public function mount($irZeroOneData = []): void
     {
         $this->irZeroOneData = $irZeroOneData;
         $this->computeFilteredTotals();
     }
-
-    // Handle filter event from Filter component
 
     #[On('filter-updated')]
     public function filterUpdated($cluster, $type)
@@ -39,11 +26,13 @@ new class extends Component {
         $this->filterType = $type;
         $this->computeFilteredTotals();
     }
+
     private function computeFilteredTotals()
     {
         $apiService = new SidlanGoogleSheetService();
         $irZeroTwoData = $apiService->getSheetData('ir-01-002');
 
+        // Normalize sheet data
         $zeroOne = collect($this->irZeroOneData)->map(function ($row) {
             $normalized = [];
             foreach ($row as $key => $value) {
@@ -71,16 +60,13 @@ new class extends Component {
             ->filter(fn($item) => !empty($item['sp_id'] ?? null))
             ->mapWithKeys(fn($item) => [$item['sp_id'] => $item['nol1_issued'] ?? null]);
 
-        // Apply Filters
+        // Apply filters
         $filtered = $zeroOne->filter(function ($item) {
             $clusterMatch = $this->filterCluster === 'All' || ($item['cluster'] ?? '') === $this->filterCluster;
-            $typeMatch = $this->filterType === 'All' || ($item['project_type'] ?? '') === $this->filterType;
-            return $clusterMatch && $typeMatch;
+            return $clusterMatch;
         });
 
-        // Pipeline and Approved
-        $pipelineItems = $filtered->filter(fn($item) => ($item['stage'] ?? '') === 'Pre-procurement' && ($item['status'] ?? '') === 'Subproject Confirmed');
-
+        // Approved SPs only
         $approvedItems = $filtered->filter(function ($item) use ($nol1Lookup) {
             $spId = strtolower($item['sp_id'] ?? '');
             $stage = $item['stage'] ?? '';
@@ -89,98 +75,64 @@ new class extends Component {
             return in_array($stage, ['Implementation', 'For procurement', 'Completed']) && $hasNol1;
         });
 
-        // Totals
-        $this->pipelineCount = $pipelineItems->count();
-        $this->approvedCount = $approvedItems->count();
-        $this->totalCount = $this->pipelineCount + $this->approvedCount;
+        // Fixed stage list (order preserved)
+        $stages = ['Implementation', 'For procurement', 'Completed'];
 
-        $this->pipelineAmount = $pipelineItems->sum(fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0));
-        $this->approvedAmount = $approvedItems->sum(fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0));
-        $this->totalAmount = $this->pipelineAmount + $this->approvedAmount;
-
-        // --- Determine clusters to display ---
-        $allClusters = ['Luzon A', 'Luzon B', 'Visayas', 'Mindanao'];
-
-        $clustersToShow = $this->filterCluster === 'All' ? $allClusters : [$this->filterCluster];
-
+        // Prepare chart data
         $this->chartData = [
-            'labels' => $clustersToShow,
+            'labels' => $stages,
             'datasets' => [
                 [
-                    'label' => 'Approved Sps',
-                    'data' => array_map(fn($cluster) => $approvedItems->where('cluster', $cluster)->count(), $clustersToShow),
-                    'backgroundColor' => '#004ef5'
-                ],
-                [
-                    'label' => 'Pipeline Sps',
-                    'data' => array_map(fn($cluster) => $pipelineItems->where('cluster', $cluster)->count(), $clustersToShow),
-                    'backgroundColor' => '#1abc9c'
+                    'label' => 'Approved SPs',
+                    'data' => array_map(fn($stage) => $approvedItems->where('stage', $stage)->count(), $stages),
+                    'backgroundColor' => '#004ef5',
+                    'borderRadius' => 6,
                 ],
             ]
         ];
     }
-
 
     public function placeholder(): View
     {
         return view('livewire.sidlan.ireap.portfolio.placeholder.counter');
     }
 };
-
 ?>
-
 
 <div class="col">
     <div class="tile-container">
-        <div class="tile-title">Subprojects by Cluster (No.)</div>
+        <div class="tile-title">Approved Subprojects by Stage</div>
         <div class="tile-content position-relative" style="height: 300px;"
-            x-data="ClusterStackedChart(@entangle('chartData'))"
-            x-init="$watch('chartData', () => init())">
-            <canvas id="chrt-sp-by-cluster"></canvas>
+             x-data="ApprovedStageChart(@entangle('chartData'))"
+             x-init="$watch('chartData', () => init())">
+            <canvas id="chrt-approved-by-stage"></canvas>
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+
 <script>
-function ClusterStackedChart(chartData) {
+function ApprovedStageChart(chartData) {
     return {
         chart: null,
         chartData: chartData,
         init() {
             if (this.chart) this.chart.destroy();
 
-            // Clone datasets and add borderRadius / borderSkipped
-            const datasetsWithRadius = this.chartData.datasets.map((dataset, datasetIndex) => ({
-                ...dataset,
-                borderSkipped: false,
-                borderRadius: (ctx) => {
-                    const dataIndex = ctx.dataIndex;
-                    const datasets = ctx.chart.data.datasets;
-
-                    // Only round if top segment
-                    let isTop = true;
-                    for (let i = datasetIndex + 1; i < datasets.length; i++) {
-                        if (datasets[i].data[dataIndex] > 0) {
-                            isTop = false;
-                            break;
-                        }
-                    }
-
-                    return isTop ? { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 } : 0;
-                }
-            }));
-
-            const ctx = document.getElementById('chrt-sp-by-cluster').getContext('2d');
+            const ctx = document.getElementById('chrt-approved-by-stage').getContext('2d');
             this.chart = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: this.chartData.labels,
-                    datasets: datasetsWithRadius
-                },
+                data: this.chartData,
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: { position: 'top' },
-                        tooltip: { mode: 'index', intersect: false },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { boxWidth: 20 }
+                        },
+                        tooltip: { enabled: true },
                         datalabels: {
                             color: 'white',
                             font: { weight: 'bold' },
@@ -190,8 +142,14 @@ function ClusterStackedChart(chartData) {
                         }
                     },
                     scales: {
-                        x: { stacked: true },
-                        y: { stacked: true, beginAtZero: true }
+                        x: {
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            ticks: { stepSize: 1 }
+                        }
                     }
                 },
                 plugins: [ChartDataLabels]
@@ -200,4 +158,3 @@ function ClusterStackedChart(chartData) {
     }
 }
 </script>
-

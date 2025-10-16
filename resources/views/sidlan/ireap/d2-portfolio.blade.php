@@ -40,36 +40,17 @@
 
         <div class="row row-cols-1 row-cols-lg-2 row-gap-4 mt-5">
             <livewire:sidlan.ireap.portfolio.sp-by-cluster :irZeroOneData="$irZeroOneData" />
-
-            <div class="col">
-                <div class="tile-container">
-                    <div class="tile-title">Subprojects by Type (No.)</div>
-                    <div class="tile-content position-relative">
-                        <canvas class="tile-chart" id="chrt-approved-by-type" width="408" height="300"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="tile-container">
-                    <div class="tile-title">Approved Subprojects by Stage</div>
-                    <div class="tile-content position-relative">
-                        <canvas class="tile-chart" id="chrt-approved-by-stage-count" width="408" height="300"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="tile-container">
-                    <div class="tile-title">Approved Subproject Cost by Stage</div>
-                    <div class="tile-content position-relative">
-                        <canvas class="tile-chart" id="chrt-approved-by-stage-cost" width="408" height="300"></canvas>
-                    </div>
-                </div>
-            </div>
+            <livewire:sidlan.ireap.portfolio.sp-by-type :irZeroOneData="$irZeroOneData" />
+            <livewire:sidlan.ireap.portfolio.approved-sp-by-stage :irZeroOneData="$irZeroOneData" />
+            <livewire:sidlan.ireap.portfolio.approved-sp-cost-by-stage :irZeroOneData="$irZeroOneData" />
+        </div>
+        <div class="row mt-4 gap-4" data-view="table">
+            <livewire:sidlan.ireap.portfolio.summary-by-sp-type :irZeroOneData="$irZeroOneData" />
+            <livewire:sidlan.ireap.portfolio.list-of-sps :irZeroOneData="$irZeroOneData" />
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
 </body>
+
 </html>
