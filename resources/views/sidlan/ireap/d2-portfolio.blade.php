@@ -33,7 +33,7 @@
 <body style="min-height: 100%;">
 
     <div class="container py-5 min-h-100">
-        <x-sidlan.portfolio-header></x-sidlan.portfolio-header>
+        <x-sidlan.portfolio-header :latestTimestamp="$latestTimestamp"></x-sidlan.portfolio-header>
 
         <livewire:sidlan.ireap.portfolio.filter />
         <livewire:sidlan.ireap.portfolio.counter :irZeroOneData="$irZeroOneData" />
@@ -50,7 +50,7 @@
         </div>
     </div>
 
-<script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
 </body>
 
 </html>

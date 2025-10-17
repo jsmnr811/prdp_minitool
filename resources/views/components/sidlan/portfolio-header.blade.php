@@ -5,7 +5,7 @@
 
             PRDP Scale-Up Rural Infrastructure Development Subprojects Portfolio
             <span class="d-block text-center fs-6">
-                As of <span class="text-warnings" id="asof">{{ \Carbon\Carbon::now()->format('M d, Y  h:i:s A') }}</span>
+                As of <span class="text-warnings" id="asof">{{ $latestTimestamp ?? now()->format('M d, Y h:i:s A') }}</span>
             </span>
 
             <span class="d-block text-center back-main-board">

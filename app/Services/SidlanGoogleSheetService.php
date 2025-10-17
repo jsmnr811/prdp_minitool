@@ -98,6 +98,34 @@ class SidlanGoogleSheetService
         }
     }
 
+    public function getLatestLogTimestampDirect(string $sheetName = 'Logs'): ?string
+    {
+        $range = "{$sheetName}!A:C"; 
+
+        $response = $this->service->spreadsheets_values->get($this->spreadsheetId, $range);
+        $values = $response->getValues() ?? [];
+
+        if (empty($values) || count($values) < 2) {
+            return null;
+        }
+
+        $rows = array_slice($values, 1);
+
+        for ($i = count($rows) - 1; $i >= 0; $i--) {
+            $row = $rows[$i];
+            $timestamp = $row[0] ?? null;
+            $user = $row[1] ?? null;
+            $message = $row[2] ?? null;
+
+            if ($user === 'SYSTEM' && str_contains($message, 'Hourly update completed successfully')) {
+                return \Carbon\Carbon::parse($timestamp)->format('M d, Y h:i:s A');
+            }
+        }
+
+        return null;
+    }
+
+
     /**
      * Backward-compatible alias (to prevent 'undefined method executeRequest' errors)
      */
