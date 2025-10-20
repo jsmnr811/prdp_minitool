@@ -123,4 +123,5 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'google_sheet_id' => env('GOOGLE_SHEET_ID','1ilSTKXJX7TBVyuiidUzcJKyZ1FejV_6MVrRJ2hhgYEI'),
 ];

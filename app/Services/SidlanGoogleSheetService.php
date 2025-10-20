@@ -13,6 +13,7 @@ class SidlanGoogleSheetService
     protected $service;
     protected $spreadsheetId;
 
+
     public function __construct()
     {
         $this->initClient();
@@ -20,7 +21,7 @@ class SidlanGoogleSheetService
 
     protected function initClient(): void
     {
-        $this->spreadsheetId = env('GOOGLE_SHEET_ID');
+        $this->spreadsheetId = config('app.google_sheet_id');
 
         $this->client = new Client();
         $this->client->setApplicationName('Laravel Sidlan Google Sheet Integration');
@@ -100,7 +101,7 @@ class SidlanGoogleSheetService
 
     public function getLatestLogTimestampDirect(string $sheetName = 'Logs'): ?string
     {
-        $range = "{$sheetName}!A:C"; 
+        $range = "{$sheetName}!A:C";
 
         $response = $this->service->spreadsheets_values->get($this->spreadsheetId, $range);
         $values = $response->getValues() ?? [];

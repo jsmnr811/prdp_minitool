@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 new class extends Component {
     public $chartData = [];
     public $underBusinessPlanPreparationItems = [];
-    public $byStatusModal = false;
+    public $subprojectModal = false;
     public $consolidatedTableData = [];
     public $tableData = [];
     public $filterKey = 'All';
@@ -33,7 +33,7 @@ new class extends Component {
     private function initChartData(): void
     {
         $this->chartData = $this->initData();
-        $this->dispatch('generatePipelineChartSPByStatusModal', ['chartData' => $this->chartData, 'consolidatedTableData' => $this->consolidatedTableData]);
+        $this->dispatch('generatePipelineChartSPByStatusModal', ['chartData' => $this->chartData]);
         $this->loader = false;
     }
 
@@ -202,7 +202,7 @@ new class extends Component {
         $this->loader = true;
 
         $this->chartData = $this->initData();
-        $this->dispatch('generatePipelineChartSPByStatusModal', ['chartData' => $this->chartData, 'consolidatedTableData' => $this->consolidatedTableData]);
+        $this->dispatch('generatePipelineChartSPByStatusModal', ['chartData' => $this->chartData]);
 
         if (!empty($this->tableContext)) {
             $datasetKey = $this->tableContext['key'] ?? null;
@@ -217,28 +217,28 @@ new class extends Component {
         $this->loader = false;
     }
 
-    // #[On('pipelineByStatusBarClicked')]
-    // public function barClicked($key, $type): void
-    // {
-    //     $this->loader = true;
-    //     // $this->chartData = $this->initData();
+    #[On('pipelineByStatusBarClicked')]
+    public function barClicked($key, $type): void
+    {
+        $this->loader = true;
+        // $this->chartData = $this->initData();
 
-    //     $innerKey = $type ? 'beyondTimelineItems' : 'subprojectItems';
+        $innerKey = $type ? 'beyondTimelineItems' : 'subprojectItems';
 
-    //     $this->tableData = $this->consolidatedTableData[$key][$innerKey] ?? [];
+        $this->tableData = $this->consolidatedTableData[$key][$innerKey] ?? [];
 
-    //     $this->modalSubtitle = $this->dataSets[$key]['title'] ?? '';
-    //     if ($innerKey === 'beyondTimelineItems') {
-    //         $this->modalSubtitle .= 'dasdasdasdasd (No. of SPs Beyond Timeline)';
-    //     }
-    //     $this->tableContext = [
-    //         'key' => $key,
-    //         'type' => $type,
-    //     ];
+        $this->modalSubtitle = $this->dataSets[$key]['title'] ?? '';
+        if ($innerKey === 'beyondTimelineItems') {
+            $this->modalSubtitle .= 'dasdasdasdasd (No. of SPs Beyond Timeline)';
+        }
+        $this->tableContext = [
+            'key' => $key,
+            'type' => $type,
+        ];
 
-    //     $this->loader = false;
-    //     $this->byStatusModal = true;
-    // }
+        $this->loader = false;
+        $this->subprojectModal = true;
+    }
 
     public function placeholder(): View
     {
@@ -291,10 +291,10 @@ new class extends Component {
         </div>
     </div>
     <!-- ✅ Modal (Livewire + Alpine synced) -->
-    {{-- @if ($byStatusModal)
+    @if ($subprojectModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div class="modal-dialog modal-dialog-centered modal-xl bg-white rounded-3 shadow-lg overflow-hidden"
-                @click.away="$set('byStatusModal', false)">
+                @click.away="$set('subprojectModal', false)">
                 <div class="modal-content border-0">
 
                     <div class="modal-header position-relative flex-column align-items-start pb-0 border-0">
@@ -305,7 +305,7 @@ new class extends Component {
                             {{ $modalSubtitle }}
                         </small>
                         <button type="button" class="btn-close position-absolute top-0 end-0 mt-2 me-2"
-                            wire:click="$set('byStatusModal', false)" aria-label="Close"></button>
+                            wire:click="$set('subprojectModal', false)" aria-label="Close"></button>
                     </div>
 
                     <div class="modal-body">
@@ -367,7 +367,7 @@ new class extends Component {
         </div>
     @endif
 
-    @if ($byStatusModal)
+    @if ($subprojectModal)
         <div class="modal fade show" id="bySubjectModal" tabindex="-1" aria-modal="true" role="dialog"
             style="display: block;" aria-labelledby="bySubjectModalLabel" aria-hidden="false">
             <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -383,7 +383,7 @@ new class extends Component {
                             {{ $modalSubtitle }}
                         </small>
                         <button type="button" class="btn-close position-absolute top-0 end-0 mt-2 me-2"
-                            wire:click="$set('byStatusModal', false)" aria-label="Close"></button>
+                            wire:click="$set('subprojectModal', false)" aria-label="Close"></button>
                     </div>
 
                     <div class="modal-body">
@@ -444,7 +444,7 @@ new class extends Component {
             </div>
         </div>
         <div class="modal-backdrop fade show"></div>
-    @endif --}}
+    @endif
 </div>
 
 @script
@@ -466,6 +466,7 @@ new class extends Component {
             }
 
             const groupKeys = Object.keys(chartData);
+            console.log(chartData);
 
             const averageDiff = (() => {
                 let total = 0;
@@ -559,95 +560,15 @@ new class extends Component {
                         }
                     },
                     onClick: (evt, elements) => {
-                        // Prevent clicking when loading
-                        if (window.isChartLoading) return;
-
                         if (!elements.length) return;
                         const element = elements[0];
                         const index = element.index;
                         const key = groupKeys[index];
                         const datasetIndex = element.datasetIndex;
-
-                        const type = datasetIndex === 1;
-                        const innerKey = type ? 'beyondTimelineItems' : 'subprojectItems';
-                        window.pipelineTableData = window.currentConsolidatedTableData[key][innerKey];
-                        window.modalSubtitle = window.currentChartData[key].title + (type ? ' (No. of SPs Beyond Timeline)' : '');
-                        window.modalTitle = 'I-REAP Subprojects in the Pipeline (Number of Subprojects by Status)';
-
-                        $('#pipeline-by-status-modal').modal('show');
-
-                        // Populate table after modal is shown
-                        setTimeout(() => {
-                            const tableContainer = $('#pipeline-by-status-modal .modal-body .table-responsive');
-                            const subtitle = $('#modal-subtitle');
-
-                            // Clear existing content
-                            tableContainer.empty();
-
-                            // Build the complete table HTML
-                            let tableHtml = `
-                                <table class="table table-hover small mb-0" style="width: 100%; table-layout: fixed;">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-wrap" style="width: 8%;">Cluster</th>
-                                            <th class="text-wrap" style="width: 10%;">Region</th>
-                                            <th class="text-wrap" style="width: 12%;">Province</th>
-                                            <th class="text-wrap" style="width: 12%;">City/
-                                                Municipality</th>
-                                            <th class="text-wrap" style="width: 12%;">Proponent</th>
-                                            <th class="text-wrap" style="width: 15%;">SP Name</th>
-                                            <th class="text-wrap" style="width: 8%;">Type</th>
-                                            <th class="text-wrap" style="width: 8%;">Cost</th>
-                                            <th class="text-wrap" style="width: 8%;">Stage</th>
-                                            <th class="text-wrap" style="width: 12%;">Status</th>
-                                            <th class="text-wrap" style="width: 15%;">No. of days</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                            `;
-
-                            if (window.pipelineTableData && Object.keys(window.pipelineTableData).length > 0) {
-                                Object.values(window.pipelineTableData).forEach((data) => {
-                                    tableHtml += `
-                                        <tr>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.cluster || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.region || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.province || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.city_municipality || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.proponent || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.project_name || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.project_type || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.cost || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.stage || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.specific_status || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">
-                                                ${Math.round(data.date_difference)} days from
-                                                ${data.dataset_key === 'underBusinessPlanPreparation' ? 'Date of confirmation' :
-                                                  data.dataset_key === 'forRPABApproval' ? 'FS / DED Preparation' :
-                                                  data.dataset_key === 'rpabApproved' ? 'RPAB Approval' : 'Date of confirmation'}
-                                                (${data.formatted_date})
-                                            </td>
-                                        </tr>
-                                    `;
-                                });
-                            }
-
-                            tableHtml += `
-                                    </tbody>
-                                </table>
-                            `;
-
-                            // Append the complete table
-                            tableContainer.html(tableHtml);
-
-                            if (window.modalTitle) {
-                                $('#modal-title').text(window.modalTitle);
-                            }
-
-                            if (window.modalSubtitle) {
-                                subtitle.text(window.modalSubtitle);
-                            }
-                        }, 100);
+                        Livewire.dispatch('pipelineByStatusBarClicked', {
+                            key,
+                            type: datasetIndex
+                        });
                     }
                 },
                 plugins: [ChartDataLabels]
@@ -656,14 +577,10 @@ new class extends Component {
 
         // Trigger chart only when Livewire dispatches
         Livewire.on('generatePipelineChartSPByStatusModal', data => {
-            window.isChartLoading = true;
             setTimeout(() => {
                 if (data[0] && data[0].chartData) {
-                    window.currentChartData = data[0].chartData;
-                    window.currentConsolidatedTableData = data[0].consolidatedTableData;
                     window.ChartOne(data[0].chartData);
                     $wire.set('loader', false);
-                    window.isChartLoading = false;
                 }
             }, 50);
         });
