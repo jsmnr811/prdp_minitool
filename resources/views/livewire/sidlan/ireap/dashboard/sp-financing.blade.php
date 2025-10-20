@@ -60,7 +60,15 @@ new class extends Component {
 
         $pipelineItems = $zeroOne->filter(
             fn($item) => ($item['stage'] ?? '') === 'Pre-procurement'
-                && ($item['status'] ?? '') === 'Subproject Confirmed'
+                && in_array(($item['status'] ?? ''), [
+                    'Subproject Confirmed',
+                    'Business Plan Package for RPCO technical review submitted',
+                    'RPCO Technical Review of Business Plan conducted',
+                    'Joint Technical Review (JTR) conducted',
+                    'SP approved by RPAB',
+                    'Signing of the IMA',
+                    'Subproject Issued with No Objection Letter 1',
+                ]) && empty($item['nol1_issued'])
         );
 
         $approvedItems = $zeroOne->filter(function ($item) use ($nol1Lookup) {
@@ -75,14 +83,38 @@ new class extends Component {
         $this->approvedCount = $approvedItems->count();
         $this->totalCount = $this->pipelineCount + $this->approvedCount;
 
-        $this->pipelineAmount = $pipelineItems->sum(
-            fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0)
-        );
+        // $this->pipelineAmount = $pipelineItems->sum(
+        //     fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0)
+        // );
 
-        $this->approvedAmount = $approvedItems->sum(
-            fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0)
-        );
+        $this->pipelineAmount = $pipelineItems->sum(function ($item) {
+            return collect([
+                'cost_nol_1',
+                'rpab_approved_cost',
+                'estimated_project_cost',
+                'cost_during_validation',
+                'indicative_project_cost',
+            ])
+                ->map(fn($field) => floatval($item[$field] ?? 0))
+                ->first(fn($value) => $value != 0, 0);
+        });
 
+
+        // $this->approvedAmount = $approvedItems->sum(
+        //     fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0)
+        // );
+
+         $this->approvedAmount = $approvedItems->sum(function ($item) {
+            return collect([
+                'cost_nol_1',
+                'rpab_approved_cost',
+                'estimated_project_cost',
+                'cost_during_validation',
+                'indicative_project_cost',
+            ])
+                ->map(fn($field) => floatval($item[$field] ?? 0))
+                ->first(fn($value) => $value != 0, 0);
+        });
         $this->totalAmount = $this->pipelineAmount + $this->approvedAmount;
     }
 

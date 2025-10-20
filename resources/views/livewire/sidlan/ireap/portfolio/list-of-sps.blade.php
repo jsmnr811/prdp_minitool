@@ -61,6 +61,7 @@ new class extends Component {
                 $normalizedKey = strtolower(str_replace([' ', '-', '/', ':'], '_', trim($key)));
                 $normalized[$normalizedKey] = trim((string)$value);
             }
+            // Ensure sp_id always normalized
             $normalized['sp_id'] = isset($normalized['sp_id'])
                 ? strtolower(trim($normalized['sp_id']))
                 : null;
@@ -77,6 +78,7 @@ new class extends Component {
                     $normalizedKey = strtolower(str_replace([' ', '-', '/', ':'], '_', trim($key)));
                     $normalized[$normalizedKey] = trim((string)$value);
                 }
+                // Normalize ID
                 $normalized['sp_id'] = isset($normalized['sp_id'])
                     ? strtolower(trim($normalized['sp_id']))
                     : null;
@@ -95,11 +97,26 @@ new class extends Component {
             return $clusterMatch && $typeMatch;
         });
 
-        // --- PIPELINED ---
-        $pipelineItems = $filtered->filter(
-            fn($item) => ($item['stage'] ?? '') === 'Pre-procurement'
-                && ($item['status'] ?? '') === 'Subproject Confirmed'
-        );
+        // --- PIPELINE ---
+        $pipelineItems = $filtered->filter(function ($item) use ($nol1Lookup) {
+            $stage = $item['stage'] ?? '';
+            $status = $item['status'] ?? '';
+            $spId = strtolower($item['sp_id'] ?? '');
+            $nol1 = $nol1Lookup[$spId] ?? null;
+            $hasNol1 = !empty($nol1) && !in_array(strtolower(trim($nol1)), ['no', 'n/a', 'none', '0']);
+
+            return $stage === 'Pre-procurement'
+                && in_array($status, [
+                    'Subproject Confirmed',
+                    'Business Plan Package for RPCO technical review submitted',
+                    'RPCO Technical Review of Business Plan conducted',
+                    'Joint Technical Review (JTR) conducted',
+                    'SP approved by RPAB',
+                    'Signing of the IMA',
+                    'Subproject Issued with No Objection Letter 1',
+                ])
+                && !$hasNol1;
+        });
 
         // --- APPROVED ---
         $approvedItems = $filtered->filter(function ($item) use ($nol1Lookup) {
@@ -115,13 +132,41 @@ new class extends Component {
         $this->approvedCount = $approvedItems->count();
         $this->totalCount = $this->pipelineCount + $this->approvedCount;
 
-        $this->pipelineAmount = $pipelineItems->sum(
-            fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0)
-        );
+        $this->pipelineAmount = $pipelineItems->sum(function ($item) {
+            $fields = [
+                'cost_nol_1',
+                'rpab_approved_cost',
+                'estimated_project_cost',
+                'cost_during_validation',
+                'indicative_project_cost',
+            ];
 
-        $this->approvedAmount = $approvedItems->sum(
-            fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0)
-        );
+            foreach ($fields as $field) {
+                if (!empty($item[$field]) && floatval($item[$field]) != 0) {
+                    return floatval($item[$field]);
+                }
+            }
+
+            return 0;
+        });
+
+        $this->approvedAmount = $approvedItems->sum(function ($item) {
+            $fields = [
+                'cost_nol_1',
+                'rpab_approved_cost',
+                'estimated_project_cost',
+                'cost_during_validation',
+                'indicative_project_cost',
+            ];
+
+            foreach ($fields as $field) {
+                if (!empty($item[$field]) && floatval($item[$field]) != 0) {
+                    return floatval($item[$field]);
+                }
+            }
+
+            return 0;
+        });
 
         $this->totalAmount = $this->pipelineAmount + $this->approvedAmount;
 
@@ -170,9 +215,23 @@ new class extends Component {
                         $stages = collect($provinceItems)->groupBy('stage')->map(function ($stageItems) {
                             return [
                                 'count' => $stageItems->count(),
-                                'cost' => $stageItems->sum(
-                                    fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0)
-                                ),
+                                'cost' => $stageItems->sum(function ($item) {
+                                    $fields = [
+                                        'cost_nol_1',
+                                        'rpab_approved_cost',
+                                        'estimated_project_cost',
+                                        'cost_during_validation',
+                                        'indicative_project_cost',
+                                    ];
+
+                                    foreach ($fields as $field) {
+                                        if (!empty($item[$field]) && floatval(str_replace([',', '₱', ' '], '', $item[$field])) != 0) {
+                                            return floatval(str_replace([',', '₱', ' '], '', $item[$field]));
+                                        }
+                                    }
+
+                                    return 0;
+                                }),
                             ];
                         });
 
@@ -487,7 +546,7 @@ $approvedStages = $approvedStages ?? ['Implementation', 'For procurement', 'Comp
 $pipelinedStages = $pipelinedStages ?? ['Pre-Procurement'];
 @endphp
 
-<div id="ireap-portfolio-wrapper" class="col-12" wire:ignore>
+<div id="ireap-portfolio-wrapper" class="col-12">
     <div class="tile-container">
         <div class="tile-title">List of I-REAP Scale-Up Subprojects</div>
 
@@ -498,12 +557,12 @@ $pipelinedStages = $pipelinedStages ?? ['Pre-Procurement'];
             <button class="btn border border-primary ireap-portfolio-nav" data-target="pipelined">Pipelined</button>
             <div class="border-start border-2 border-primary d-none d-lg-block"></div>
             <button id="ireap-portfolio-export" class="btn border border-primary active" style="display: inline-flex; align-items: center;   background-color: #0d6efd; color: #fff; border: 1px solid #0d6efd;"">
-                <span class="btn-normal" style="display: inline-flex; align-items: center;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-download me-1 small" viewBox="0 0 16 16">
-                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"></path>
-                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"></path>
-                    </svg>
-                    Export
+                <span class=" btn-normal" style="display: inline-flex; align-items: center;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-download me-1 small" viewBox="0 0 16 16">
+                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"></path>
+                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"></path>
+                </svg>
+                Export
                 </span>
                 <span class="btn-loading" style="display:none; align-items: center;">
                     <i class="fa fa-spinner fa-spin me-1"></i> Downloading...

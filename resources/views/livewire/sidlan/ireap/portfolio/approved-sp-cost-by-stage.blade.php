@@ -27,13 +27,25 @@ new class extends Component {
         $this->computeFilteredTotals();
     }
 
-    private function computeFilteredTotals()
-    {
-        $apiService = new SidlanGoogleSheetService();
-        $irZeroTwoData = $apiService->getSheetData('ir-01-002');
+private function computeFilteredTotals()
+{
+    $apiService = new SidlanGoogleSheetService();
+    $irZeroTwoData = $apiService->getSheetData('ir-01-002');
 
-        // Normalize data
-        $zeroOne = collect($this->irZeroOneData)->map(function ($row) {
+    $zeroOne = collect($this->irZeroOneData)->map(function ($row) {
+        $normalized = [];
+        foreach ($row as $key => $value) {
+            $normalizedKey = strtolower(str_replace([' ', '-', '/', ':'], '_', trim($key)));
+            $normalized[$normalizedKey] = trim((string)$value);
+        }
+        $normalized['sp_id'] = isset($normalized['sp_id']) ? strtolower(trim($normalized['sp_id'])) : null;
+        return $normalized;
+    });
+
+    $zeroTwo = collect($irZeroTwoData)
+        ->filter(fn($row) => is_array($row) && count($row) > 0)
+        ->values()
+        ->map(function ($row) {
             $normalized = [];
             foreach ($row as $key => $value) {
                 $normalizedKey = strtolower(str_replace([' ', '-', '/', ':'], '_', trim($key)));
@@ -43,58 +55,56 @@ new class extends Component {
             return $normalized;
         });
 
-        $zeroTwo = collect($irZeroTwoData)
-            ->filter(fn($row) => is_array($row) && count($row) > 0)
-            ->values()
-            ->map(function ($row) {
-                $normalized = [];
-                foreach ($row as $key => $value) {
-                    $normalizedKey = strtolower(str_replace([' ', '-', '/', ':'], '_', trim($key)));
-                    $normalized[$normalizedKey] = trim((string)$value);
+    $nol1Lookup = $zeroTwo
+        ->filter(fn($item) => !empty($item['sp_id'] ?? null))
+        ->mapWithKeys(fn($item) => [$item['sp_id'] => $item['nol1_issued'] ?? null]);
+
+    $filtered = $zeroOne->filter(function ($item) {
+        return $this->filterCluster === 'All' || ($item['cluster'] ?? '') === $this->filterCluster;
+    });
+
+    $approvedItems = $filtered->filter(function ($item) use ($nol1Lookup) {
+        $spId = strtolower($item['sp_id'] ?? '');
+        $stage = $item['stage'] ?? '';
+        $nol1 = $nol1Lookup[$spId] ?? null;
+        $hasNol1 = !empty($nol1) && !in_array(strtolower(trim($nol1)), ['no', 'n/a', 'none', '0']);
+        return in_array($stage, ['Implementation', 'For procurement', 'Completed']) && $hasNol1;
+    });
+
+    $stages = ['Implementation', 'For procurement', 'Completed'];
+
+    // ✅ Fixed: Use your priority cost fields for summation
+    $costByStage = array_map(function ($stage) use ($approvedItems) {
+        return $approvedItems
+            ->where('stage', $stage)
+            ->sum(function ($item) {
+                $fields = [
+                    'cost_nol_1',
+                    'rpab_approved_cost',
+                    'estimated_project_cost',
+                    'cost_during_validation',
+                    'indicative_project_cost',
+                ];
+                foreach ($fields as $field) {
+                    if (!empty($item[$field]) && floatval($item[$field]) != 0) {
+                        return floatval($item[$field]);
+                    }
                 }
-                $normalized['sp_id'] = isset($normalized['sp_id']) ? strtolower(trim($normalized['sp_id'])) : null;
-                return $normalized;
+                return 0;
             });
+    }, $stages);
 
-        $nol1Lookup = $zeroTwo
-            ->filter(fn($item) => !empty($item['sp_id'] ?? null))
-            ->mapWithKeys(fn($item) => [$item['sp_id'] => $item['nol1_issued'] ?? null]);
+    $this->chartData = [
+        'labels' => $stages,
+        'datasets' => [[
+            'label' => 'Approved SPs Cost (₱)',
+            'data' => $costByStage,
+            'backgroundColor' => '#004ef5',
+            'borderRadius' => 6,
+        ]]
+    ];
+}
 
-        // Apply cluster filter
-        $filtered = $zeroOne->filter(function ($item) {
-            return $this->filterCluster === 'All' || ($item['cluster'] ?? '') === $this->filterCluster;
-        });
-
-        // Approved SPs only
-        $approvedItems = $filtered->filter(function ($item) use ($nol1Lookup) {
-            $spId = strtolower($item['sp_id'] ?? '');
-            $stage = $item['stage'] ?? '';
-            $nol1 = $nol1Lookup[$spId] ?? null;
-            $hasNol1 = !empty($nol1) && !in_array(strtolower(trim($nol1)), ['no', 'n/a', 'none', '0']);
-            return in_array($stage, ['Implementation', 'For procurement', 'Completed']) && $hasNol1;
-        });
-
-        $stages = ['Implementation', 'For procurement', 'Completed'];
-
-        // Sum cost
-        $costByStage = array_map(
-            fn($stage) =>
-            $approvedItems
-                ->where('stage', $stage)
-                ->sum(fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0)),
-            $stages
-        );
-
-        $this->chartData = [
-            'labels' => $stages,
-            'datasets' => [[
-                'label' => 'Approved SPs Cost (₱)',
-                'data' => $costByStage,
-                'backgroundColor' => '#004ef5',
-                'borderRadius' => 6,
-            ]]
-        ];
-    }
 
     public function placeholder(): View
     {
@@ -128,6 +138,14 @@ new class extends Component {
         return '₱ ' + formatted;
     }
 
+    // ✅ Full value (no shortening, with commas)
+    function formatFullCurrency(value) {
+        return '₱ ' + Number(value).toLocaleString('en-PH', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
     function ApprovedStageCostChart(chartData) {
         return {
             chart: null,
@@ -151,7 +169,8 @@ new class extends Component {
                             },
                             tooltip: {
                                 callbacks: {
-                                    label: (context) => formatCurrency(context.raw || 0)
+                                    // ✅ Show full peso amount on hover
+                                    label: (context) => formatFullCurrency(context.raw || 0)
                                 }
                             },
                             datalabels: {
@@ -166,15 +185,11 @@ new class extends Component {
                         },
                         scales: {
                             x: {
-                                grid: {
-                                    display: false
-                                }
+                                grid: { display: false }
                             },
                             y: {
                                 beginAtZero: true,
-                                grid: {
-                                    color: 'rgba(0,0,0,0.05)'
-                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' },
                                 ticks: {
                                     callback: (value) => formatCurrency(value)
                                 }
@@ -182,7 +197,7 @@ new class extends Component {
                         },
                         elements: {
                             bar: {
-                                borderSkipped: 'bottom', 
+                                borderSkipped: 'bottom',
                                 borderRadius: {
                                     topLeft: 6,
                                     topRight: 6,
@@ -191,7 +206,6 @@ new class extends Component {
                                 }
                             }
                         }
-
                     },
                     plugins: [ChartDataLabels]
                 });

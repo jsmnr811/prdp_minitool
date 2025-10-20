@@ -5,6 +5,8 @@ use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 use App\Services\SidlanGoogleSheetService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+
 
 new class extends Component {
     public $chartData = [];
@@ -17,9 +19,15 @@ new class extends Component {
     public string $modalTitle = '';
     public string $modalSubtitle = '';
     public array $dataSets = [];
+    public $tableContext = [];
+    public $filteredData =[];
+
+    private ?SidlanGoogleSheetService $sheetService = null;
 
     public function mount(): void
     {
+        // Initialize the service here safely
+        $this->sheetService = new SidlanGoogleSheetService();
         $this->loader = true;
         $this->initChartData();
     }
@@ -27,7 +35,8 @@ new class extends Component {
     private function initChartData(): void
     {
         $this->chartData = $this->initData();
-        $this->dispatch('generateChart', ['chartData' => $this->chartData]);
+        $this->dispatch('generatePipelineChartSPByStatusModal', ['chartData' => $this->chartData]);
+        $this->loader = false;
     }
 
     private function initData(): array
@@ -38,52 +47,66 @@ new class extends Component {
             'rpabApproved' => $this->RPABApproved(),
         ];
 
-        $dataSets = [];
+        $titleMap = [
+            'underBusinessPlanPreparation' => 'Under Business Plan Preparation',
+            'forRPABApproval' => 'Under Review / For RPAB Approval',
+            'rpabApproved' => 'RPAB Approved (For NOL 1)',
+        ];
+
+        $timelineMap = [
+            'underBusinessPlanPreparation' => 204,
+            'forRPABApproval' => 114,
+            'rpabApproved' => 120,
+        ];
 
         foreach ($sections as $key => $data) {
-            $titleMap = [
-                'underBusinessPlanPreparation' => 'Under Business Plan Preparation',
-                'forRPABApproval' => 'Under Review /  For RPAB Approval',
-                'rpabApproved' => 'RPAB Approved (For NOL 1)',
-            ];
-
-            $timelineMap = [
-                'underBusinessPlanPreparation' => 204,
-                'forRPABApproval' => 114,
-                'rpabApproved' => 120,
-            ];
-
-            $dataSets[$key] = [
+            $this->dataSets[$key] = [
                 'title' => $titleMap[$key],
                 'subject_count' => $data['count'],
                 'beyond_timeline_count' => $data['beyondTimelineCount'],
                 'key' => $key,
                 'average_difference_days' => $data['average_difference_days'],
-                'bar_Label' => $data['average_difference_days'] . " days vs \n {$timelineMap[$key]} days timeline",
+                'bar_Label' => "{$data['average_difference_days']} days vs \n {$timelineMap[$key]} days timeline",
             ];
 
-            $this->consolidatedTableData[$key]['subprojectItems'] = $data['items'] ?? [];
-            $this->consolidatedTableData[$key]['beyondTimelineItems'] = $data['beyondTimeline'] ?? [];
+            $this->consolidatedTableData[$key] = [
+                'subprojectItems' => $data['items'] ?? [],
+                'beyondTimelineItems' => $data['beyondTimeline'] ?? [],
+            ];
         }
 
-        $this->dataSets = $dataSets;
-
-        return $dataSets;
+        return $this->dataSets;
     }
 
     private function fetchDataFromSheet(string $sheetName): \Illuminate\Support\Collection
     {
-        $service = new SidlanGoogleSheetService();
-        return collect($service->getSheetData($sheetName));
+        if (!$this->sheetService) {
+            $this->sheetService = new SidlanGoogleSheetService();
+        }
+
+        $data = collect($this->sheetService->getSheetData($sheetName));
+
+        return $data->map(function ($row) {
+            $clean = [];
+            foreach ($row as $key => $value) {
+                $cleanKey = trim($key);
+                $cleanValue = is_string($value) ? trim($value) : $value;
+                $clean[$cleanKey] = $cleanValue;
+            }
+            return $clean;
+        });
     }
 
     private function calculateCost(array $item): string
     {
-        foreach (['cost_nol_1', 'rpab_approved_cost', 'estimated_project_cost', 'cost_during_validation', 'indicative_project_cost'] as $field) {
+        $fields = ['cost_nol_1', 'rpab_approved_cost', 'estimated_project_cost', 'cost_during_validation', 'indicative_project_cost'];
+
+        foreach ($fields as $field) {
             if (!empty($item[$field]) && is_numeric($item[$field]) && (float)$item[$field] > 0) {
                 return '₱' . number_format((float)$item[$field], 2);
             }
         }
+
         return '-';
     }
 
@@ -93,26 +116,44 @@ new class extends Component {
 
         $items = $items->map(function ($item) use ($dateField, $datasetKey, $now) {
             $date = Carbon::parse($item[$dateField]);
-            return collect($item)
-                ->merge([
-                    'cost' => $this->calculateCost($item),
-                    'date_difference' => $date->diffInRealDays($now),
-                    $datasetKey === 'forRPABApproval' ? 'rpabApprovalDate' : 'subproject_confirmed' => $date->format('M j, Y'),
-                    'dataset_key' => $datasetKey
-                ]);
+
+            return array_merge($item, [
+                'cost' => $this->calculateCost($item),
+                'date_difference' => $date->diffInRealDays($now),
+                'formatted_date' => $date->format('M j, Y'),
+                'dataset_key' => $datasetKey,
+            ]);
         });
 
         $beyondTimeline = $items->filter(fn($item) => Carbon::parse($item[$dateField])->diffInRealDays($now) > $timelineDays);
-
-        $averageDifferenceDays = round($beyondTimeline->avg('date_difference') ?? 0);
 
         return [
             'items' => $items,
             'count' => $items->count(),
             'beyondTimeline' => $beyondTimeline,
             'beyondTimelineCount' => $beyondTimeline->count(),
-            'average_difference_days' => $averageDifferenceDays,
+            'average_difference_days' => round($beyondTimeline->avg('date_difference') ?? 0),
         ];
+    }
+
+    private function passesFilter(array $item): bool
+    {
+        if ($this->filterKey === 'All') return true;
+
+        $filter = trim($this->filterKey);
+
+        $cluster = isset($item['cluster']) ? trim($item['cluster']) : null;
+        $region  = isset($item['region']) ? trim($item['region']) : null;
+
+        if (in_array($filter, ['Luzon A', 'Luzon B', 'Visayas', 'Mindanao'])) {
+            return $cluster === $filter;
+        }
+
+        if (!empty($region)) {
+            return $region === $filter;
+        }
+
+        return false;
     }
 
     private function underBusinessPlanPreparation(): array
@@ -121,11 +162,9 @@ new class extends Component {
             $baseCondition = $item['stage'] === 'Pre-procurement'
                 && $item['specific_status'] === 'Subproject Confirmed'
                 && !empty($item['subproject_confirmed'])
-                && empty($item['sp_rpab_approved']);
+                && (empty($item['sp_rpab_approved']) || !strtotime($item['sp_rpab_approved']));
 
-            if ($this->filterKey === 'All') return $baseCondition;
-            if (in_array($this->filterKey, ['Luzon A', 'Luzon B', 'Visayas', 'Mindanao'])) return $baseCondition && $item['cluster'] === $this->filterKey;
-            return $baseCondition && $item['region'] === $this->filterKey;
+            return $baseCondition && $this->passesFilter($item);
         });
 
         return $this->prepareItems($items, 'subproject_confirmed', 'underBusinessPlanPreparation', 204);
@@ -137,16 +176,15 @@ new class extends Component {
 
         $items = $this->fetchDataFromSheet('ir-01-002')->filter(function ($item) use ($priorityDates) {
             $baseCondition = $item['stage'] === 'Pre-procurement'
-                && in_array($item['specific_status'], ['RPCO Technical Review of Business Plan conducted', 'Business Plan Package for RPCO technical review submitted'])
+                && in_array($item['specific_status'], [
+                    'RPCO Technical Review of Business Plan conducted',
+                    'Business Plan Package for RPCO technical review submitted',
+                ])
                 && collect($priorityDates)->first(fn($field) => !empty($item[$field]))
                 && empty($item['nol1_issued']);
 
-            if ($this->filterKey === 'All') return $baseCondition;
-            if (in_array($this->filterKey, ['Luzon A', 'Luzon B', 'Visayas', 'Mindanao'])) return $baseCondition && $item['cluster'] === $this->filterKey;
-            return $baseCondition && $item['region'] === $this->filterKey;
-        });
-
-        $items = $items->map(function ($item) use ($priorityDates) {
+            return $baseCondition && $this->passesFilter($item);
+        })->map(function ($item) use ($priorityDates) {
             $dateField = collect($priorityDates)->first(fn($field) => !empty($item[$field]));
             $item['rpabApprovalDate'] = $item[$dateField] ?? null;
             return $item;
@@ -159,12 +197,15 @@ new class extends Component {
     {
         $items = $this->fetchDataFromSheet('ir-01-002')->filter(function ($item) {
             $baseCondition = $item['stage'] === 'Pre-procurement'
-                && in_array($item['specific_status'], ['Joint Technical Review (JTR) conducted', 'SP approved by RPAB', 'Signing of the IMA', 'Subproject Issued with No Objection Letter 1'])
+                && in_array($item['specific_status'], [
+                    'Joint Technical Review (JTR) conducted',
+                    'SP approved by RPAB',
+                    'Signing of the IMA',
+                    'Subproject Issued with No Objection Letter 1',
+                ])
                 && !empty($item['nol1_issued']);
 
-            if ($this->filterKey === 'All') return $baseCondition;
-            if (in_array($this->filterKey, ['Luzon A', 'Luzon B', 'Visayas', 'Mindanao'])) return $baseCondition && $item['cluster'] === $this->filterKey;
-            return $baseCondition && $item['region'] === $this->filterKey;
+            return $baseCondition && $this->passesFilter($item);
         });
 
         return $this->prepareItems($items, 'nol1_issued', 'rpabApproved', 120);
@@ -173,28 +214,55 @@ new class extends Component {
     public function updatedFilterKey(): void
     {
         $this->loader = true;
-        $this->initChartData();
+
+        $this->chartData = $this->initData();
+        $this->dispatch('generatePipelineChartSPByStatusModal', ['chartData' => $this->chartData]);
+
+        if (!empty($this->tableContext)) {
+            $datasetKey = $this->tableContext['key'] ?? null;
+            $isBeyond = $this->tableContext['type'] ?? false;
+
+            if ($datasetKey) {
+                $innerKey = $isBeyond ? 'beyondTimelineItems' : 'subprojectItems';
+                $this->tableData = $this->consolidatedTableData[$datasetKey][$innerKey] ?? [];
+            }
+        }
+
+        $this->loader = false;
     }
 
     #[On('barClicked')]
     public function barClicked($key, $type): void
     {
+        $this->loader = true;
+        // $this->chartData = $this->initData();
+
         $innerKey = $type ? 'beyondTimelineItems' : 'subprojectItems';
+
         $this->tableData = $this->consolidatedTableData[$key][$innerKey] ?? [];
+
         $this->modalSubtitle = $this->dataSets[$key]['title'] ?? '';
         if ($innerKey === 'beyondTimelineItems') {
-            $this->modalSubtitle .= ' (No. of SPs Beyond Timeline)';
+            $this->modalSubtitle .= 'dasdasdasdasd (No. of SPs Beyond Timeline)';
         }
-        $this->subprojectModal = true;
+        $this->filteredData = $this->tableData;
+        $this->tableContext = [
+            'key' => $key,
+            'type' => $type,
+        ];
+
+        $this->loader = false;
+        $this->subprojectModal=true;
+        
     }
+
+
 
     public function placeholder(): View
     {
         return view('livewire.sidlan.ireap.placeholder.section-2');
     }
 };
-
-
 ?>
 
 <div>
@@ -243,68 +311,72 @@ new class extends Component {
                 id="subproject-chart"></canvas>
         </div>
     </div>
-    @if ($subprojectModal)
-    <div class="modal fade show" id="helloModal" tabindex="-1" aria-modal="true" role="dialog" style="display: block;" aria-labelledby="helloModalLabel" aria-hidden="false">
-        <div class="modal-dialog modal-dialog-centered modal-xl">
-            <div class="modal-content">
+    <!-- ✅ Modal (Livewire + Alpine synced) -->
+    @if($subprojectModal)
+    <div
 
-                <div class="modal-header position-relative flex-column align-items-start pb-0" style="border-bottom: none;">
-                    <h5 class="modal-title mb-0 fw-bold text-primary" id="helloModalLabel">
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div
+            class="modal-dialog modal-dialog-centered modal-xl bg-white rounded-3 shadow-lg overflow-hidden"
+            @click.away="$wire.set('subprojectModal', false)">
+            <div class="modal-content border-0">
+
+                <div class="modal-header position-relative flex-column align-items-start pb-0 border-0">
+                    <h5 class="modal-title mb-0 fw-bold text-primary">
                         I-REAP Subprojects in the Pipeline (Number of Subprojects by Status)
                     </h5>
                     <small class="text-warning fw-semibold" style="font-size: 1rem;">
                         {{ $modalSubtitle }}
                     </small>
-                    <button type="button" class="btn-close position-absolute top-0 end-0 mt-2 me-2" wire:click='$set("subprojectModal", false)' aria-label="Close"></button>
+                    <button
+                        type="button"
+                        class="btn-close position-absolute top-0 end-0 mt-2 me-2"
+                        wire:click="$set('subprojectModal', false)"
+                        aria-label="Close"></button>
                 </div>
 
                 <div class="modal-body">
-                    @if (count($tableData) > 0)
+                    @if (count($filteredData) > 0)
                     <div style="overflow-x: auto;">
-                        <table class="table table-hover fix-header-table small mb-0" id="subprojectTable" style="width: auto; min-width: 100%;">
+                        <table class="table table-hover fix-header-table small mb-0" style="min-width: 100%;">
                             <thead>
                                 <tr>
-                                    <th style="white-space: nowrap;">Cluster</th>
-                                    <th style="white-space: nowrap;">Region</th>
-                                    <th style="white-space: nowrap;">Province</th>
-                                    <th style="white-space: nowrap;">City/Municipality</th>
-                                    <th style="white-space: nowrap;">Proponent</th>
-                                    <th style="white-space: nowrap;">SP Name</th>
-                                    <th style="white-space: nowrap;">Type</th>
-                                    <th style="white-space: nowrap;">Cost</th>
-                                    <th style="white-space: nowrap;">Stage</th>
-                                    <th style="white-space: nowrap;">Status</th>
-                                    <th style="white-space: nowrap;">No. of days</th>
+                                    <th>Cluster</th>
+                                    <th>Region</th>
+                                    <th>Province</th>
+                                    <th>City/Municipality</th>
+                                    <th>Proponent</th>
+                                    <th>SP Name</th>
+                                    <th>Type</th>
+                                    <th>Cost</th>
+                                    <th>Stage</th>
+                                    <th>Status</th>
+                                    <th>No. of days</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($tableData as $data)
+                                @foreach ($filteredData as $data)
                                 <tr>
-                                    <td style="white-space: nowrap;">{{ $data['cluster'] }}</td>
-                                    <td style="white-space: nowrap;">{{ $data['region'] }}</td>
-                                    <td style="white-space: nowrap;">{{ $data['province'] }}</td>
-                                    <td style="white-space: nowrap;">{{ $data['city_municipality'] }}</td>
-                                    <td style="white-space: nowrap;">{{ $data['proponent'] }}</td>
-                                    <td style="white-space: nowrap;">{{ $data['project_name'] }}</td>
-                                    <td style="white-space: nowrap;">{{ $data['project_type'] }}</td>
-                                    <td style="white-space: nowrap;">{{ $data['cost'] }}</td>
-                                    <td style="white-space: nowrap;">{{ $data['stage'] }}</td>
-                                    <td style="white-space: nowrap;">{{ $data['specific_status'] }}</td>
-                                    <td style="white-space: nowrap;">
+                                    <td>{{ $data['cluster'] }}</td>
+                                    <td>{{ $data['region'] }}</td>
+                                    <td>{{ $data['province'] }}</td>
+                                    <td>{{ $data['city_municipality'] }}</td>
+                                    <td>{{ $data['proponent'] }}</td>
+                                    <td>{{ $data['project_name'] }}</td>
+                                    <td>{{ $data['project_type'] }}</td>
+                                    <td>{{ $data['cost'] }}</td>
+                                    <td>{{ $data['stage'] }}</td>
+                                    <td>{{ $data['specific_status'] }}</td>
+                                    <td>
                                         {{ round($data['date_difference']) }} days from
-
-                                        @php
-                                        $formattedDate = \Carbon\Carbon::parse($data['subproject_confirmed'])->format('M j, Y');
-                                        @endphp
-
                                         @if($data['dataset_key'] === 'underBusinessPlanPreparation')
-                                        Date of confirmation ({{ $formattedDate }})
+                                        Date of confirmation ({{ $data['formatted_date'] }})
                                         @elseif($data['dataset_key'] === 'forRPABApproval')
-                                        FS / DED Preparation ({{ $formattedDate }})
+                                        FS / DED Preparation ({{ $data['formatted_date'] }})
                                         @elseif($data['dataset_key'] === 'rpabApproved')
-                                        from RPAB Approval ({{ $formattedDate }})
+                                        RPAB Approval ({{ $data['formatted_date'] }})
                                         @else
-                                        Date of confirmation ({{ $formattedDate }})
+                                        Date of confirmation ({{ $data['formatted_date'] }})
                                         @endif
                                     </td>
                                 </tr>
@@ -313,14 +385,13 @@ new class extends Component {
                         </table>
                     </div>
                     @else
-                    <p>No data found.</p>
+                    <p>No data found for this category.</p>
                     @endif
                 </div>
 
             </div>
         </div>
     </div>
-    <div class="modal-backdrop fade show"></div>
     @endif
 </div>
 
@@ -452,14 +523,13 @@ new class extends Component {
     };
 
     // Trigger chart only when Livewire dispatches
-    Livewire.on('generateChart', data => {
+    Livewire.on('generatePipelineChartSPByStatusModal', data => {
         setTimeout(() => {
             if (data[0] && data[0].chartData) {
                 window.ChartOne(data[0].chartData);
                 $wire.set('loader', false);
             }
-        }, 50); // 50ms delay ensures canvas exists
-        // $wire.set('loader', false);
+        }, 50);
     });
 </script>
 @endscript

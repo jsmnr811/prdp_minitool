@@ -67,11 +67,27 @@ new class extends Component {
         });
 
         // Identify pipeline and approved
-        $pipelineItems = $filtered->filter(fn($item) =>
-            ($item['stage'] ?? '') === 'Pre-procurement' &&
-            ($item['status'] ?? '') === 'Subproject Confirmed'
-        );
+       $pipelineItems = $filtered->filter(function ($item) use ($nol1Lookup) {
+            $stage = $item['stage'] ?? '';
+            $status = $item['status'] ?? '';
+            $spId = strtolower($item['sp_id'] ?? '');
+            $nol1 = $nol1Lookup[$spId] ?? null;
+            $hasNol1 = !empty($nol1) && !in_array(strtolower(trim($nol1)), ['no', 'n/a', 'none', '0']);
 
+            return $stage === 'Pre-procurement'
+                && in_array($status, [
+                    'Subproject Confirmed',
+                    'Business Plan Package for RPCO technical review submitted',
+                    'RPCO Technical Review of Business Plan conducted',
+                    'Joint Technical Review (JTR) conducted',
+                    'SP approved by RPAB',
+                    'Signing of the IMA',
+                    'Subproject Issued with No Objection Letter 1',
+                ])
+                && !$hasNol1;
+        });
+
+        // --- APPROVED ---
         $approvedItems = $filtered->filter(function ($item) use ($nol1Lookup) {
             $spId = strtolower($item['sp_id'] ?? '');
             $stage = $item['stage'] ?? '';

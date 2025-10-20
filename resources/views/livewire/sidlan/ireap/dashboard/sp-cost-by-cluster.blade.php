@@ -58,10 +58,23 @@ new class extends Component {
             ->mapWithKeys(fn($item) => [$item['sp_id'] => $item['nol1_issued'] ?? null]);
 
         // Pipelined items
-        $pipelineItems = $zeroOne->filter(fn($item) =>
-            strtolower(trim($item['stage'] ?? '')) === 'pre-procurement' &&
-            strtolower(trim($item['status'] ?? '')) === 'subproject confirmed'
+        // $pipelineItems = $zeroOne->filter(fn($item) =>
+        //     strtolower(trim($item['stage'] ?? '')) === 'pre-procurement' &&
+        //     strtolower(trim($item['status'] ?? '')) === 'subproject confirmed'
+        // );
+        $pipelineItems = $zeroOne->filter(
+            fn($item) => ($item['stage'] ?? '') === 'Pre-procurement'
+                && in_array(($item['status'] ?? ''), [
+                    'Subproject Confirmed',
+                    'Business Plan Package for RPCO technical review submitted',
+                    'RPCO Technical Review of Business Plan conducted',
+                    'Joint Technical Review (JTR) conducted',
+                    'SP approved by RPAB',
+                    'Signing of the IMA',
+                    'Subproject Issued with No Objection Letter 1',
+                ]) && empty($item['nol1_issued'])
         );
+
 
         // Approved items
         $approvedItems = $zeroOne->filter(function ($item) use ($nol1Lookup) {
@@ -81,21 +94,100 @@ new class extends Component {
         $this->totalCount = $this->pipelineCount + $this->approvedCount;
 
         // Amounts
-        $this->pipelineAmount = $pipelineItems->sum(fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0));
-        $this->approvedAmount = $approvedItems->sum(fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0));
+        // $this->pipelineAmount = $pipelineItems->sum(fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0));
+        $this->pipelineAmount = $pipelineItems->sum(function ($item) {
+            $fields = [
+                'cost_nol_1',
+                'rpab_approved_cost',
+                'estimated_project_cost',
+                'cost_during_validation',
+                'indicative_project_cost',
+            ];
+
+            foreach ($fields as $field) {
+                if (!empty($item[$field]) && floatval($item[$field]) != 0) {
+                    return floatval($item[$field]);
+                }
+            }
+
+            return 0;
+        });
+        // $this->approvedAmount = $approvedItems->sum(fn($item) => floatval($item['cost_during_validation'] ?? $item['sp_indicative_cost'] ?? 0));
+        $this->approvedAmount = $approvedItems->sum(function ($item) {
+            $fields = [
+                'cost_nol_1',
+                'rpab_approved_cost',
+                'estimated_project_cost',
+                'cost_during_validation',
+                'indicative_project_cost',
+            ];
+
+            foreach ($fields as $field) {
+                if (!empty($item[$field]) && floatval($item[$field]) != 0) {
+                    return floatval($item[$field]);
+                }
+            }
+
+            return 0;
+        });
         $this->totalAmount = $this->pipelineAmount + $this->approvedAmount;
 
         // Prepare donut chart data
         $this->pipelinedLabels = $this->expectedClusters;
         $this->approvedLabels = $this->expectedClusters;
 
+        // $pipelinedGroups = $pipelineItems
+        //     ->groupBy(fn($item) => $item['cluster'] ?? 'Unspecified')
+        //     ->map(fn($group) => $group->sum(fn($row) => floatval($row['cost_during_validation'] ?? $row['sp_indicative_cost'] ?? 0)));
+
+        // $approvedGroups = $approvedItems
+        //     ->groupBy(fn($item) => $item['cluster'] ?? 'Unspecified')
+        //     ->map(fn($group) => $group->sum(fn($row) => floatval($row['cost_during_validation'] ?? $row['sp_indicative_cost'] ?? 0)));
+
         $pipelinedGroups = $pipelineItems
             ->groupBy(fn($item) => $item['cluster'] ?? 'Unspecified')
-            ->map(fn($group) => $group->sum(fn($row) => floatval($row['cost_during_validation'] ?? $row['sp_indicative_cost'] ?? 0)));
+            ->map(function ($group) {
+                return $group->sum(function ($row) {
+                    $fields = [
+                        'cost_nol_1',
+                        'rpab_approved_cost',
+                        'estimated_project_cost',
+                        'cost_during_validation',
+                        'indicative_project_cost',
+                    ];
+
+                    foreach ($fields as $field) {
+                        if (!empty($row[$field]) && floatval($row[$field]) != 0) {
+                            return floatval($row[$field]);
+                        }
+                    }
+
+                    return 0;
+                });
+            });
 
         $approvedGroups = $approvedItems
             ->groupBy(fn($item) => $item['cluster'] ?? 'Unspecified')
-            ->map(fn($group) => $group->sum(fn($row) => floatval($row['cost_during_validation'] ?? $row['sp_indicative_cost'] ?? 0)));
+            ->map(function ($group) {
+                return $group->sum(function ($row) {
+                    $fields = [
+                        'cost_nol_1',
+                        'rpab_approved_cost',
+                        'estimated_project_cost',
+                        'cost_during_validation',
+                        'indicative_project_cost',
+                    ];
+
+                    foreach ($fields as $field) {
+                        if (!empty($row[$field]) && floatval($row[$field]) != 0) {
+                            return floatval($row[$field]);
+                        }
+                    }
+
+                    return 0;
+                });
+            });
+
 
         // Ensure all clusters exist
         $pipelinedGroups = collect($this->expectedClusters)
@@ -138,79 +230,120 @@ new class extends Component {
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const colors = ['#004ef5', '#1abc9c', '#3498db', '#9b59b6'];
+    document.addEventListener('DOMContentLoaded', () => {
+        const colors = ['#004ef5', '#1abc9c', '#3498db', '#9b59b6'];
 
-    // Chart 1: Pipelined
-    const ctxPipelined = document.getElementById('chrt-cluster-pipelined');
-    if (ctxPipelined) {
-        new Chart(ctxPipelined, {
-            type: 'doughnut',
-            data: {
-                labels: @json($pipelinedLabels),
-                datasets: [{
-                    data: @json($pipelinedValues),
-                    backgroundColor: colors,
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '37%',
-                radius: '64%',
-                plugins: {
-                    legend: { display: true, position: 'bottom', labels: { boxWidth: 15, padding: 10, color: '#000' } },
-                    tooltip: { callbacks: { label: ctx => `₱${ctx.raw.toFixed(2)} B` } },
-                    datalabels: {
-                        color: ctx => colors[ctx.dataIndex],
-                        align: 'end',
-                        anchor: 'end',
-                        offset: 8,
-                        font: { weight: 'normal', size: 16 },
-                        formatter: value => value > 0 ? `₱${value} B` : ''
-                    }
-                }
-            },
-            plugins: [ChartDataLabels]
-        });
-    }
+        // Chart 1: Pipelined
+        const ctxPipelined = document.getElementById('chrt-cluster-pipelined');
+        if (ctxPipelined) {
+            new Chart(ctxPipelined, {
+                type: 'doughnut',
+                data: {
+                    labels: @json($pipelinedLabels),
+                    datasets: [{
+                        data: @json($pipelinedValues),
+                        backgroundColor: colors,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '37%',
+                    radius: '64%',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 15,
+                                padding: 10,
+                                color: '#000'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => {
+                                    const fullValue = ctx.raw * 1_000_000_000; // convert back to full pesos
+                                    return '₱' + fullValue.toLocaleString('en-PH', {
+                                        maximumFractionDigits: 0
+                                    });
+                                }
+                            }
+                        },
 
-    // Chart 2: Approved
-    const ctxApproved = document.getElementById('chrt-cluster-approved');
-    if (ctxApproved) {
-        new Chart(ctxApproved, {
-            type: 'doughnut',
-            data: {
-                labels: @json($approvedLabels),
-                datasets: [{
-                    data: @json($approvedValues),
-                    backgroundColor: colors,
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '37%',
-                radius: '64%',
-                plugins: {
-                    legend: { display: true, position: 'bottom', labels: { boxWidth: 15, padding: 10, color: '#000' } },
-                    tooltip: { callbacks: { label: ctx => `₱${ctx.raw.toFixed(2)} B` } },
-                    datalabels: {
-                        color: ctx => colors[ctx.dataIndex],
-                        align: 'end',
-                        anchor: 'end',
-                        offset: 8,
-                        font: { weight: 'normal', size: 16 },
-                        formatter: value => value > 0 ? `₱${value} B` : ''
+                        datalabels: {
+                            color: ctx => colors[ctx.dataIndex],
+                            align: 'end',
+                            anchor: 'end',
+                            offset: 8,
+                            font: {
+                                weight: 'normal',
+                                size: 16
+                            },
+                            formatter: value => value > 0 ? `₱${value} B` : ''
+                        }
                     }
-                }
-            },
-            plugins: [ChartDataLabels]
-        });
-    }
-});
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        // Chart 2: Approved
+        const ctxApproved = document.getElementById('chrt-cluster-approved');
+        if (ctxApproved) {
+            new Chart(ctxApproved, {
+                type: 'doughnut',
+                data: {
+                    labels: @json($approvedLabels),
+                    datasets: [{
+                        data: @json($approvedValues),
+                        backgroundColor: colors,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '37%',
+                    radius: '64%',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 15,
+                                padding: 10,
+                                color: '#000'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => {
+                                    const fullValue = ctx.raw * 1_000_000_000; // convert back to full pesos
+                                    return '₱' + fullValue.toLocaleString('en-PH', {
+                                        maximumFractionDigits: 0
+                                    });
+                                }
+                            }
+                        },
+                        datalabels: {
+                            color: ctx => colors[ctx.dataIndex],
+                            align: 'end',
+                            anchor: 'end',
+                            offset: 8,
+                            font: {
+                                weight: 'normal',
+                                size: 16
+                            },
+                            formatter: value => value > 0 ? `₱${value} B` : ''
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+    });
 </script>

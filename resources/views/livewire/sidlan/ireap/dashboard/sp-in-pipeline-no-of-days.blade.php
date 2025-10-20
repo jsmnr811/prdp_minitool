@@ -394,7 +394,7 @@ new class extends Component {
     private function initChartData(): void
     {
         $this->chartData = $this->initData();
-        $this->dispatch('generateChart', ['chartData' => $this->chartData]);
+        $this->dispatch('generateChartDays', ['chartData' => $this->chartData]);
     }
 
     #[On('barClicked')]
@@ -473,7 +473,7 @@ new class extends Component {
 
 
             @endif
-            <canvas id="sp-chart-days-in-the-current-status"></canvas>
+            <canvas id="sp-chart-days"></canvas>
         </div>
     </div>
     @if ($spNoOfDaysModal)
@@ -559,117 +559,93 @@ new class extends Component {
 </div>
 @script
 <script>
-    // Keep chart instance globally
-    window.chartInstance = null;
+    (() => {
+        let chartInstanceDays = null;
 
-    window.ChartOne = function(chartData) {
-        const canvas = document.getElementById('sp-chart-days-in-the-current-status');
+        function renderDaysChart(chartData) {
+            const canvas = document.getElementById('sp-chart-days');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
 
-        if (!canvas) return;
+            if (chartInstanceDays) {
+                chartInstanceDays.destroy();
+                chartInstanceDays = null;
+            }
 
-        const ctx = canvas.getContext('2d');
+            const groupKeys = Object.keys(chartData);
 
-        if (window.chartInstance) {
-            window.chartInstance.destroy();
-            window.chartInstance = null;
-        }
-
-        const groupKeys = Object.keys(chartData);
-        console.log(chartData);
-
-        const averageDiff = (() => {
-            let total = 0;
-            let count = 0;
-            groupKeys.forEach(k => {
-                if (chartData[k].average_difference_days) {
-                    total += chartData[k].average_difference_days;
-                    count++;
-                }
-            });
-            return count ? Math.round(total / count) : 0;
-        })();
-
-        window.chartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: groupKeys.map(key => chartData[key].title),
-                datasets: [{
-                        label: 'Prescribed Timeline',
-                        backgroundColor: '#0047e0',
-                        data: groupKeys.map(key => chartData[key].prescribed_timeline),
-                        borderRadius: 8,
-                    },
-                    {
-                        label: 'Average No. of Days',
-                        backgroundColor: '#fa2314',
-                        data: groupKeys.map(key => chartData[key].average_difference_days),
-                        borderRadius: 8,
-
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}`
-                        }
-                    },
-                    datalabels: {
-                        display: true,
-                        color: '#000',
-                        font: {
-                            size: 14
+            chartInstanceDays = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: groupKeys.map(key => chartData[key].title),
+                    datasets: [{
+                            label: 'Prescribed Timeline',
+                            backgroundColor: '#0047e0',
+                            data: groupKeys.map(key => chartData[key].prescribed_timeline),
+                            borderRadius: 8,
                         },
-                        align: 'end',
-                        anchor: 'end',
-                        textAlign: 'center',
-                        formatter: function(value, context) {
-                            if (context.datasetIndex === 1 && value > 0) {
-                                const datasetIndex = context.dataIndex; 
-                                const key = groupKeys[datasetIndex];
-                                const data = chartData[key];
-
-                                const label = (data?.bar_Label || '').replace(/\\n/g, '\n') || `${value} items`;
-
-                                return [
-                                    `${value}`,
-                                    label
-                                ];
-                            }
-                            return value > 0 ? `${value}` : '';
+                        {
+                            label: 'Average No. of Days',
+                            backgroundColor: '#fa2314',
+                            data: groupKeys.map(key => chartData[key].average_difference_days),
+                            borderRadius: 8,
                         }
-
-
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}`
+                            }
+                        },
+                        datalabels: {
+                            display: true,
+                            color: '#000',
+                            font: {
+                                size: 14
+                            },
+                            align: 'end',
+                            anchor: 'end',
+                            formatter(value, context) {
+                                if (context.datasetIndex === 1 && value > 0) {
+                                    const key = groupKeys[context.dataIndex];
+                                    const data = chartData[key];
+                                    const label = (data?.bar_Label || '').replace(/\\n/g, '\n') || `${value} items`;
+                                    return [`${value}`, label];
+                                }
+                                return value > 0 ? `${value}` : '';
+                            }
+                        }
+                    },
+                    onClick: (evt, elements) => {
+                        if (!elements.length) return;
+                        const element = elements[0];
+                        const key = groupKeys[element.index];
+                        const datasetIndex = element.datasetIndex;
+                        Livewire.dispatch('barClicked', {
+                            key,
+                            type: datasetIndex
+                        });
                     }
                 },
-                onClick: (evt, elements) => {
-                    if (!elements.length) return;
-                    const element = elements[0];
-                    const index = element.index;
-                    const key = groupKeys[index];
-                    const datasetIndex = element.datasetIndex;
-                    Livewire.dispatch('barClicked', {
-                        key,
-                        type: datasetIndex
-                    });
-                }
-            },
-            plugins: [ChartDataLabels]
-        });
-    };
+                plugins: [ChartDataLabels]
+            });
+        }
 
-    Livewire.on('generateChart', data => {
-        setTimeout(() => {
-            if (data[0] && data[0].chartData) {
-                window.ChartOne(data[0].chartData);
-            }
-        }, 50);
-    });
+        // Listen for a unique event name
+        Livewire.on('generateChartDays', data => {
+            setTimeout(() => {
+                if (data[0] && data[0].chartData) {
+                    renderDaysChart(data[0].chartData);
+                }
+            }, 50);
+        });
+    })();
 </script>
 @endscript
