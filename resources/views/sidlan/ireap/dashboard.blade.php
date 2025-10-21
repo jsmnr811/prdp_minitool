@@ -113,7 +113,29 @@
                         <small class="text-warning fw-semibold" style="font-size: 1rem;" id="modal-subtitle">
                         </small>
                         <button type="button" class="btn-close position-absolute top-0 end-0 mt-2 me-2"
-                            class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive"
+                            style="overflow-x: auto; min-height:50vh; max-height: 70vh; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #d1d5db #f9fafb;">
+                            <!-- Table will be dynamically rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+         <div class="modal" tabindex="-1" id="pipeline-days-modal">
+            <div class="modal-dialog modal-dialog-centered modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header position-relative flex-column align-items-start pb-0"
+                        style="border-bottom: none;">
+                        <h5 class="modal-title mb-0 fw-bold text-primary" id="modal-title">
+                            I-REAP Subprojects in the Pipeline (No. of Days in the Current Status)
+                        </h5>
+                        <small class="text-warning fw-semibold" style="font-size: 1rem;" id="modal-subtitle">
+                        </small>
+                        <button type="button" class="btn-close position-absolute top-0 end-0 mt-2 me-2"
+                            data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <div class="table-responsive"
@@ -132,6 +154,13 @@
   <span class="visually-hidden">Loading...</span>
 </div></div>`;
                     $('.table-responsive').html(html);
+                });
+
+                $('#pipeline-days-modal').on('hide.bs.modal', function(event) {
+                    var html = `<div class="d-flex justify-content-center align-items-center" style="min-height: 50vh;"><div style="width: 70px; height: 70px;" class="spinner-border" role="status">
+  <span class="visually-hidden">Loading...</span>
+</div></div>`;
+                    $('#pipeline-days-modal .table-responsive').html(html);
                 });
             })
         </script>
