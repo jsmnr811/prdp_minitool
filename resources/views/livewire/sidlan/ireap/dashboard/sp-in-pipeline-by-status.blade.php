@@ -156,45 +156,156 @@ new class extends Component {
         return false;
     }
 
+    /**
+     *  
+     * Retrieve and prepare items currently under business plan preparation.
+     *
+     * Conditions:
+     * - Stage must be "Pre-procurement".
+     * - Specific status must be "Subproject Confirmed".
+     * - The field `subproject_confirmed` must not be empty (confirmation date must exist).
+     * - The field `rpco_technical_review_conducted` must be either empty or invalid
+     *   (indicating that the RPCO technical review has not yet been conducted).
+     * - The record must also pass the external `$this->passesFilter($item)` criteria.
+     *
+     * @return array Processed and formatted items currently under business plan preparation.
+     */
     private function underBusinessPlanPreparation(): array
     {
-        $items = $this->fetchDataFromSheet('ir-01-002')->filter(function ($item) {
-            $baseCondition = $item['stage'] === 'Pre-procurement' && $item['specific_status'] === 'Subproject Confirmed' && !empty($item['subproject_confirmed']) && (empty($item['sp_rpab_approved']) || !strtotime($item['sp_rpab_approved']));
+        $items = $this->fetchDataFromSheet('ir-01-002')
+            ->filter(function ($item) {
+                $baseCondition = $item['stage'] === 'Pre-procurement'
+                    && $item['specific_status'] === 'Subproject Confirmed'
+                    && !empty($item['subproject_confirmed'])
+                    && (empty($item['rpco_technical_review_conducted'])
+                        || !strtotime($item['rpco_technical_review_conducted']));
 
-            return $baseCondition && $this->passesFilter($item);
-        });
+                return $baseCondition && $this->passesFilter($item);
+            });
 
         return $this->prepareItems($items, 'subproject_confirmed', 'underBusinessPlanPreparation', 204);
     }
 
+
+    /**
+     * 
+     * Retrieve and prepare items awaiting RPAB approval.
+     * 
+     * Conditions:
+     * - Stage must be "Pre-procurement".
+     * - Specific status must be one of:
+     *     - "RPCO Technical Review of Business Plan conducted"
+     *     - "Business Plan Package for RPCO technical review submitted"
+     * - The field `business_plan_packaged` must not be empty (indicating packaging completion).
+     * - The field `sp_rpab_approved` must be either empty or invalid (indicating RPAB approval not yet done).
+     * - The record must also pass the external `$this->passesFilter($item)` criteria.
+     *
+     * The resulting items are then assigned an `rpabApprovalDate`, which is chosen
+     * from the first available date in this priority order:
+     *     1. sp_rpab_approved
+     *     2. jtr_conducted
+     *     3. rpco_technical_review_conducted
+     *     4. business_plan_packaged
+     *
+     * @return array Processed and formatted items awaiting RPAB approval.
+     */
     private function forRPABApproval(): array
     {
-        $priorityDates = ['ima_signed_notarized', 'sp_rpab_approved', 'jtr_conducted', 'rpco_technical_review_conducted', 'business_plan_packaged'];
+        $priorityDates = [
+            'sp_rpab_approved',
+            'jtr_conducted',
+            'rpco_technical_review_conducted',
+            'business_plan_packaged',
+        ];
 
         $items = $this->fetchDataFromSheet('ir-01-002')
-            ->filter(function ($item) use ($priorityDates) {
-                $baseCondition = $item['stage'] === 'Pre-procurement' && in_array($item['specific_status'], ['RPCO Technical Review of Business Plan conducted', 'Business Plan Package for RPCO technical review submitted']) && collect($priorityDates)->first(fn($field) => !empty($item[$field])) && empty($item['nol1_issued']);
-
-                return $baseCondition && $this->passesFilter($item);
+            ->filter(function ($item) {
+                return $item['stage'] === 'Pre-procurement'
+                    && in_array($item['specific_status'], [
+                        'RPCO Technical Review of Business Plan conducted',
+                        'Business Plan Package for RPCO technical review submitted'
+                    ])
+                    && !empty($item['business_plan_packaged'])
+                    && (empty($item['sp_rpab_approved']) || !strtotime($item['sp_rpab_approved']))
+                    && $this->passesFilter($item);
             })
             ->map(function ($item) use ($priorityDates) {
-                $dateField = collect($priorityDates)->first(fn($field) => !empty($item[$field]));
-                $item['rpabApprovalDate'] = $item[$dateField] ?? null;
+                foreach ($priorityDates as $field) {
+                    if (!empty($item[$field])) {
+                        $item['rpabApprovalDate'] = $item[$field];
+                        break;
+                    }
+                }
+
+                $item['rpabApprovalDate'] = $item['rpabApprovalDate'] ?? null;
+
                 return $item;
             });
 
         return $this->prepareItems($items, 'rpabApprovalDate', 'forRPABApproval', 114);
     }
 
+
+
+    /**
+     * 
+     * Retrieve and prepare RPAB-approved items.
+     * 
+     * Conditions:
+     * - Stage must be "Pre-procurement".
+     * - Specific status must be one of:
+     *     - "Joint Technical Review (JTR) conducted"
+     *     - "SP approved by RPAB"
+     *     - "Signing of the IMA"
+     *     - "Subproject Issued with No Objection Letter 1"
+     * - The field `jtr_conducted` must not be empty.
+     * - The record must also pass the external `$this->passesFilter($item)` criteria.
+     *
+     * The resulting items are then assigned an `rpabApprovedDate`, which is chosen
+     * from the first available date in this priority order:
+     *     1. nol1_issued
+     *     2. ima_signed_notarized
+     *     3. sp_rpab_approved
+     *     4. jtr_conducted
+     *
+     * @return array Processed and formatted RPAB-approved items.
+     */
     private function RPABApproved(): array
     {
-        $items = $this->fetchDataFromSheet('ir-01-002')->filter(function ($item) {
-            $baseCondition = $item['stage'] === 'Pre-procurement' && in_array($item['specific_status'], ['Joint Technical Review (JTR) conducted', 'SP approved by RPAB', 'Signing of the IMA', 'Subproject Issued with No Objection Letter 1']) && !empty($item['nol1_issued']);
+        $priorityDates = [
+            'nol1_issued',
+            'ima_signed_notarized',
+            'sp_rpab_approved',
+            'jtr_conducted',
+        ];
 
-            return $baseCondition && $this->passesFilter($item);
-        });
+        $items = $this->fetchDataFromSheet('ir-01-002')
+            ->filter(function ($item) {
 
-        return $this->prepareItems($items, 'nol1_issued', 'rpabApproved', 120);
+                return $item['stage'] === 'Pre-procurement'
+                    && in_array($item['specific_status'], [
+                        'Joint Technical Review (JTR) conducted',
+                        'SP approved by RPAB',
+                        'Signing of the IMA',
+                        'Subproject Issued with No Objection Letter 1'
+                    ])
+                    && !empty($item['jtr_conducted'])
+                    && $this->passesFilter($item);
+            })
+            ->map(function ($item) use ($priorityDates) {
+                foreach ($priorityDates as $field) {
+                    if (!empty($item[$field])) {
+                        $item['rpabApprovedDate'] = $item[$field];
+                        break;
+                    }
+                }
+
+                $item['rpabApprovedDate'] = $item['rpabApprovedDate'] ?? null;
+
+                return $item;
+            });
+
+        return $this->prepareItems($items, 'rpabApprovedDate', 'rpabApproved', 120);
     }
 
     public function updatedFilterKey(): void
@@ -217,28 +328,6 @@ new class extends Component {
         $this->loader = false;
     }
 
-    // #[On('pipelineByStatusBarClicked')]
-    // public function barClicked($key, $type): void
-    // {
-    //     $this->loader = true;
-    //     // $this->chartData = $this->initData();
-
-    //     $innerKey = $type ? 'beyondTimelineItems' : 'subprojectItems';
-
-    //     $this->tableData = $this->consolidatedTableData[$key][$innerKey] ?? [];
-
-    //     $this->modalSubtitle = $this->dataSets[$key]['title'] ?? '';
-    //     if ($innerKey === 'beyondTimelineItems') {
-    //         $this->modalSubtitle .= 'dasdasdasdasd (No. of SPs Beyond Timeline)';
-    //     }
-    //     $this->tableContext = [
-    //         'key' => $key,
-    //         'type' => $type,
-    //     ];
-
-    //     $this->loader = false;
-    //     $this->byStatusModal = true;
-    // }
 
     public function placeholder(): View
     {
@@ -290,302 +379,147 @@ new class extends Component {
             <canvas class="tile-chart position-absolute top-0 start-0 w-100 h-100" id="subproject-chart"></canvas>
         </div>
     </div>
-    <!-- ✅ Modal (Livewire + Alpine synced) -->
-    {{-- @if ($byStatusModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div class="modal-dialog modal-dialog-centered modal-xl bg-white rounded-3 shadow-lg overflow-hidden"
-                @click.away="$set('byStatusModal', false)">
-                <div class="modal-content border-0">
-
-                    <div class="modal-header position-relative flex-column align-items-start pb-0 border-0">
-                        <h5 class="modal-title mb-0 fw-bold text-primary">
-                            I-REAP Subprojects in the Pipeline (Number of Subprojects by Status)
-                        </h5>
-                        <small class="text-warning fw-semibold" style="font-size: 1rem;">
-                            {{ $modalSubtitle }}
-                        </small>
-                        <button type="button" class="btn-close position-absolute top-0 end-0 mt-2 me-2"
-                            wire:click="$set('byStatusModal', false)" aria-label="Close"></button>
-                    </div>
-
-                    <div class="modal-body">
-                        @if (count($tableData) > 0)
-                            <div style="overflow-x: auto;">
-                                <table class="table table-hover fix-header-table small mb-0" style="min-width: 100%;">
-                                    <thead>
-                                        <tr>
-                                            <th>Cluster</th>
-                                            <th>Region</th>
-                                            <th>Province</th>
-                                            <th>City/Municipality</th>
-                                            <th>Proponent</th>
-                                            <th>SP Name</th>
-                                            <th>Type</th>
-                                            <th>Cost</th>
-                                            <th>Stage</th>
-                                            <th>Status</th>
-                                            <th>No. of days</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($tableData as $data)
-                                            <tr>
-                                                <td>{{ $data['cluster'] }}</td>
-                                                <td>{{ $data['region'] }}</td>
-                                                <td>{{ $data['province'] }}</td>
-                                                <td>{{ $data['city_municipality'] }}</td>
-                                                <td>{{ $data['proponent'] }}</td>
-                                                <td>{{ $data['project_name'] }}</td>
-                                                <td>{{ $data['project_type'] }}</td>
-                                                <td>{{ $data['cost'] }}</td>
-                                                <td>{{ $data['stage'] }}</td>
-                                                <td>{{ $data['specific_status'] }}</td>
-                                                <td>
-                                                    {{ round($data['date_difference']) }} days from
-                                                    @if ($data['dataset_key'] === 'underBusinessPlanPreparation')
-                                                        Date of confirmation ({{ $data['formatted_date'] }})
-                                                    @elseif($data['dataset_key'] === 'forRPABApproval')
-                                                        FS / DED Preparation ({{ $data['formatted_date'] }})
-                                                    @elseif($data['dataset_key'] === 'rpabApproved')
-                                                        RPAB Approval ({{ $data['formatted_date'] }})
-                                                    @else
-                                                        Date of confirmation ({{ $data['formatted_date'] }})
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <p>No data found for this category.</p>
-                        @endif
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    @endif
-
-    @if ($byStatusModal)
-        <div class="modal fade show" id="bySubjectModal" tabindex="-1" aria-modal="true" role="dialog"
-            style="display: block;" aria-labelledby="bySubjectModalLabel" aria-hidden="false">
-            <div class="modal-dialog modal-dialog-centered modal-xl">
-                <div class="modal-content">
-
-                    <div class="modal-header position-relative flex-column align-items-start pb-0"
-                        style="border-bottom: none;">
-                        <h5 class="modal-title mb-0 fw-bold text-primary" id="bySubjectModalLabel">
-                            I-REAP Subprojects in the Pipeline (Number of Subprojects by Status)
-
-                        </h5>
-                        <small class="text-warning fw-semibold" style="font-size: 1rem;">
-                            {{ $modalSubtitle }}
-                        </small>
-                        <button type="button" class="btn-close position-absolute top-0 end-0 mt-2 me-2"
-                            wire:click="$set('byStatusModal', false)" aria-label="Close"></button>
-                    </div>
-
-                    <div class="modal-body">
-                        @if (count($tableData) > 0)
-                            <div style="overflow-x: auto;">
-                                <table class="table table-hover fix-header-table small mb-0" style="min-width: 100%;">
-                                    <thead>
-                                        <tr>
-                                            <th>Cluster</th>
-                                            <th>Region</th>
-                                            <th>Province</th>
-                                            <th>City/Municipality</th>
-                                            <th>Proponent</th>
-                                            <th>SP Name</th>
-                                            <th>Type</th>
-                                            <th>Cost</th>
-                                            <th>Stage</th>
-                                            <th>Status</th>
-                                            <th>No. of days</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($tableData as $data)
-                                            <tr>
-                                                <td>{{ $data['cluster'] }}</td>
-                                                <td>{{ $data['region'] }}</td>
-                                                <td>{{ $data['province'] }}</td>
-                                                <td>{{ $data['city_municipality'] }}</td>
-                                                <td>{{ $data['proponent'] }}</td>
-                                                <td>{{ $data['project_name'] }}</td>
-                                                <td>{{ $data['project_type'] }}</td>
-                                                <td>{{ $data['cost'] }}</td>
-                                                <td>{{ $data['stage'] }}</td>
-                                                <td>{{ $data['specific_status'] }}</td>
-                                                <td>
-                                                    {{ round($data['date_difference']) }} days from
-                                                    @if ($data['dataset_key'] === 'underBusinessPlanPreparation')
-                                                        Date of confirmation ({{ $data['formatted_date'] }})
-                                                    @elseif($data['dataset_key'] === 'forRPABApproval')
-                                                        FS / DED Preparation ({{ $data['formatted_date'] }})
-                                                    @elseif($data['dataset_key'] === 'rpabApproved')
-                                                        RPAB Approval ({{ $data['formatted_date'] }})
-                                                    @else
-                                                        Date of confirmation ({{ $data['formatted_date'] }})
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <p>No data found for this category.</p>
-                        @endif
-                    </div>
-
-                </div>
-            </div>
-        </div>
-        <div class="modal-backdrop fade show"></div>
-    @endif --}}
 </div>
 
 @script
-    <script>
-        // Keep chart instance globally
-        window.chartInstance = null;
+<script>
+    // Keep chart instance globally
+    window.chartInstance = null;
 
-        window.ChartOne = function(chartData) {
-            const canvas = document.getElementById('subproject-chart');
+    window.ChartOne = function(chartData) {
+        const canvas = document.getElementById('subproject-chart');
 
-            if (!canvas) return; // prevent errors if canvas not in DOM
+        if (!canvas) return; // prevent errors if canvas not in DOM
 
-            const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d');
 
-            // Destroy previous chart if exists
-            if (window.chartInstance) {
-                window.chartInstance.destroy();
-                window.chartInstance = null;
-            }
+        // Destroy previous chart if exists
+        if (window.chartInstance) {
+            window.chartInstance.destroy();
+            window.chartInstance = null;
+        }
 
-            const groupKeys = Object.keys(chartData);
+        const groupKeys = Object.keys(chartData);
 
-            const averageDiff = (() => {
-                let total = 0;
-                let count = 0;
-                groupKeys.forEach(k => {
-                    if (chartData[k].average_difference_days) {
-                        total += chartData[k].average_difference_days;
-                        count++;
+        const averageDiff = (() => {
+            let total = 0;
+            let count = 0;
+            groupKeys.forEach(k => {
+                if (chartData[k].average_difference_days) {
+                    total += chartData[k].average_difference_days;
+                    count++;
+                }
+            });
+            return count ? Math.round(total / count) : 0;
+        })();
+
+        window.chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: groupKeys.map(key => chartData[key].title),
+                datasets: [{
+                        label: 'No. of Subprojects',
+                        backgroundColor: '#0047e0',
+                        data: groupKeys.map(key => chartData[key].subject_count),
+                        borderRadius: 8,
+                    },
+                    {
+                        label: 'No. of Subprojects Beyond Timeline',
+                        backgroundColor: '#fa2314',
+                        data: groupKeys.map(key => chartData[key].beyond_timeline_count),
+                        borderRadius: 8,
+
                     }
-                });
-                return count ? Math.round(total / count) : 0;
-            })();
-
-            window.chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: groupKeys.map(key => chartData[key].title),
-                    datasets: [{
-                            label: 'No. of Subprojects',
-                            backgroundColor: '#0047e0',
-                            data: groupKeys.map(key => chartData[key].subject_count),
-                            borderRadius: 8,
-                        },
-                        {
-                            label: 'No. of Subprojects Beyond Timeline',
-                            backgroundColor: '#fa2314',
-                            data: groupKeys.map(key => chartData[key].beyond_timeline_count),
-                            borderRadius: 8,
-
-                        }
-                    ]
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 10
+                    }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: {
-                        padding: {
-                            top: 10
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        suggestedMax: (() => {
+                            const allValues = [];
+                            groupKeys.forEach(key => {
+                                allValues.push(chartData[key].subject_count || 0);
+                                allValues.push(chartData[key].beyond_timeline_count || 0);
+                            });
+                            const maxValue = Math.max(...allValues);
+                            return maxValue + Math.ceil(maxValue * 0.2);
+                        })()
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}`
                         }
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            suggestedMax: (() => {
-                                const allValues = [];
-                                groupKeys.forEach(key => {
-                                    allValues.push(chartData[key].subject_count || 0);
-                                    allValues.push(chartData[key].beyond_timeline_count || 0);
-                                });
-                                const maxValue = Math.max(...allValues);
-                                return maxValue + Math.ceil(maxValue * 0.2);
-                            })()
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true
+                    datalabels: {
+                        display: true,
+                        color: '#000',
+                        font: {
+                            size: 14
                         },
-                        tooltip: {
-                            callbacks: {
-                                label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}`
+                        align: 'end',
+                        anchor: 'end',
+                        textAlign: 'center',
+                        formatter: function(value, context) {
+                            if (context.datasetIndex === 1 && value > 0) {
+                                const datasetIndex = context.dataIndex;
+                                const key = groupKeys[datasetIndex];
+                                const data = chartData[key];
+
+                                const label = (data?.bar_Label || '').replace(/\\n/g, '\n') ||
+                                    `${value} items`;
+
+                                return [
+                                    `${value}`,
+                                    label
+                                ];
                             }
-                        },
-                        datalabels: {
-                            display: true,
-                            color: '#000',
-                            font: {
-                                size: 14
-                            },
-                            align: 'end',
-                            anchor: 'end',
-                            textAlign: 'center',
-                            formatter: function(value, context) {
-                                if (context.datasetIndex === 1 && value > 0) {
-                                    const datasetIndex = context.dataIndex;
-                                    const key = groupKeys[datasetIndex];
-                                    const data = chartData[key];
-
-                                    const label = (data?.bar_Label || '').replace(/\\n/g, '\n') ||
-                                        `${value} items`;
-
-                                    return [
-                                        `${value}`,
-                                        label
-                                    ];
-                                }
-                                return value > 0 ? `${value}` : '';
-                            }
-
-
+                            return value > 0 ? `${value}` : '';
                         }
-                    },
-                    onClick: (evt, elements) => {
-                        // Prevent clicking when loading
-                        if (window.isChartLoading) return;
 
-                        if (!elements.length) return;
-                        const element = elements[0];
-                        const index = element.index;
-                        const key = groupKeys[index];
-                        const datasetIndex = element.datasetIndex;
 
-                        const type = datasetIndex === 1;
-                        const innerKey = type ? 'beyondTimelineItems' : 'subprojectItems';
-                        window.pipelineTableData = window.currentConsolidatedTableData[key][innerKey];
-                        window.modalSubtitle = window.currentChartData[key].title + (type ? ' (No. of SPs Beyond Timeline)' : '');
-                        window.modalTitle = 'I-REAP Subprojects in the Pipeline (Number of Subprojects by Status)';
+                    }
+                },
+                onClick: (evt, elements) => {
+                    // Prevent clicking when loading
+                    if (window.isChartLoading) return;
 
-                        $('#pipeline-by-status-modal').modal('show');
+                    if (!elements.length) return;
+                    const element = elements[0];
+                    const index = element.index;
+                    const key = groupKeys[index];
+                    const datasetIndex = element.datasetIndex;
 
-                        // Populate table after modal is shown
-                        setTimeout(() => {
-                            const tableContainer = $('#pipeline-by-status-modal .modal-body .table-responsive');
-                            const subtitle = $('#modal-subtitle');
+                    const type = datasetIndex === 1;
+                    const innerKey = type ? 'beyondTimelineItems' : 'subprojectItems';
+                    window.pipelineTableData = window.currentConsolidatedTableData[key][innerKey];
+                    window.modalSubtitle = window.currentChartData[key].title + (type ? ' (No. of SPs Beyond Timeline)' : '');
+                    window.modalTitle = 'I-REAP Subprojects in the Pipeline (Number of Subprojects by Status)';
 
-                            // Clear existing content
-                            tableContainer.empty();
+                    $('#pipeline-by-status-modal').modal('show');
 
-                            // Build the complete table HTML
-                            let tableHtml = `
+                    // Populate table after modal is shown
+                    setTimeout(() => {
+                        const tableContainer = $('#pipeline-by-status-modal .modal-body .table-responsive');
+                        const subtitle = $('#modal-subtitle');
+
+                        // Clear existing content
+                        tableContainer.empty();
+
+                        // Build the complete table HTML
+                        let tableHtml = `
                                 <table class="table table-hover small mb-0" style="width: 100%; table-layout: fixed;">
                                     <thead>
                                         <tr>
@@ -606,9 +540,9 @@ new class extends Component {
                                     <tbody>
                             `;
 
-                            if (window.pipelineTableData && Object.keys(window.pipelineTableData).length > 0) {
-                                Object.values(window.pipelineTableData).forEach((data) => {
-                                    tableHtml += `
+                        if (window.pipelineTableData && Object.keys(window.pipelineTableData).length > 0) {
+                            Object.values(window.pipelineTableData).forEach((data) => {
+                                tableHtml += `
                                         <tr>
                                             <td style="word-wrap: break-word; white-space: normal;">${data.cluster || ''}</td>
                                             <td style="word-wrap: break-word; white-space: normal;">${data.region || ''}</td>
@@ -629,43 +563,43 @@ new class extends Component {
                                             </td>
                                         </tr>
                                     `;
-                                });
-                            }
+                            });
+                        }
 
-                            tableHtml += `
+                        tableHtml += `
                                     </tbody>
                                 </table>
                             `;
 
-                            // Append the complete table
-                            tableContainer.html(tableHtml);
+                        // Append the complete table
+                        tableContainer.html(tableHtml);
 
-                            if (window.modalTitle) {
-                                $('#modal-title').text(window.modalTitle);
-                            }
+                        if (window.modalTitle) {
+                            $('#modal-title').text(window.modalTitle);
+                        }
 
-                            if (window.modalSubtitle) {
-                                subtitle.text(window.modalSubtitle);
-                            }
-                        }, 100);
-                    }
-                },
-                plugins: [ChartDataLabels]
-            });
-        };
-
-        // Trigger chart only when Livewire dispatches
-        Livewire.on('generatePipelineChartSPByStatusModal', data => {
-            window.isChartLoading = true;
-            setTimeout(() => {
-                if (data[0] && data[0].chartData) {
-                    window.currentChartData = data[0].chartData;
-                    window.currentConsolidatedTableData = data[0].consolidatedTableData;
-                    window.ChartOne(data[0].chartData);
-                    $wire.set('loader', false);
-                    window.isChartLoading = false;
+                        if (window.modalSubtitle) {
+                            subtitle.text(window.modalSubtitle);
+                        }
+                    }, 100);
                 }
-            }, 50);
+            },
+            plugins: [ChartDataLabels]
         });
-    </script>
+    };
+
+    // Trigger chart only when Livewire dispatches
+    Livewire.on('generatePipelineChartSPByStatusModal', data => {
+        window.isChartLoading = true;
+        setTimeout(() => {
+            if (data[0] && data[0].chartData) {
+                window.currentChartData = data[0].chartData;
+                window.currentConsolidatedTableData = data[0].consolidatedTableData;
+                window.ChartOne(data[0].chartData);
+                $wire.set('loader', false);
+                window.isChartLoading = false;
+            }
+        }, 50);
+    });
+</script>
 @endscript

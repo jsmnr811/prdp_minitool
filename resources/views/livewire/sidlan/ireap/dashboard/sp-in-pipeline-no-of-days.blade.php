@@ -134,13 +134,25 @@ new class extends Component {
         ];
     }
 
+    /**
+     * Retrieve and prepare subprojects currently under business plan preparation.
+     *
+     * Conditions:
+     * - Stage must be "Pre-procurement".
+     * - Specific status must be "Subproject Confirmed".
+     * - The field `subproject_confirmed` must not be empty.
+     * - The field `rpco_technical_review_conducted` must be either empty or invalid.
+     *
+     * @return array Processed and formatted items currently under business plan preparation.
+     */
     private function underBusinessPlanPreparation(): array
     {
         $items = $this->filterByKey(function ($item) {
             return $item['stage'] === 'Pre-procurement'
                 && $item['specific_status'] === 'Subproject Confirmed'
                 && !empty($item['subproject_confirmed'])
-                && empty($item['sp_rpab_approved']);
+                && (empty($item['rpco_technical_review_conducted'])
+                    || !strtotime($item['rpco_technical_review_conducted']));
         })->map(function ($item) {
             return array_merge(
                 collect($item)->only([
@@ -162,6 +174,25 @@ new class extends Component {
         return $this->processDateDiff($items, 'subproject_confirmed', 204, 'underBusinessPlanPreparation');
     }
 
+    /**
+     * Retrieve and prepare items awaiting RPAB approval.
+     *
+     * Conditions:
+     * - Stage must be "Pre-procurement".
+     * - Specific status must be one of:
+     *     - "RPCO Technical Review of Business Plan conducted"
+     *     - "Business Plan Package for RPCO technical review submitted"
+     * - The field `business_plan_packaged` must not be empty.
+     * - The field `sp_rpab_approved` must be either empty or invalid.
+     *
+     * The resulting items are assigned an `rpabApprovalDate`, chosen from the first available date in priority order:
+     *     1. sp_rpab_approved
+     *     2. jtr_conducted
+     *     3. rpco_technical_review_conducted
+     *     4. business_plan_packaged
+     *
+     * @return array Processed and formatted items awaiting RPAB approval.
+     */
     private function forRPABApproval(): array
     {
         $items = $this->filterByKey(function ($item) {
@@ -171,26 +202,31 @@ new class extends Component {
             ], true);
 
             $priorityDates = [
-                'ima_signed_notarized',
                 'sp_rpab_approved',
                 'jtr_conducted',
                 'rpco_technical_review_conducted',
-                'business_plan_packaged'
+                'business_plan_packaged',
             ];
 
             $approvalDate = collect($priorityDates)->first(fn($f) => !empty($item[$f]));
-            return $item['stage'] === 'Pre-procurement' && $statusMatch && $approvalDate && empty($item['nol1_issued']);
+
+            return $item['stage'] === 'Pre-procurement'
+                && $statusMatch
+                && $approvalDate
+                && !empty($item['business_plan_packaged'])
+                && (empty($item['sp_rpab_approved']) || !strtotime($item['sp_rpab_approved']));
         })->map(function ($item) {
             $priorityDates = [
-                'ima_signed_notarized',
                 'sp_rpab_approved',
                 'jtr_conducted',
                 'rpco_technical_review_conducted',
-                'business_plan_packaged'
+                'business_plan_packaged',
             ];
+
             $rpabDate = collect($priorityDates)
                 ->map(fn($f) => $item[$f] ?? null)
                 ->first(fn($value) => !empty($value));
+
             return array_merge(
                 collect($item)->only([
                     'cluster',
@@ -206,7 +242,7 @@ new class extends Component {
                 [
                     'cost' => $this->getCost($item),
                     'rpabApprovalDate' => $rpabDate,
-                    'subproject_confirmed' => $rpabDate
+                    'subproject_confirmed' => $rpabDate,
                 ]
             );
         });
@@ -214,8 +250,35 @@ new class extends Component {
         return $this->processDateDiff($items, 'rpabApprovalDate', 114, 'forRPABApproval');
     }
 
+    /**
+     * Retrieve and prepare RPAB-approved items.
+     *
+     * Conditions:
+     * - Stage must be "Pre-procurement".
+     * - Specific status must be one of:
+     *     - "Joint Technical Review (JTR) conducted"
+     *     - "SP approved by RPAB"
+     *     - "Signing of the IMA"
+     *     - "Subproject Issued with No Objection Letter 1"
+     * - The field `jtr_conducted` must not be empty.
+     *
+     * The resulting items are assigned an `rpabApprovedDate`, chosen from the first available date in priority order:
+     *     1. nol1_issued
+     *     2. ima_signed_notarized
+     *     3. sp_rpab_approved
+     *     4. jtr_conducted
+     *
+     * @return array Processed and formatted RPAB-approved items.
+     */
     private function RPABApproved(): array
     {
+        $priorityDates = [
+            'nol1_issued',
+            'ima_signed_notarized',
+            'sp_rpab_approved',
+            'jtr_conducted',
+        ];
+
         $items = $this->filterByKey(function ($item) {
             return $item['stage'] === 'Pre-procurement'
                 && in_array($item['specific_status'], [
@@ -224,8 +287,12 @@ new class extends Component {
                     'Signing of the IMA',
                     'Subproject Issued with No Objection Letter 1'
                 ], true)
-                && !empty($item['nol1_issued']);
-        })->map(function ($item) {
+                && !empty($item['jtr_conducted']);
+        })->map(function ($item) use ($priorityDates) {
+            $rpabDate = collect($priorityDates)
+                ->map(fn($f) => $item[$f] ?? null)
+                ->first(fn($value) => !empty($value));
+
             return array_merge(
                 collect($item)->only([
                     'cluster',
@@ -234,17 +301,20 @@ new class extends Component {
                     'city_municipality',
                     'proponent',
                     'project_name',
-                    'nol1_issued',
                     'project_type',
                     'stage',
                     'specific_status'
                 ])->toArray(),
-                ['cost' => $this->getCost($item)]
+                [
+                    'cost' => $this->getCost($item),
+                    'rpabApprovedDate' => $rpabDate,
+                ]
             );
         });
 
-        return $this->processDateDiff($items, 'nol1_issued', 120, 'rpabApproved');
+        return $this->processDateDiff($items, 'rpabApprovedDate', 120, 'rpabApproved');
     }
+
 
     public function updatedFilterKey(): void
     {
@@ -308,149 +378,149 @@ new class extends Component {
 </div>
 
 @script
-    <script>
-        window.chartInstanceDays = null;
+<script>
+    window.chartInstanceDays = null;
 
-        window.ChartTwo = function(chartData) {
-            const canvas = document.getElementById('sp-pipeline-no-of-days-in-the-current-status');
+    window.ChartTwo = function(chartData) {
+        const canvas = document.getElementById('sp-pipeline-no-of-days-in-the-current-status');
 
-            if (!canvas) return;
+        if (!canvas) return;
 
-            const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d');
 
-            if (window.chartInstanceDays) {
-                window.chartInstanceDays.destroy();
-                window.chartInstanceDays = null;
-            }
+        if (window.chartInstanceDays) {
+            window.chartInstanceDays.destroy();
+            window.chartInstanceDays = null;
+        }
 
-            const groupKeys = Object.keys(chartData);
+        const groupKeys = Object.keys(chartData);
 
-            window.chartInstanceDays = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: groupKeys.map(key => chartData[key].title),
-                    datasets: [{
-                            label: 'Prescribed Timeline',
-                            backgroundColor: '#0047e0',
-                            data: groupKeys.map(key => chartData[key].prescribed_timeline),
-                            borderRadius: 8,
-                        },
-                        {
-                            label: 'Average No. of Days',
-                            backgroundColor: '#fa2314',
-                            data: groupKeys.map(key => chartData[key].average_difference_days),
-                            borderRadius: 8,
-                        }
-                    ]
+        window.chartInstanceDays = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: groupKeys.map(key => chartData[key].title),
+                datasets: [{
+                        label: 'Prescribed Timeline',
+                        backgroundColor: '#0047e0',
+                        data: groupKeys.map(key => chartData[key].prescribed_timeline),
+                        borderRadius: 8,
+                    },
+                    {
+                        label: 'Average No. of Days',
+                        backgroundColor: '#fa2314',
+                        data: groupKeys.map(key => chartData[key].average_difference_days),
+                        borderRadius: 8,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 10
+                    }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: {
-                        padding: {
-                            top: 10
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        suggestedMax: (() => {
+                            const allValues = [];
+                            groupKeys.forEach(key => {
+                                allValues.push(chartData[key].prescribed_timeline || 0);
+                                allValues.push(chartData[key].average_difference_days || 0);
+                            });
+                            const maxValue = Math.max(...allValues);
+                            return maxValue + Math.ceil(maxValue * 0.2);
+                        })()
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}`
                         }
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            suggestedMax: (() => {
-                                const allValues = [];
-                                groupKeys.forEach(key => {
-                                    allValues.push(chartData[key].prescribed_timeline || 0);
-                                    allValues.push(chartData[key].average_difference_days || 0);
-                                });
-                                const maxValue = Math.max(...allValues);
-                                return maxValue + Math.ceil(maxValue * 0.2);
-                            })()
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true
+                    datalabels: {
+                        display: true,
+                        color: '#000',
+                        font: {
+                            size: 14
                         },
-                        tooltip: {
-                            callbacks: {
-                                label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}`
+                        align: 'end',
+                        anchor: 'end',
+                        textAlign: 'center',
+                        formatter: function(value, context) {
+                            if (context.datasetIndex === 1 && value > 0) {
+                                const datasetIndex = context.dataIndex;
+                                const key = groupKeys[datasetIndex];
+                                const data = chartData[key];
+
+                                const label = (data?.bar_Label || '').replace(/\\n/g, '\n') ||
+                                    `${value} items`;
+
+                                return [
+                                    `${value}`,
+                                    label
+                                ];
                             }
-                        },
-                        datalabels: {
-                            display: true,
-                            color: '#000',
-                            font: {
-                                size: 14
-                            },
-                            align: 'end',
-                            anchor: 'end',
-                            textAlign: 'center',
-                            formatter: function(value, context) {
-                                if (context.datasetIndex === 1 && value > 0) {
-                                    const datasetIndex = context.dataIndex;
-                                    const key = groupKeys[datasetIndex];
-                                    const data = chartData[key];
-
-                                    const label = (data?.bar_Label || '').replace(/\\n/g, '\n') ||
-                                        `${value} items`;
-
-                                    return [
-                                        `${value}`,
-                                        label
-                                    ];
-                                }
-                                return value > 0 ? `${value}` : '';
-                            }
-
-
+                            return value > 0 ? `${value}` : '';
                         }
-                    },
-                    onClick: (evt, elements) => {
-                        // Prevent clicking when loading
-                        if (window.isChartLoadingDays) return;
 
-                        if (!elements.length) return;
-                        const element = elements[0];
-                        const index = element.index;
-                        const key = groupKeys[index];
-                        const datasetIndex = element.datasetIndex;
 
-                        // Only allow clicks on the red bar (Average No. of Days, datasetIndex === 1)
-                        if (datasetIndex !== 1) return;
+                    }
+                },
+                onClick: (evt, elements) => {
+                    // Prevent clicking when loading
+                    if (window.isChartLoadingDays) return;
 
-                        const type = datasetIndex === 1;
-                        const innerKey = type ? 'beyondTimelineItems' : 'subprojectItems';
+                    if (!elements.length) return;
+                    const element = elements[0];
+                    const index = element.index;
+                    const key = groupKeys[index];
+                    const datasetIndex = element.datasetIndex;
 
-                        console.log('SP Pipeline Days: Bar clicked:', {
-                            key,
-                            type,
-                            innerKey,
-                            chartDataAvailable: !!window.currentDaysChartData,
-                            consolidatedDataAvailable: !!window.currentDaysConsolidatedTableData,
-                            chartDataForKey: window.currentDaysChartData ? window.currentDaysChartData[key] : null,
-                            consolidatedDataForKey: window.currentDaysConsolidatedTableData ? window.currentDaysConsolidatedTableData[key] : null
-                        });
+                    // Only allow clicks on the red bar (Average No. of Days, datasetIndex === 1)
+                    if (datasetIndex !== 1) return;
 
-                        window.pipelineDaysTableData = window.currentDaysConsolidatedTableData[key][innerKey];
-                        window.modalDaysSubtitle = window.currentDaysChartData[key].title + (type ? ' (No. of SPs Beyond Timeline)' : '');
-                        window.modalDaysTitle = 'I-REAP Subprojects in the Pipeline (No. of Days in the Current Status)';
+                    const type = datasetIndex === 1;
+                    const innerKey = type ? 'beyondTimelineItems' : 'subprojectItems';
 
-                        console.log('SP Pipeline Days: Table data extracted:', {
-                            tableDataLength: window.pipelineDaysTableData ? Object.keys(window.pipelineDaysTableData).length : 0,
-                            modalTitle: window.modalDaysTitle,
-                            modalSubtitle: window.modalDaysSubtitle
-                        });
+                    console.log('SP Pipeline Days: Bar clicked:', {
+                        key,
+                        type,
+                        innerKey,
+                        chartDataAvailable: !!window.currentDaysChartData,
+                        consolidatedDataAvailable: !!window.currentDaysConsolidatedTableData,
+                        chartDataForKey: window.currentDaysChartData ? window.currentDaysChartData[key] : null,
+                        consolidatedDataForKey: window.currentDaysConsolidatedTableData ? window.currentDaysConsolidatedTableData[key] : null
+                    });
 
-                        $('#pipeline-days-modal').modal('show');
+                    window.pipelineDaysTableData = window.currentDaysConsolidatedTableData[key][innerKey];
+                    window.modalDaysSubtitle = window.currentDaysChartData[key].title + (type ? ' (No. of SPs Beyond Timeline)' : '');
+                    window.modalDaysTitle = 'I-REAP Subprojects in the Pipeline (No. of Days in the Current Status)';
 
-                        // Populate table after modal is shown
-                        setTimeout(() => {
-                            const tableContainer = $('#pipeline-days-modal .modal-body .table-responsive');
-                            const subtitle = $('#pipeline-days-modal #modal-subtitle');
+                    console.log('SP Pipeline Days: Table data extracted:', {
+                        tableDataLength: window.pipelineDaysTableData ? Object.keys(window.pipelineDaysTableData).length : 0,
+                        modalTitle: window.modalDaysTitle,
+                        modalSubtitle: window.modalDaysSubtitle
+                    });
 
-                            // Clear existing content
-                            tableContainer.empty();
+                    $('#pipeline-days-modal').modal('show');
 
-                            // Build the complete table HTML
-                            let tableHtml = `
+                    // Populate table after modal is shown
+                    setTimeout(() => {
+                        const tableContainer = $('#pipeline-days-modal .modal-body .table-responsive');
+                        const subtitle = $('#pipeline-days-modal #modal-subtitle');
+
+                        // Clear existing content
+                        tableContainer.empty();
+
+                        // Build the complete table HTML
+                        let tableHtml = `
                                 <table class="table table-hover small mb-0" style="width: 100%; table-layout: fixed;">
                                     <thead>
                                         <tr>
@@ -470,9 +540,9 @@ new class extends Component {
                                     <tbody>
                             `;
 
-                            if (window.pipelineDaysTableData && Object.keys(window.pipelineDaysTableData).length > 0) {
-                                Object.values(window.pipelineDaysTableData).forEach((data) => {
-                                    tableHtml += `
+                        if (window.pipelineDaysTableData && Object.keys(window.pipelineDaysTableData).length > 0) {
+                            Object.values(window.pipelineDaysTableData).forEach((data) => {
+                                tableHtml += `
                                         <tr>
                                             <td style="word-wrap: break-word; white-space: normal;">${data.cluster || ''}</td>
                                             <td style="word-wrap: break-word; white-space: normal;">${data.region || ''}</td>
@@ -493,62 +563,62 @@ new class extends Component {
                                             </td>
                                         </tr>
                                     `;
-                                });
-                            }
+                            });
+                        }
 
-                            tableHtml += `
+                        tableHtml += `
                                     </tbody>
                                 </table>
                             `;
 
-                            // Append the complete table
-                            tableContainer.html(tableHtml);
+                        // Append the complete table
+                        tableContainer.html(tableHtml);
 
-                            if (window.modalDaysTitle) {
-                                $('#pipeline-days-modal #modal-title').text(window.modalDaysTitle);
-                            }
+                        if (window.modalDaysTitle) {
+                            $('#pipeline-days-modal #modal-title').text(window.modalDaysTitle);
+                        }
 
-                            if (window.modalDaysSubtitle) {
-                                subtitle.text(window.modalDaysSubtitle);
-                            }
-                        }, 100);
-                    }
-                },
-                plugins: [ChartDataLabels]
-            });
-        };
-
-
-        // Trigger chart only when Livewire dispatches
-        Livewire.on('generatePipelineChartNoOfDaysModal', data => {
-            console.log('SP Pipeline Days: Received Livewire data:', data);
-            window.isChartLoadingDays = true;
-            setTimeout(() => {
-                if (data[0] && data[0].chartData) {
-                    window.currentDaysChartData = data[0].chartData;
-                    window.currentDaysConsolidatedTableData = data[0].consolidatedTableData;
-
-                    console.log('SP Pipeline Days: Chart data keys:', Object.keys(data[0].chartData));
-                    console.log('SP Pipeline Days: Consolidated data keys:', Object.keys(data[0].consolidatedTableData));
-
-                    // Debug each consolidated data structure
-                    Object.keys(data[0].consolidatedTableData).forEach(key => {
-                        console.log(`SP Pipeline Days: ${key} consolidated data structure:`, {
-                            hasSubprojectItems: !!data[0].consolidatedTableData[key].subprojectItems,
-                            subprojectItemsCount: data[0].consolidatedTableData[key].subprojectItems ?
-                                Object.keys(data[0].consolidatedTableData[key].subprojectItems).length : 0,
-                            hasBeyondTimelineItems: !!data[0].consolidatedTableData[key].beyondTimelineItems,
-                            beyondTimelineItemsCount: data[0].consolidatedTableData[key].beyondTimelineItems ?
-                                Object.keys(data[0].consolidatedTableData[key].beyondTimelineItems).length : 0
-                        });
-                    });
-
-                    window.ChartTwo(data[0].chartData);
-                    window.isChartLoadingDays = false;
-                } else {
-                    console.error('SP Pipeline Days: Invalid data received from Livewire:', data);
+                        if (window.modalDaysSubtitle) {
+                            subtitle.text(window.modalDaysSubtitle);
+                        }
+                    }, 100);
                 }
-            }, 50);
+            },
+            plugins: [ChartDataLabels]
         });
-    </script>
+    };
+
+
+    // Trigger chart only when Livewire dispatches
+    Livewire.on('generatePipelineChartNoOfDaysModal', data => {
+        console.log('SP Pipeline Days: Received Livewire data:', data);
+        window.isChartLoadingDays = true;
+        setTimeout(() => {
+            if (data[0] && data[0].chartData) {
+                window.currentDaysChartData = data[0].chartData;
+                window.currentDaysConsolidatedTableData = data[0].consolidatedTableData;
+
+                console.log('SP Pipeline Days: Chart data keys:', Object.keys(data[0].chartData));
+                console.log('SP Pipeline Days: Consolidated data keys:', Object.keys(data[0].consolidatedTableData));
+
+                // Debug each consolidated data structure
+                Object.keys(data[0].consolidatedTableData).forEach(key => {
+                    console.log(`SP Pipeline Days: ${key} consolidated data structure:`, {
+                        hasSubprojectItems: !!data[0].consolidatedTableData[key].subprojectItems,
+                        subprojectItemsCount: data[0].consolidatedTableData[key].subprojectItems ?
+                            Object.keys(data[0].consolidatedTableData[key].subprojectItems).length : 0,
+                        hasBeyondTimelineItems: !!data[0].consolidatedTableData[key].beyondTimelineItems,
+                        beyondTimelineItemsCount: data[0].consolidatedTableData[key].beyondTimelineItems ?
+                            Object.keys(data[0].consolidatedTableData[key].beyondTimelineItems).length : 0
+                    });
+                });
+
+                window.ChartTwo(data[0].chartData);
+                window.isChartLoadingDays = false;
+            } else {
+                console.error('SP Pipeline Days: Invalid data received from Livewire:', data);
+            }
+        }, 50);
+    });
+</script>
 @endscript
