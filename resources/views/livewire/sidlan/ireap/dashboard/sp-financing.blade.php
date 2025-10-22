@@ -263,6 +263,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const formatFull = (value) =>
         '₱ ' + value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+    // Determine which dataset is on top
+    const topDataset = pipelineAmount > 0 ? 'Pipeline' : (approvedAmount > 0 ? 'Approved' : null);
+
+    // Helper to determine border radius dynamically
+    const getBorderRadius = (label) => {
+        return label === topDataset
+            ? { topLeft: 10, topRight: 10 }
+            : 0;
+    };
+
     // Initialize chart
     new Chart(ctx, {
         type: 'bar',
@@ -273,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     label: 'Total Allocation',
                     data: [totalAllocation],
                     backgroundColor: '#004ef5',
-                    borderRadius: { topLeft: 10, topRight: 10 },
+                    borderRadius: 10,
                     stack: 'Base',
                     order: 1
                 },
@@ -281,6 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     label: 'Approved',
                     data: [approvedAmount],
                     backgroundColor: '#007bff',
+                    borderRadius: getBorderRadius('Approved'),
                     stack: 'Funding',
                     order: 2
                 },
@@ -288,8 +299,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     label: 'Pipeline',
                     data: [pipelineAmount],
                     backgroundColor: '#1abc9c',
+                    borderRadius: getBorderRadius('Pipeline'),
                     stack: 'Funding',
-                    order: 2
+                    order: 3
                 }
             ]
         },
@@ -324,3 +336,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+

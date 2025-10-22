@@ -52,12 +52,154 @@
         .table-responsive::-webkit-scrollbar-thumb:hover {
             background: #9ca3af;
         }
+
+        /* Loading Overlay Styles */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: 200% 200%;
+            animation: gradient-shift 3s ease infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(10px) saturate(1.2);
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.1);
+            transition: opacity 0.6s ease-in-out, visibility 0.6s ease-in-out, transform 0.6s ease-in-out;
+        }
+
+        .loading-content {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+
+        .chart-icon {
+            color: #dad6d6ff;
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            animation: bar-chart-animate 3s ease-in-out infinite;
+            transform-origin: bottom center;
+        }
+
+        @keyframes bar-chart-animate {
+            0% {
+                transform: scaleY(0.3) scaleX(1);
+                transform-origin: bottom center;
+                opacity: 0.6;
+                filter: drop-shadow(0 0 10px rgba(128, 128, 128, 0.3));
+            }
+            10% {
+                transform: scaleY(0.8) scaleX(1);
+                transform-origin: bottom center;
+                opacity: 0.8;
+                filter: drop-shadow(0 0 15px rgba(128, 128, 128, 0.4));
+            }
+            20% {
+                transform: scaleY(1.2) scaleX(1);
+                transform-origin: bottom center;
+                opacity: 1;
+                filter: drop-shadow(0 0 20px rgba(128, 128, 128, 0.5));
+            }
+            30% {
+                transform: scaleY(0.9) scaleX(1);
+                transform-origin: bottom center;
+                opacity: 0.9;
+                filter: drop-shadow(0 0 18px rgba(128, 128, 128, 0.4));
+            }
+            40% {
+                transform: scaleY(1.1) scaleX(1);
+                transform-origin: bottom center;
+                opacity: 1;
+                filter: drop-shadow(0 0 20px rgba(128, 128, 128, 0.5));
+            }
+            50% {
+                transform: scaleY(0.7) scaleX(1);
+                transform-origin: bottom center;
+                opacity: 0.8;
+                filter: drop-shadow(0 0 15px rgba(128, 128, 128, 0.4));
+            }
+            60% {
+                transform: scaleY(1.0) scaleX(1);
+                transform-origin: bottom center;
+                opacity: 0.9;
+                filter: drop-shadow(0 0 18px rgba(128, 128, 128, 0.4));
+            }
+            70% {
+                transform: scaleY(0.8) scaleX(1);
+                transform-origin: bottom center;
+                opacity: 0.8;
+                filter: drop-shadow(0 0 15px rgba(128, 128, 128, 0.4));
+            }
+            80% {
+                transform: scaleY(1.05) scaleX(1);
+                transform-origin: bottom center;
+                opacity: 0.9;
+                filter: drop-shadow(0 0 18px rgba(128, 128, 128, 0.4));
+            }
+            90% {
+                transform: scaleY(0.85) scaleX(1);
+                transform-origin: bottom center;
+                opacity: 0.7;
+                filter: drop-shadow(0 0 12px rgba(128, 128, 128, 0.3));
+            }
+            100% {
+                transform: scaleY(0.3) scaleX(1);
+                transform-origin: bottom center;
+                opacity: 0.6;
+                filter: drop-shadow(0 0 10px rgba(128, 128, 128, 0.3));
+            }
+        }
+
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Initially hide the overlay */
+        .loading-overlay {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.95);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .loading-content {
+                padding: 1.5rem;
+            }
+            .chart-icon {
+                font-size: 3rem;
+            }
+            .loading-text {
+                font-size: 1.1rem;
+            }
+        }
     </style>
     <link rel="stylesheet" href="https://geomapping.da.gov.ph/prdp/assets/css/sidlan.css?v=1760664684387">
     @vite('resources/js/app.js')
 </head>
 
 <body style="min-height: 100%;" class="">
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <i class="fas fa-chart-column fa-3x chart-icon"></i>
+        </div>
+    </div>
 
     <div class="container py-5 min-h-100 position-relative">
         <div class="d-flex justify-content-center">
@@ -71,13 +213,13 @@
         <!-- portfolio -->
         <div class="section-title ps-lg-2 d-flex flex-column flex-lg-row justify-content-between align-items-start">
             Our Portfolio
-            <a href="https://geomapping.da.gov.ph/prdp/sidlan/d2-portfolio" target="_blank"
+            <a href="{{route('sidlan.ireap.d2-portfolio')}}"
                 class="btn btn-primary d-none d-lg-block dashboard-redirect">View Detailed Data</a>
         </div>
 
         <div class="row d-block d-lg-none">
             <div class="col-12">
-                <a href="https://geomapping.da.gov.ph/prdp/sidlan/d2-portfolio" target="_blank"
+                <a href="{{route('sidlan.ireap.d2-portfolio')}}"
                     class="btn btn-primary btn-sm my-2">View Detailed Data</a>
             </div>
         </div>
@@ -162,7 +304,61 @@
                     $('#pipeline-days-modal .table-responsive').html(html);
                 });
 
-            })
+            });
+
+            // Loading overlay functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                const loadingOverlay = document.getElementById('loading-overlay');
+                let componentsLoaded = 0;
+                const totalComponents = document.querySelectorAll('[wire\\:id]').length;
+
+                // Function to hide loading overlay
+                function hideLoadingOverlay() {
+                    loadingOverlay.classList.add('hidden');
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                    }, 500);
+                }
+
+                // Track Livewire component loading
+                document.addEventListener('livewire:init', function() {
+                    // Components are initializing
+                });
+
+                document.addEventListener('livewire:navigated', function() {
+                    // Page navigation completed
+                    hideLoadingOverlay();
+                });
+
+                // Monitor when Livewire requests complete
+                document.addEventListener('livewire:beforedom', function() {
+                    // DOM is about to be updated
+                });
+
+                document.addEventListener('livewire:updated', function() {
+                    componentsLoaded++;
+                    // If all components have been updated, hide the overlay
+                    if (componentsLoaded >= totalComponents && totalComponents > 0) {
+                        hideLoadingOverlay();
+                    }
+                });
+
+                // Fallback: hide overlay after 10 seconds
+                setTimeout(function() {
+                    if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+                        hideLoadingOverlay();
+                    }
+                }, 10000);
+
+                // Also hide overlay when window finishes loading
+                window.addEventListener('load', function() {
+                    setTimeout(function() {
+                        if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+                            hideLoadingOverlay();
+                        }
+                    }, 1000);
+                });
+            });
         </script>
 </body>
 
