@@ -5,38 +5,81 @@ use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 use App\Services\SidlanGoogleSheetService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
+/**
+ * Component: Pipeline Chart (SP by Status)
+ *
+ * Responsibilities:
+ *  - Load and normalize sheet data (IR-01-002).
+ *  - Compute three datasets:
+ *      1. underBusinessPlanPreparation
+ *      2. forRPABApproval
+ *      3. rpabApproved
+ *  - Prepare aggregated chart payload and consolidated table rows.
+ *  - Expose a Livewire event that front-end JS listens to for rendering.
+ *
+ * Notes:
+ *  - Uses Carbon for safe date parsing and diff calculations.
+ *  - Keeps UI and chart behavior identical to the original.
+ */
 new class extends Component {
-    public $chartData = [];
-    public $underBusinessPlanPreparationItems = [];
-    public $byStatusModal = false;
-    public $consolidatedTableData = [];
-    public $tableData = [];
-    public $filterKey = 'All';
-    public $loader = false;
+    /** @var array Chart payload sent to front-end */
+    public array $chartData = [];
+
+    /** @var array Consolidated table data used for modal detail view */
+    public array $consolidatedTableData = [];
+
+    /** @var array Table data currently shown in modal (JS-populated) */
+    public array $tableData = [];
+
+    /** @var string Filter key (All | cluster | region) */
+    public string $filterKey = 'All';
+
+    /** @var bool Loading indicator */
+    public bool $loader = false;
+
+    /** @var string Modal title and subtitle placeholders */
     public string $modalTitle = '';
     public string $modalSubtitle = '';
-    public array $dataSets = [];
-    public $tableContext = [];
 
+    /** @var array Prepared datasets for the chart */
+    public array $dataSets = [];
+
+    /** @var array Context used when building modal table */
+    public array $tableContext = [];
+
+    /** @var SidlanGoogleSheetService|null Google Sheet service instance */
     private ?SidlanGoogleSheetService $sheetService = null;
 
+    /**
+     * Mount lifecycle hook.
+     * Initialize sheet service and chart data.
+     */
     public function mount(): void
     {
-        // Initialize the service here safely
         $this->sheetService = new SidlanGoogleSheetService();
         $this->loader = true;
         $this->initChartData();
     }
 
+    /**
+     * Load and dispatch chart data to front-end.
+     */
     private function initChartData(): void
     {
         $this->chartData = $this->initData();
-        $this->dispatch('generatePipelineChartSPByStatusModal', ['chartData' => $this->chartData, 'consolidatedTableData' => $this->consolidatedTableData]);
+        $this->dispatch('generatePipelineChartSPByStatusModal', [
+            'chartData' => $this->chartData,
+            'consolidatedTableData' => $this->consolidatedTableData
+        ]);
         $this->loader = false;
     }
 
+    /**
+     * Build the three data sections and the final chart payload.
+     *
+     * @return array
+     */
     private function initData(): array
     {
         $sections = [
@@ -57,14 +100,21 @@ new class extends Component {
             'rpabApproved' => 120,
         ];
 
+        $this->dataSets = [];
+        $this->consolidatedTableData = [];
+
         foreach ($sections as $key => $data) {
+            $average = $data['average_difference_days'] ?? 0;
+            $count = $data['count'] ?? 0;
+            $beyondCount = $data['beyondTimelineCount'] ?? 0;
+
             $this->dataSets[$key] = [
                 'title' => $titleMap[$key],
-                'subject_count' => $data['count'],
-                'beyond_timeline_count' => $data['beyondTimelineCount'],
+                'subject_count' => $count,
+                'beyond_timeline_count' => $beyondCount,
                 'key' => $key,
-                'average_difference_days' => $data['average_difference_days'],
-                'bar_Label' => "{$data['average_difference_days']} days vs \n {$timelineMap[$key]} days timeline",
+                'average_difference_days' => $average,
+                'bar_Label' => "{$average} days vs\n{$timelineMap[$key]} days timeline",
             ];
 
             $this->consolidatedTableData[$key] = [
@@ -76,15 +126,23 @@ new class extends Component {
         return $this->dataSets;
     }
 
+    /**
+     * Fetch sheet data and return a cleaned collection.
+     *
+     * @param string $sheetName
+     * @return \Illuminate\Support\Collection
+     */
     private function fetchDataFromSheet(string $sheetName): \Illuminate\Support\Collection
     {
+        // Ensure service is available
         if (!$this->sheetService) {
             $this->sheetService = new SidlanGoogleSheetService();
         }
 
-        $data = collect($this->sheetService->getSheetData($sheetName));
+        $rows = collect($this->sheetService->getSheetData($sheetName));
 
-        return $data->map(function ($row) {
+        // Normalize keys (trim only keys and string values)
+        return $rows->map(function ($row) {
             $clean = [];
             foreach ($row as $key => $value) {
                 $cleanKey = trim($key);
@@ -95,6 +153,12 @@ new class extends Component {
         });
     }
 
+    /**
+     * Calculate displayable cost string from known fields.
+     *
+     * @param array $item
+     * @return string
+     */
     private function calculateCost(array $item): string
     {
         $fields = ['cost_nol_1', 'rpab_approved_cost', 'estimated_project_cost', 'cost_during_validation', 'indicative_project_cost'];
@@ -108,32 +172,77 @@ new class extends Component {
         return '-';
     }
 
+    /**
+     * Generic items preparation helper:
+     *  - Attach cost, parsed date, date_difference, formatted_date, dataset_key
+     *  - Identify beyond-timeline items
+     *  - Compute average days (only from beyond-timeline items)
+     *
+     * @param \Illuminate\Support\Collection $items
+     * @param string $dateField Field name containing the date to compare
+     * @param string $datasetKey Identifier for dataset
+     * @param int $timelineDays Threshold days for "beyond timeline"
+     * @return array
+     */
     private function prepareItems(\Illuminate\Support\Collection $items, string $dateField, string $datasetKey, int $timelineDays): array
     {
-        $now = now();
+        $now = Carbon::now();
 
-        $items = $items->map(function ($item) use ($dateField, $datasetKey, $now) {
-            $date = Carbon::parse($item[$dateField]);
+        // Map items: attach computed metadata, handle invalid/missing dates gracefully
+        $prepared = $items->map(function ($item) use ($dateField, $datasetKey, $now) {
+            $dateValue = $item[$dateField] ?? null;
+            $parsed = null;
+            $dateDiff = null;
+            $formatted = null;
+
+            if (!empty($dateValue)) {
+                try {
+                    $parsed = Carbon::parse($dateValue);
+                    $dateDiff = $parsed->diffInRealDays($now);
+                    $formatted = $parsed->format('M j, Y');
+                } catch (\Exception $e) {
+                    $parsed = null;
+                }
+            }
 
             return array_merge($item, [
                 'cost' => $this->calculateCost($item),
-                'date_difference' => $date->diffInRealDays($now),
-                'formatted_date' => $date->format('M j, Y'),
+                'date_difference' => $dateDiff,
+                'formatted_date' => $formatted,
                 'dataset_key' => $datasetKey,
             ]);
         });
 
-        $beyondTimeline = $items->filter(fn($item) => Carbon::parse($item[$dateField])->diffInRealDays($now) > $timelineDays);
+        // Identify beyond-timeline (only where date_difference is numeric)
+        $beyondTimeline = $prepared->filter(
+            fn($it) => is_numeric($it['date_difference']) && $it['date_difference'] > $timelineDays
+        );
+
+        // ✅ Average based only on beyond-timeline items
+        $avg = $beyondTimeline
+            ->pluck('date_difference')
+            ->filter(fn($v) => is_numeric($v))
+            ->avg();
+
+        $avgRounded = is_null($avg) ? 0 : round($avg);
 
         return [
-            'items' => $items,
-            'count' => $items->count(),
-            'beyondTimeline' => $beyondTimeline,
+            'items' => $prepared->values()->toArray(),
+            'count' => $prepared->count(),
+            'beyondTimeline' => $beyondTimeline->values()->toArray(),
             'beyondTimelineCount' => $beyondTimeline->count(),
-            'average_difference_days' => round($beyondTimeline->avg('date_difference') ?? 0),
+            'average_difference_days' => $avgRounded, // only beyond-timeline average
         ];
     }
 
+
+    /**
+     * Filter helper to enforce the currently selected filterKey (cluster or region)
+     * Returns true if the item should be included under the current filter.
+     *
+     * @param array $item
+     * @return bool
+     */
     private function passesFilter(array $item): bool
     {
         if ($this->filterKey === 'All') {
@@ -141,14 +250,15 @@ new class extends Component {
         }
 
         $filter = trim($this->filterKey);
-
         $cluster = isset($item['cluster']) ? trim($item['cluster']) : null;
         $region = isset($item['region']) ? trim($item['region']) : null;
 
+        // If the filterKey matches cluster groups, compare cluster
         if (in_array($filter, ['Luzon A', 'Luzon B', 'Visayas', 'Mindanao'])) {
             return $cluster === $filter;
         }
 
+        // Otherwise match region if provided
         if (!empty($region)) {
             return $region === $filter;
         }
@@ -157,164 +267,130 @@ new class extends Component {
     }
 
     /**
-     *  
-     * Retrieve and prepare items currently under business plan preparation.
+     * Prepare items under Business Plan Preparation.
      *
-     * Conditions:
-     * - Stage must be "Pre-procurement".
-     * - Specific status must be "Subproject Confirmed".
-     * - The field `subproject_confirmed` must not be empty (confirmation date must exist).
-     * - The field `rpco_technical_review_conducted` must be either empty or invalid
-     *   (indicating that the RPCO technical review has not yet been conducted).
-     * - The record must also pass the external `$this->passesFilter($item)` criteria.
-     *
-     * @return array Processed and formatted items currently under business plan preparation.
+     * Conditions checked (source data keys expected exactly as in sheet):
+     *  - stage === 'Pre-procurement'
+     *  - specific_status === 'Subproject Confirmed'
+     *  - subproject_confirmed exists (date)
+     *  - rpco_technical_review_conducted empty or invalid
      */
     private function underBusinessPlanPreparation(): array
     {
-        $items = $this->fetchDataFromSheet('ir-01-002')
-            ->filter(function ($item) {
-                $baseCondition = $item['stage'] === 'Pre-procurement'
-                    && $item['specific_status'] === 'Subproject Confirmed'
-                    && !empty($item['subproject_confirmed'])
-                    && (empty($item['rpco_technical_review_conducted'])
-                        || !strtotime($item['rpco_technical_review_conducted']));
+        $rows = $this->fetchDataFromSheet('ir-01-002');
 
-                return $baseCondition && $this->passesFilter($item);
-            });
+        $items = $rows->filter(function ($item) {
+            $baseCondition = ($item['stage'] ?? '') === 'Pre-procurement'
+                && ($item['specific_status'] ?? '') === 'Subproject Confirmed'
+                && !empty($item['subproject_confirmed'])
+                && (empty($item['rpco_technical_review_conducted']) || !strtotime($item['rpco_technical_review_conducted']));
+
+            return $baseCondition && $this->passesFilter($item);
+        });
 
         return $this->prepareItems($items, 'subproject_confirmed', 'underBusinessPlanPreparation', 204);
     }
 
-
     /**
-     * 
-     * Retrieve and prepare items awaiting RPAB approval.
-     * 
+     * Prepare items awaiting RPAB approval.
+     *
+     * Priority for determining "rpabApprovalDate":
+     *   sp_rpab_approved, jtr_conducted, rpco_technical_review_conducted, business_plan_packaged
+     *
      * Conditions:
-     * - Stage must be "Pre-procurement".
-     * - Specific status must be one of:
-     *     - "RPCO Technical Review of Business Plan conducted"
-     *     - "Business Plan Package for RPCO technical review submitted"
-     * - The field `business_plan_packaged` must not be empty (indicating packaging completion).
-     * - The field `sp_rpab_approved` must be either empty or invalid (indicating RPAB approval not yet done).
-     * - The record must also pass the external `$this->passesFilter($item)` criteria.
-     *
-     * The resulting items are then assigned an `rpabApprovalDate`, which is chosen
-     * from the first available date in this priority order:
-     *     1. sp_rpab_approved
-     *     2. jtr_conducted
-     *     3. rpco_technical_review_conducted
-     *     4. business_plan_packaged
-     *
-     * @return array Processed and formatted items awaiting RPAB approval.
+     *  - stage === 'Pre-procurement'
+     *  - specific_status ∈ [RPCO Technical Review..., Business Plan Package...]
+     *  - business_plan_packaged not empty
+     *  - sp_rpab_approved empty or invalid (still awaiting)
      */
     private function forRPABApproval(): array
     {
-        $priorityDates = [
-            'sp_rpab_approved',
-            'jtr_conducted',
-            'rpco_technical_review_conducted',
-            'business_plan_packaged',
-        ];
+        $priorityDates = ['sp_rpab_approved', 'jtr_conducted', 'rpco_technical_review_conducted', 'business_plan_packaged'];
 
-        $items = $this->fetchDataFromSheet('ir-01-002')
-            ->filter(function ($item) {
-                return $item['stage'] === 'Pre-procurement'
-                    && in_array($item['specific_status'], [
-                        'RPCO Technical Review of Business Plan conducted',
-                        'Business Plan Package for RPCO technical review submitted'
-                    ])
-                    && !empty($item['business_plan_packaged'])
-                    && (empty($item['sp_rpab_approved']) || !strtotime($item['sp_rpab_approved']))
-                    && $this->passesFilter($item);
-            })
+        $rows = $this->fetchDataFromSheet('ir-01-002');
+
+        $items = $rows->filter(function ($item) {
+            $cond = ($item['stage'] ?? '') === 'Pre-procurement'
+                && in_array($item['specific_status'] ?? '', [
+                    'RPCO Technical Review of Business Plan conducted',
+                    'Business Plan Package for RPCO technical review submitted'
+                ], true)
+                && !empty($item['business_plan_packaged'])
+                && (empty($item['sp_rpab_approved']) || !strtotime($item['sp_rpab_approved']));
+
+            return $cond && $this->passesFilter($item);
+        })
             ->map(function ($item) use ($priorityDates) {
-                foreach ($priorityDates as $field) {
-                    if (!empty($item[$field])) {
-                        $item['rpabApprovalDate'] = $item[$field];
+                foreach ($priorityDates as $f) {
+                    if (!empty($item[$f])) {
+                        $item['rpabApprovalDate'] = $item[$f];
                         break;
                     }
                 }
-
                 $item['rpabApprovalDate'] = $item['rpabApprovalDate'] ?? null;
-
                 return $item;
             });
 
         return $this->prepareItems($items, 'rpabApprovalDate', 'forRPABApproval', 114);
     }
 
-
-
     /**
-     * 
-     * Retrieve and prepare RPAB-approved items.
-     * 
+     * Prepare RPABApproved items (for NOL1 issuance).
+     *
+     * Priority for determining rpabApprovedDate:
+     *  nol1_issued, ima_signed_notarized, sp_rpab_approved, jtr_conducted
+     *
      * Conditions:
-     * - Stage must be "Pre-procurement".
-     * - Specific status must be one of:
-     *     - "Joint Technical Review (JTR) conducted"
-     *     - "SP approved by RPAB"
-     *     - "Signing of the IMA"
-     *     - "Subproject Issued with No Objection Letter 1"
-     * - The field `jtr_conducted` must not be empty.
-     * - The record must also pass the external `$this->passesFilter($item)` criteria.
-     *
-     * The resulting items are then assigned an `rpabApprovedDate`, which is chosen
-     * from the first available date in this priority order:
-     *     1. nol1_issued
-     *     2. ima_signed_notarized
-     *     3. sp_rpab_approved
-     *     4. jtr_conducted
-     *
-     * @return array Processed and formatted RPAB-approved items.
+     *  - stage === 'Pre-procurement'
+     *  - specific_status ∈ [JTR conducted, SP approved by RPAB, Signing of the IMA, Subproject Issued with NOL1]
+     *  - jtr_conducted exists
      */
     private function RPABApproved(): array
     {
-        $priorityDates = [
-            'nol1_issued',
-            'ima_signed_notarized',
-            'sp_rpab_approved',
-            'jtr_conducted',
-        ];
+        $priorityDates = ['nol1_issued', 'ima_signed_notarized', 'sp_rpab_approved', 'jtr_conducted'];
 
-        $items = $this->fetchDataFromSheet('ir-01-002')
-            ->filter(function ($item) {
+        $rows = $this->fetchDataFromSheet('ir-01-002');
 
-                return $item['stage'] === 'Pre-procurement'
-                    && in_array($item['specific_status'], [
-                        'Joint Technical Review (JTR) conducted',
-                        'SP approved by RPAB',
-                        'Signing of the IMA',
-                        'Subproject Issued with No Objection Letter 1'
-                    ])
-                    && !empty($item['jtr_conducted'])
-                    && $this->passesFilter($item);
-            })
+        $items = $rows->filter(function ($item) {
+            $cond = ($item['stage'] ?? '') === 'Pre-procurement'
+                && in_array($item['specific_status'] ?? '', [
+                    'Joint Technical Review (JTR) conducted',
+                    'SP approved by RPAB',
+                    'Signing of the IMA',
+                    'Subproject Issued with No Objection Letter 1'
+                ], true)
+                && !empty($item['jtr_conducted']);
+
+            return $cond && $this->passesFilter($item);
+        })
             ->map(function ($item) use ($priorityDates) {
-                foreach ($priorityDates as $field) {
-                    if (!empty($item[$field])) {
-                        $item['rpabApprovedDate'] = $item[$field];
+                foreach ($priorityDates as $f) {
+                    if (!empty($item[$f])) {
+                        $item['rpabApprovedDate'] = $item[$f];
                         break;
                     }
                 }
-
                 $item['rpabApprovedDate'] = $item['rpabApprovedDate'] ?? null;
-
                 return $item;
             });
 
         return $this->prepareItems($items, 'rpabApprovedDate', 'rpabApproved', 120);
     }
 
+    /**
+     * React to filter changes. Recompute datasets and optionally update tableData if modal context exists.
+     */
     public function updatedFilterKey(): void
     {
         $this->loader = true;
 
         $this->chartData = $this->initData();
-        $this->dispatch('generatePipelineChartSPByStatusModal', ['chartData' => $this->chartData, 'consolidatedTableData' => $this->consolidatedTableData]);
+        $this->dispatch('generatePipelineChartSPByStatusModal', [
+            'chartData' => $this->chartData,
+            'consolidatedTableData' => $this->consolidatedTableData
+        ]);
 
+        // If currently viewing a modal table (tableContext provided), update tableData
         if (!empty($this->tableContext)) {
             $datasetKey = $this->tableContext['key'] ?? null;
             $isBeyond = $this->tableContext['type'] ?? false;
@@ -328,7 +404,11 @@ new class extends Component {
         $this->loader = false;
     }
 
-
+    /**
+     * Placeholder view used during loading.
+     *
+     * @return View
+     */
     public function placeholder(): View
     {
         return view('livewire.sidlan.ireap.placeholder.section-2');
@@ -374,7 +454,6 @@ new class extends Component {
             </div>
         </div>
 
-
         <div wire:ignore class="tile-content position-relative overflow-hidden chart-container" style="height: 400px;">
             <canvas class="tile-chart position-absolute top-0 start-0 w-100 h-100" id="subproject-chart"></canvas>
         </div>
@@ -383,52 +462,58 @@ new class extends Component {
 
 @script
 <script>
-    // Keep chart instance globally
-    window.chartInstance = null;
+    // Single global instance reference for the chart
+    window.pipelineChartInstance = null;
 
+    /**
+     * Render the pipeline status chart.
+     * chartData: object where keys are dataset keys and each value contains:
+     *  - title
+     *  - subject_count
+     *  - beyond_timeline_count
+     *  - average_difference_days
+     *  - bar_Label
+     *
+     * consolidatedTableData: object used later by the modal
+     */
     window.ChartOne = function(chartData) {
         const canvas = document.getElementById('subproject-chart');
-
-        if (!canvas) return; // prevent errors if canvas not in DOM
+        if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
 
-        // Destroy previous chart if exists
-        if (window.chartInstance) {
-            window.chartInstance.destroy();
-            window.chartInstance = null;
+        // Destroy existing instance to prevent duplicates
+        if (window.pipelineChartInstance) {
+            window.pipelineChartInstance.destroy();
+            window.pipelineChartInstance = null;
         }
 
-        const groupKeys = Object.keys(chartData);
+        const groupKeys = Object.keys(chartData || {});
+        if (!groupKeys.length) return;
 
-        const averageDiff = (() => {
-            let total = 0;
-            let count = 0;
-            groupKeys.forEach(k => {
-                if (chartData[k].average_difference_days) {
-                    total += chartData[k].average_difference_days;
-                    count++;
-                }
-            });
-            return count ? Math.round(total / count) : 0;
-        })();
+        // Build datasets
+        const subjectCounts = groupKeys.map(k => chartData[k].subject_count || 0);
+        const beyondCounts = groupKeys.map(k => chartData[k].beyond_timeline_count || 0);
 
-        window.chartInstance = new Chart(ctx, {
+        // Compute suggested max for y-axis (+20% buffer)
+        const maxVal = Math.max(...subjectCounts, ...beyondCounts, 0);
+        const suggestedMax = maxVal + Math.ceil(maxVal * 0.2);
+
+        window.pipelineChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: groupKeys.map(key => chartData[key].title),
+                labels: groupKeys.map(k => chartData[k].title),
                 datasets: [{
                         label: 'No. of Subprojects',
                         backgroundColor: '#0047e0',
-                        data: groupKeys.map(key => chartData[key].subject_count),
+                        data: subjectCounts,
                         borderRadius: 8,
                     },
                     {
                         label: 'No. of Subprojects Beyond Timeline',
                         backgroundColor: '#fa2314',
-                        data: groupKeys.map(key => chartData[key].beyond_timeline_count),
+                        data: beyondCounts,
                         borderRadius: 8,
-
                     }
                 ]
             },
@@ -443,15 +528,7 @@ new class extends Component {
                 scales: {
                     y: {
                         beginAtZero: true,
-                        suggestedMax: (() => {
-                            const allValues = [];
-                            groupKeys.forEach(key => {
-                                allValues.push(chartData[key].subject_count || 0);
-                                allValues.push(chartData[key].beyond_timeline_count || 0);
-                            });
-                            const maxValue = Math.max(...allValues);
-                            return maxValue + Math.ceil(maxValue * 0.2);
-                        })()
+                        suggestedMax
                     }
                 },
                 plugins: {
@@ -473,114 +550,102 @@ new class extends Component {
                         anchor: 'end',
                         textAlign: 'center',
                         formatter: function(value, context) {
+                            // For the "beyond timeline" dataset (index 1), show two lines:
+                            // - the count
+                            // - descriptive bar_Label (if provided)
                             if (context.datasetIndex === 1 && value > 0) {
-                                const datasetIndex = context.dataIndex;
-                                const key = groupKeys[datasetIndex];
-                                const data = chartData[key];
-
-                                const label = (data?.bar_Label || '').replace(/\\n/g, '\n') ||
-                                    `${value} items`;
-
-                                return [
-                                    `${value}`,
-                                    label
-                                ];
+                                const idx = context.dataIndex;
+                                const key = groupKeys[idx];
+                                const data = chartData[key] || {};
+                                const label = (data.bar_Label || '').replace(/\\n/g, '\n') || `${value} items`;
+                                return [String(value), label];
                             }
-                            return value > 0 ? `${value}` : '';
+                            return value > 0 ? String(value) : '';
                         }
-
-
                     }
                 },
                 onClick: (evt, elements) => {
-                    // Prevent clicking when loading
-                    if (window.isChartLoading) return;
+                    if (!elements || !elements.length) return;
 
-                    if (!elements.length) return;
-                    const element = elements[0];
-                    const index = element.index;
+                    // Only handle clicks when chart has data
+                    const el = elements[0];
+                    const index = el.index;
+                    const datasetIndex = el.datasetIndex;
                     const key = groupKeys[index];
-                    const datasetIndex = element.datasetIndex;
 
-                    const type = datasetIndex === 1;
-                    const innerKey = type ? 'beyondTimelineItems' : 'subprojectItems';
-                    window.pipelineTableData = window.currentConsolidatedTableData[key][innerKey];
-                    window.modalSubtitle = window.currentChartData[key].title + (type ? ' (No. of SPs Beyond Timeline)' : '');
+                    const isBeyond = (datasetIndex === 1);
+                    const innerKey = isBeyond ? 'beyondTimelineItems' : 'subprojectItems';
+
+                    // Avoid errors if consolidated data isn't present
+                    const consolidated = window.currentConsolidatedTableData || {};
+                    const tableData = (consolidated[key] && consolidated[key][innerKey]) ? consolidated[key][innerKey] : [];
+
+                    // Set global variables used by modal population
+                    window.pipelineTableData = tableData;
+                    window.modalSubtitle = (chartData[key] && chartData[key].title) ? chartData[key].title + (isBeyond ? ' (No. of SPs Beyond Timeline)' : '') : '';
                     window.modalTitle = 'I-REAP Subprojects in the Pipeline (Number of Subprojects by Status)';
 
+                    // Show Bootstrap modal and populate table after modal opens
                     $('#pipeline-by-status-modal').modal('show');
 
-                    // Populate table after modal is shown
                     setTimeout(() => {
                         const tableContainer = $('#pipeline-by-status-modal .modal-body .table-responsive');
                         const subtitle = $('#modal-subtitle');
 
-                        // Clear existing content
                         tableContainer.empty();
 
-                        // Build the complete table HTML
                         let tableHtml = `
-                                <table class="table table-hover small mb-0" style="width: 100%; table-layout: fixed;">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-wrap" style="width: 8%;">Cluster</th>
-                                            <th class="text-wrap" style="width: 10%;">Region</th>
-                                            <th class="text-wrap" style="width: 12%;">Province</th>
-                                            <th class="text-wrap" style="width: 12%;">City/
-                                                Municipality</th>
-                                            <th class="text-wrap" style="width: 12%;">Proponent</th>
-                                            <th class="text-wrap" style="width: 15%;">SP Name</th>
-                                            <th class="text-wrap" style="width: 8%;">Type</th>
-                                            <th class="text-wrap" style="width: 8%;">Cost</th>
-                                            <th class="text-wrap" style="width: 8%;">Stage</th>
-                                            <th class="text-wrap" style="width: 12%;">Status</th>
-                                            <th class="text-wrap" style="width: 15%;">No. of days</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                            `;
+                            <table class="table table-hover small mb-0" style="width:100%; table-layout: fixed;">
+                                <thead>
+                                    <tr>
+                                        <th style="width:8%;">Cluster</th>
+                                        <th style="width:10%;">Region</th>
+                                        <th style="width:12%;">Province</th>
+                                        <th style="width:12%;">City/Municipality</th>
+                                        <th style="width:12%;">Proponent</th>
+                                        <th style="width:15%;">SP Name</th>
+                                        <th style="width:8%;">Type</th>
+                                        <th style="width:8%;">Cost</th>
+                                        <th style="width:8%;">Stage</th>
+                                        <th style="width:12%;">Status</th>
+                                        <th style="width:15%;">No. of days</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
 
-                        if (window.pipelineTableData && Object.keys(window.pipelineTableData).length > 0) {
-                            Object.values(window.pipelineTableData).forEach((data) => {
+                        if (Array.isArray(window.pipelineTableData) && window.pipelineTableData.length) {
+                            window.pipelineTableData.forEach((d) => {
+                                const days = d.date_difference ? Math.round(d.date_difference) : '';
+                                const labelContext = d.dataset_key === 'underBusinessPlanPreparation' ? 'Date of confirmation' :
+                                    d.dataset_key === 'forRPABApproval' ? 'FS / DED Preparation' :
+                                    d.dataset_key === 'rpabApproved' ? 'RPAB Approval' : 'Date';
+                                const formattedDate = d.formatted_date || '';
                                 tableHtml += `
-                                        <tr>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.cluster || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.region || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.province || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.city_municipality || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.proponent || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.project_name || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.project_type || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.cost || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.stage || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">${data.specific_status || ''}</td>
-                                            <td style="word-wrap: break-word; white-space: normal;">
-                                                ${Math.round(data.date_difference)} days from
-                                                ${data.dataset_key === 'underBusinessPlanPreparation' ? 'Date of confirmation' :
-                                                  data.dataset_key === 'forRPABApproval' ? 'FS / DED Preparation' :
-                                                  data.dataset_key === 'rpabApproved' ? 'RPAB Approval' : 'Date of confirmation'}
-                                                (${data.formatted_date})
-                                            </td>
-                                        </tr>
-                                    `;
+                                    <tr>
+                                        <td style="word-wrap: break-word; white-space: normal;">${d.cluster || ''}</td>
+                                        <td style="word-wrap: break-word; white-space: normal;">${d.region || ''}</td>
+                                        <td style="word-wrap: break-word; white-space: normal;">${d.province || ''}</td>
+                                        <td style="word-wrap: break-word; white-space: normal;">${d.city_municipality || ''}</td>
+                                        <td style="word-wrap: break-word; white-space: normal;">${d.proponent || ''}</td>
+                                        <td style="word-wrap: break-word; white-space: normal;">${d.project_name || ''}</td>
+                                        <td style="word-wrap: break-word; white-space: normal;">${d.project_type || ''}</td>
+                                        <td style="word-wrap: break-word; white-space: normal;">${d.cost || ''}</td>
+                                        <td style="word-wrap: break-word; white-space: normal;">${d.stage || ''}</td>
+                                        <td style="word-wrap: break-word; white-space: normal;">${d.specific_status || ''}</td>
+                                        <td style="word-wrap: break-word; white-space: normal;">
+                                            ${days ? `${days} days from ${labelContext} (${formattedDate})` : ''}
+                                        </td>
+                                    </tr>
+                                `;
                             });
                         }
 
-                        tableHtml += `
-                                    </tbody>
-                                </table>
-                            `;
-
-                        // Append the complete table
+                        tableHtml += `</tbody></table>`;
                         tableContainer.html(tableHtml);
 
-                        if (window.modalTitle) {
-                            $('#modal-title').text(window.modalTitle);
-                        }
-
-                        if (window.modalSubtitle) {
-                            subtitle.text(window.modalSubtitle);
-                        }
+                        if (window.modalTitle) $('#modal-title').text(window.modalTitle);
+                        if (window.modalSubtitle) subtitle.text(window.modalSubtitle);
                     }, 100);
                 }
             },
@@ -588,18 +653,25 @@ new class extends Component {
         });
     };
 
-    // Trigger chart only when Livewire dispatches
-    Livewire.on('generatePipelineChartSPByStatusModal', data => {
-        window.isChartLoading = true;
-        setTimeout(() => {
-            if (data[0] && data[0].chartData) {
-                window.currentChartData = data[0].chartData;
-                window.currentConsolidatedTableData = data[0].consolidatedTableData;
-                window.ChartOne(data[0].chartData);
+    // Listen for Livewire dispatch and render chart
+    Livewire.on('generatePipelineChartSPByStatusModal', payload => {
+        // payload[0] contains chartData + consolidatedTableData
+        if (!payload || !payload[0]) return;
+
+        const data = payload[0];
+        window.currentChartData = data.chartData || {};
+        window.currentConsolidatedTableData = data.consolidatedTableData || {};
+
+        window.ChartOne(window.currentChartData);
+
+        // Ensure Livewire loader state is turned off if present
+        if (typeof $wire !== 'undefined') {
+            try {
                 $wire.set('loader', false);
-                window.isChartLoading = false;
+            } catch (e) {
+                /* ignore */
             }
-        }, 50);
+        }
     });
 </script>
 @endscript

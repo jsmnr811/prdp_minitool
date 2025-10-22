@@ -84,13 +84,7 @@
 
         <div class="row row-cols-1 row-cols-lg-2 row-gap-4 mt-5">
             <livewire:sidlan.ireap.dashboard.sp-financing :irZeroOneData="$irZeroOneData" />
-
-            <div class="col">
-
-                <div class="row row-cols-1 row-gap-4 h-100">
-                    <livewire:sidlan.ireap.dashboard.sp-cost-by-cluster :irZeroOneData="$irZeroOneData" />
-                </div>
-            </div>
+            <livewire:sidlan.ireap.dashboard.sp-cost-by-cluster :irZeroOneData="$irZeroOneData" />
         </div>
 
         <div class="row row-cols-1 row-gap-4 mt-4">
@@ -99,6 +93,9 @@
             </div>
             <div class="col">
                 <livewire:sidlan.ireap.dashboard.sp-in-pipeline-no-of-days />
+            </div>
+            <div class="col">
+                <livewire:sidlan.ireap.dashboard.sp-actual-pace-in-pre-implementation />
             </div>
         </div>
 
@@ -124,7 +121,8 @@
                 </div>
             </div>
         </div>
-         <div class="modal" tabindex="-1" id="pipeline-days-modal">
+
+        <div class="modal" tabindex="-1" id="pipeline-days-modal">
             <div class="modal-dialog modal-dialog-centered modal-xl">
                 <div class="modal-content">
                     <div class="modal-header position-relative flex-column align-items-start pb-0"
@@ -147,6 +145,7 @@
             </div>
         </div>
 
+
         <script>
             $(document).ready(function() {
                 $('#pipeline-by-status-modal').on('hide.bs.modal', function(event) {
@@ -162,6 +161,7 @@
 </div></div>`;
                     $('#pipeline-days-modal .table-responsive').html(html);
                 });
+
             })
         </script>
 </body>
