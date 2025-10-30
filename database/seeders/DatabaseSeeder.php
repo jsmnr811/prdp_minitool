@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Testing\Fakes\Fake;
+use Database\Seeders\HRMS\HRMSSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -12,16 +12,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([
-            ProductSeeder::class,
-            FakerUserSeeder::class,
-            CommoditiesTableSeeder::class
-        ]);
-        $this->call(RegionsTableSeeder::class);
-        $this->call(ProvincesTableSeeder::class);
-        $this->call(ProvincesBoundariesSeeder::class);
-        $this->call(InterventionsTableSeeder::class);
-        $this->call(GeoOfficeSeeder::class);
-        $this->call(CommoditiesTableSeeder::class);
+        // $this->call([
+        //     ProductSeeder::class,
+        //     FakerUserSeeder::class,
+        //     CommoditiesTableSeeder::class
+        // ]);
+        // $this->call(RegionsTableSeeder::class);
+        // $this->call(ProvincesTableSeeder::class);
+        // $this->call(ProvincesBoundariesSeeder::class);
+        // $this->call(InterventionsTableSeeder::class);
+        // $this->call(GeoOfficeSeeder::class);
+        // $this->call(CommoditiesTableSeeder::class);
+
+        $this->call(HRMSSeeder::class);
+
     }
 }
